@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+# 用户数据与临时文件（API Key 保存在 %APPDATA%/SubTranslator，不在项目内）
+config.json
+output/
+downloads/
+cache/
+*.log
+tools/
+# PyInstaller 打包产物
+build/
+dist/
