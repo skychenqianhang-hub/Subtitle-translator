@@ -20,7 +20,7 @@ class SettingsDialog(QDialog):
         self.tabs = QTabWidget()
         self.settings_page = SettingsPage(cfg)
         self.profiles_page = ProfilesPage()
-        self.tabs.addTab(self.settings_page, "基本设置")
+        self.tabs.addTab(self.settings_page, "API Key")
         self.tabs.addTab(self.profiles_page, "场景管理")
         layout.addWidget(self.tabs)
 

@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
 from app.config import Config, save_config
 from app.core.audio_devices import list_output_devices
 from app.ui.common import hint, not_implemented
+from app.ui.model_panel import ModelLanguagePanel
+from app.ui.output_mode import OutputModePicker
 from app.ui.overlay_window import OverlayWindow
 from app.ui.scene_picker import ScenePicker
 
@@ -21,10 +23,17 @@ class RealtimePage(QWidget):
         super().__init__(parent)
         self.cfg = cfg
         self.overlay = overlay
+        self._device_connected = False
         layout = QVBoxLayout(self)
         layout.addWidget(hint("适用于直播和在线视频：抓取电脑正在播放的声音，实时识别并翻译，字幕显示在悬浮窗里。任何平台都能用。"))
 
-        box = QGroupBox("参数")
+        # ---- 语言与模型（两页共用同一份设置）----
+        self.model_panel = ModelLanguagePanel(cfg)
+        self.model_panel.changed.connect(self._on_model_panel_changed)
+        layout.addWidget(self.model_panel)
+
+        # ---- 实时参数 ----
+        box = QGroupBox("实时参数")
         form = QFormLayout(box)
 
         self.scene = ScenePicker()
@@ -52,8 +61,13 @@ class RealtimePage(QWidget):
         delay_row.addWidget(self.delay)
         delay_row.addWidget(hint("最多攒多长的声音再送去识别。越短字幕越快出，但句子更容易被切断；建议 5 到 8 秒。"), 1)
         form.addRow("翻译延迟", delay_row)
+
+        self.output_mode = OutputModePicker(cfg.realtime_output_mode, cfg.target_language_name())
+        self.output_mode.changed.connect(self._save_output_mode)
+        form.addRow("输出内容", self.output_mode)
         layout.addWidget(box)
 
+        # ---- 控制 ----
         ctrl_row = QHBoxLayout()
         self.start_button = QPushButton("开始")
         self.start_button.setMinimumHeight(36)
@@ -72,7 +86,7 @@ class RealtimePage(QWidget):
 
         self.log = QTextEdit()
         self.log.setReadOnly(True)
-        self.log.setPlaceholderText("开始后，识别到的原文和翻译会在这里滚动显示。")
+        self.log.setPlaceholderText("开始后，识别到的原文和译文会在这里滚动显示。")
         layout.addWidget(self.log, 1)
 
         save_row = QHBoxLayout()
@@ -84,21 +98,27 @@ class RealtimePage(QWidget):
 
         self.overlay.visibility_changed.connect(self._sync_overlay_button)
         self.refresh_devices()
+        self._apply_output_mode(cfg.realtime_output_mode)
 
     # ---- 设备 ----
     def refresh_devices(self) -> None:
+        self.device.blockSignals(True)
         self.device.clear()
         devices = list_output_devices()
         if not devices:
             self.device.addItem("电脑正在播放的声音（默认输出设备）", -1)
-            return
-        for d in devices:
-            label = f"{d.name}（默认）" if d.is_default else d.name
-            self.device.addItem(label, d.index)
-        idx = self.device.findText(self.cfg.audio_device_name)
-        self.device.setCurrentIndex(idx if idx >= 0 else 0)
-        self.device.currentTextChanged.connect(self._save_device)
+        else:
+            for d in devices:
+                label = f"{d.name}（默认）" if d.is_default else d.name
+                self.device.addItem(label, d.index)
+            idx = self.device.findText(self.cfg.audio_device_name)
+            self.device.setCurrentIndex(idx if idx >= 0 else 0)
+        self.device.blockSignals(False)
+        if not self._device_connected:
+            self.device.currentTextChanged.connect(self._save_device)
+            self._device_connected = True
 
+    # ---- 保存 ----
     def _save_device(self, name: str) -> None:
         self.cfg.audio_device_name = name
         self._save()
@@ -110,6 +130,23 @@ class RealtimePage(QWidget):
     def _save_scene(self, name: str) -> None:
         self.cfg.last_scene = name
         self._save()
+
+    def _save_output_mode(self, mode: str) -> None:
+        self.cfg.realtime_output_mode = mode
+        self._apply_output_mode(mode)
+        self._save()
+
+    def _apply_output_mode(self, mode: str) -> None:
+        self.overlay.set_mode(mode)
+        self.model_panel.set_translation_enabled(mode != "source_only")
+
+    def _on_model_panel_changed(self) -> None:
+        self.output_mode.set_target_name(self.cfg.target_language_name())
+
+    def sync_from_config(self) -> None:
+        """另一页改了语言 / 模型后同步过来。"""
+        self.model_panel.load_from_config()
+        self.output_mode.set_target_name(self.cfg.target_language_name())
 
     def _save(self) -> None:
         try:

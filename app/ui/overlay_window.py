@@ -1,4 +1,4 @@
-"""悬浮字幕窗：独立、置顶、可拖动、可调字号，可选同时显示原文。"""
+"""悬浮字幕窗：独立、置顶、可拖动、可调字号。显示原文 / 中文 / 双语由「输出内容」决定。"""
 from __future__ import annotations
 
 from PySide6.QtCore import QPoint, Qt, Signal
@@ -17,6 +17,7 @@ class OverlayWindow(QWidget):
             Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint,
         )
         self.cfg = cfg
+        self.mode = cfg.realtime_output_mode
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self._drag_offset: QPoint | None = None
 
@@ -32,12 +33,9 @@ class OverlayWindow(QWidget):
         bar = QHBoxLayout()
         self.smaller = self._bar_button("A-", self._font_smaller)
         self.bigger = self._bar_button("A+", self._font_bigger)
-        self.source_toggle = self._bar_button("原文", self._toggle_source)
-        self.source_toggle.setCheckable(True)
-        self.source_toggle.setChecked(cfg.overlay_show_source)
         self.close_button = self._bar_button("×", self.hide)
-        for b in (self.smaller, self.bigger, self.source_toggle):
-            bar.addWidget(b)
+        bar.addWidget(self.smaller)
+        bar.addWidget(self.bigger)
         bar.addStretch(1)
         bar.addWidget(self.close_button)
         layout.addLayout(bar)
@@ -53,9 +51,16 @@ class OverlayWindow(QWidget):
 
         self.resize(900, 140)
         self._apply_font()
-        self._apply_source_visibility()
+        self.set_mode(self.mode)
 
     # ---- 显示 ----
+    def set_mode(self, mode: str) -> None:
+        """bilingual：原文 + 中文；target_only：仅中文；source_only：仅原文。"""
+        self.mode = mode
+        self.source_label.setVisible(mode in ("bilingual", "source_only"))
+        self.target_label.setVisible(mode in ("bilingual", "target_only"))
+        self._apply_font()
+
     def show_subtitle(self, target: str, source: str = "") -> None:
         self.target_label.setText(target)
         self.source_label.setText(source)
@@ -63,7 +68,7 @@ class OverlayWindow(QWidget):
             self.show()
 
     def show_demo(self) -> None:
-        self.show_subtitle("这里会显示翻译后的中文字幕（示例）", "ここに翻訳前の原文が表示されます（例）")
+        self.show_subtitle("这里会显示翻译后的中文字幕（示例）", "ここに音声認識された原文が表示されます（例）")
         self._center_bottom()
 
     def _center_bottom(self) -> None:
@@ -81,11 +86,14 @@ class OverlayWindow(QWidget):
         super().hideEvent(event)
         self.visibility_changed.emit()
 
-    # ---- 字号 / 原文 ----
+    # ---- 字号 ----
     def _apply_font(self) -> None:
         size = self.cfg.overlay_font_size
         self.target_label.setStyleSheet(f"color: white; font-size: {size}px; font-weight: 600;")
-        self.source_label.setStyleSheet(f"color: #d0d0d0; font-size: {max(12, int(size * 0.6))}px;")
+        # 仅原文时原文就是主字幕，用大字；双语时原文是辅助，用小一点的字
+        source_size = size if self.mode == "source_only" else max(12, int(size * 0.6))
+        source_color = "white" if self.mode == "source_only" else "#d0d0d0"
+        self.source_label.setStyleSheet(f"color: {source_color}; font-size: {source_size}px;")
 
     def _font_bigger(self) -> None:
         self.cfg.overlay_font_size = min(72, self.cfg.overlay_font_size + 2)
@@ -97,14 +105,6 @@ class OverlayWindow(QWidget):
         self._apply_font()
         save_config(self.cfg)
 
-    def _toggle_source(self) -> None:
-        self.cfg.overlay_show_source = self.source_toggle.isChecked()
-        self._apply_source_visibility()
-        save_config(self.cfg)
-
-    def _apply_source_visibility(self) -> None:
-        self.source_label.setVisible(self.cfg.overlay_show_source)
-
     def _bar_button(self, text: str, slot) -> QPushButton:
         b = QPushButton(text)
         b.setFixedHeight(22)
@@ -112,7 +112,6 @@ class OverlayWindow(QWidget):
             "QPushButton { color: #ddd; background: rgba(255,255,255,40); border: none;"
             " border-radius: 4px; padding: 0 8px; }"
             "QPushButton:hover { background: rgba(255,255,255,80); }"
-            "QPushButton:checked { background: rgba(80,160,255,160); }"
         )
         b.clicked.connect(slot)
         return b

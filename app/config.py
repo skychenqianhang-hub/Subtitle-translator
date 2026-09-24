@@ -22,10 +22,27 @@ TRANSLATE_MODELS = {
     "anthropic": ["claude-sonnet-5", "claude-haiku-4-5-20251001", "claude-opus-5"],
     "openai": ["gpt-4o", "gpt-4o-mini"],
 }
+# 原文语言（语音识别用）
 SOURCE_LANGUAGES = {
     "auto": "自动检测",
     "ja": "日语",
     "en": "英语",
+    "zh": "中文",
+    "ko": "韩语",
+}
+# 翻译至（目标语言）
+TARGET_LANGUAGES = {
+    "zh-Hans": "简体中文",
+    "zh-Hant": "繁体中文",
+    "en": "英语",
+    "ja": "日语",
+    "ko": "韩语",
+}
+# 输出内容：双语 / 仅译文 / 仅原文（仅原文 = 只做语音识别，不调用翻译）
+OUTPUT_MODES = {
+    "bilingual": "原文 + 译文（双语）",
+    "target_only": "仅译文",
+    "source_only": "仅原文（只识别，不翻译）",
 }
 
 
@@ -43,21 +60,24 @@ class Config:
     # API Key
     openai_api_key: str = ""
     anthropic_api_key: str = ""
-    # 默认模型
+    # 模型（主页上选择，实时 / 视频两页共用）
     asr_provider: str = "openai"
     asr_model: str = "whisper-1"
     translate_provider: str = "anthropic"
     translate_model: str = "claude-sonnet-5"
     # 语言
     source_language: str = "auto"
+    target_language: str = "zh-Hans"
     # 悬浮字幕窗
     overlay_font_size: int = 28
-    overlay_show_source: bool = False
     # 实时翻译参数
     realtime_delay_seconds: int = 5
     audio_device_name: str = ""
+    realtime_output_mode: str = "bilingual"
+    # 视频翻译参数
+    video_output_mode: str = "bilingual"
     # 界面
-    last_mode: str = "realtime"      # "realtime" 或 "offline"
+    last_mode: str = "realtime"      # "realtime" 或 "video"
     last_scene: str = "通用"         # 例如 "游戏 → Valorant"
     window_geometry: str = ""
 
@@ -66,6 +86,9 @@ class Config:
 
     def has_anthropic_key(self) -> bool:
         return bool(self.anthropic_api_key.strip())
+
+    def target_language_name(self) -> str:
+        return TARGET_LANGUAGES.get(self.target_language, self.target_language)
 
 
 def load_config() -> Config:
@@ -77,7 +100,13 @@ def load_config() -> Config:
     except (OSError, json.JSONDecodeError):
         return Config()
     known = {f.name for f in fields(Config)}
-    return Config(**{k: v for k, v in raw.items() if k in known})
+    cfg = Config(**{k: v for k, v in raw.items() if k in known})
+    # 兼容旧版本的名字
+    if raw.get("last_mode") == "offline":
+        cfg.last_mode = "video"
+    if "offline_output_mode" in raw and "video_output_mode" not in raw:
+        cfg.video_output_mode = raw["offline_output_mode"]
+    return cfg
 
 
 def save_config(cfg: Config) -> None:
