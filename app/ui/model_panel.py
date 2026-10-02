@@ -8,8 +8,8 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QWidget
 
 from app.config import (
-    ASR_MODELS, SOURCE_LANGUAGES, TARGET_LANGUAGES, TRANSLATE_MODELS, TRANSLATE_PROVIDERS, Config,
-    save_config,
+    ASR_MODELS, DEFAULT_TRANSLATE_MODEL, SOURCE_LANGUAGES, TARGET_LANGUAGES, TRANSLATE_MODELS,
+    TRANSLATE_PROVIDERS, Config, save_config,
 )
 from app.ui.common import hint
 
@@ -44,7 +44,7 @@ class ModelLanguagePanel(QGroupBox):
         self.asr_model.addItems(ASR_MODELS)
         asr_row = QHBoxLayout()
         asr_row.addWidget(self.asr_model, 1)
-        asr_row.addWidget(hint("OpenAI 语音识别（Whisper 系列）"))
+        asr_row.addWidget(hint("OpenAI 语音识别。gpt-transcribe 最新最便宜；whisper-1 时间戳更细"))
         form.addRow("识别模型", asr_row)
 
         tr_row = QHBoxLayout()
@@ -90,6 +90,7 @@ class ModelLanguagePanel(QGroupBox):
             return
         provider = self.translate_provider.currentData()
         self._fill_translate_models(provider)
+        self.translate_model.setCurrentText(DEFAULT_TRANSLATE_MODEL.get(provider, ""))
         self._on_change()
 
     def _on_change(self) -> None:

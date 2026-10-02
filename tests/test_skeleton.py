@@ -72,14 +72,15 @@ def main() -> int:
     mp.target_language.setCurrentIndex(mp.target_language.findData("en"))
     mp.asr_model.setCurrentText("gpt-4o-transcribe")
     mp.translate_provider.setCurrentIndex(mp.translate_provider.findData("openai"))
-    mp.translate_model.setCurrentText("gpt-4o-mini")
+    assert mp.translate_model.currentText() == "gpt-5", "切换翻译服务后应自动选该服务的默认模型"
+    mp.translate_model.setCurrentText("gpt-5-mini")
     c = config_mod.load_config()
     assert c.source_language == "ja" and c.target_language == "en", (c.source_language, c.target_language)
     assert c.asr_model == "gpt-4o-transcribe"
-    assert c.translate_provider == "openai" and c.translate_model == "gpt-4o-mini"
+    assert c.translate_provider == "openai" and c.translate_model == "gpt-5-mini"
     vmp = vp.model_panel
     assert vmp.target_language.currentData() == "en", "视频页未同步目标语言"
-    assert vmp.translate_model.currentText() == "gpt-4o-mini", "视频页未同步翻译模型"
+    assert vmp.translate_model.currentText() == "gpt-5-mini", "视频页未同步翻译模型"
     assert "英语" in vp.output_mode.note.text(), vp.output_mode.note.text()
     # 反向：视频页改 → 实时页同步
     vmp.target_language.setCurrentIndex(vmp.target_language.findData("zh-Hant"))
@@ -132,7 +133,7 @@ def main() -> int:
     win2 = MainWindow(c)
     assert win2.realtime_page.delay.value() == 7
     assert win2.realtime_page.model_panel.target_language.currentData() == "zh-Hant"
-    assert win2.realtime_page.model_panel.translate_model.currentText() == "gpt-4o-mini"
+    assert win2.realtime_page.model_panel.translate_model.currentText() == "gpt-5-mini"
     assert win2.realtime_page.output_mode.current() == "target_only"
     assert win2.video_page.output_mode.current() == "source_only"
     assert not win2.video_page.model_panel.translate_model.isEnabled()
@@ -149,8 +150,17 @@ def main() -> int:
     raw["offline_output_mode"] = "target_only"
     raw.pop("video_output_mode", None)
     p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    raw["asr_model"] = "whisper-1"
+    raw["translate_model"] = "claude-opus-5"
+    raw.pop("config_version", None)
+    p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
     c = config_mod.load_config()
     assert c.last_mode == "video" and c.video_output_mode == "target_only"
+    assert c.asr_model == "gpt-transcribe" and c.translate_model == "claude-sonnet-5-5", (c.asr_model, c.translate_model)
+    # 新版本文件里用户自己选的 whisper-1 不能被改掉
+    c.asr_model = "whisper-1"
+    config_mod.save_config(c)
+    assert config_mod.load_config().asr_model == "whisper-1"
     print("旧设置兼容：OK")
 
     win.close()

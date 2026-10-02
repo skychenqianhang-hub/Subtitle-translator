@@ -16,11 +16,19 @@ for tool in (find_ffmpeg(), find_ffprobe()):
         raise SystemExit("打包前需要先安装 ffmpeg（找不到 ffmpeg / ffprobe）")
     binaries.append((tool, "bin"))
 
+# conda 环境里 _ctypes.pyd 依赖 Library/bin 下的 ffi.dll，PyInstaller 收集不到，手动带上
+import glob
+conda_bin = os.path.join(os.path.dirname(sys.executable), "Library", "bin")
+for name in ("ffi.dll", "ffi-8.dll", "ffi-7.dll"):
+    path = os.path.join(conda_bin, name)
+    if os.path.isfile(path):
+        binaries.append((path, "."))
+
 a = Analysis(
     ["app/main.py"],
     pathex=["."],
     binaries=binaries,
-    datas=[("profiles", "profiles")],
+    datas=[("profiles", "profiles"), ("app/core/audio/models/silero_vad.onnx", "app/core/audio/models")],
     hiddenimports=[],
     hookspath=[],
     runtime_hooks=[],

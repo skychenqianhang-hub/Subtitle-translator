@@ -139,7 +139,9 @@ SubTranslator/
    - 输出内容；悬浮窗按此显示
    - 开始 / 停止 / 打开悬浮字幕窗；滚动日志；结束后保存本场字幕
 2. **视频翻译**（已录好的视频；曾叫「离线翻译」，2026-09-24 改名）
-   - 本地文件 或 视频网址 → 语言与模型面板 → 内容场景 → 输出内容 → 开始处理 → 进度 → 预览修改 → 导出 SRT
+   - 本地文件 或 视频网址 → 语言与模型面板 → 内容场景 → 输出形式 + 输出内容 → 开始处理 → 进度 → 预览修改
+   - 输出形式（2026-10-03 用户要求）：仅字幕文件（.srt，存视频旁边同名）/ 带字幕的视频（.mp4，字幕烧进画面）/ 两者都要；烧录时可选字幕字号 小 / 中 / 大
+   - 带字幕的视频：`app/core/subtitle/ass.py` 生成 ASS（双语时原文小号浅灰在上、译文白色在下，中文长句手动换行），`burn.py` 用 ffmpeg 的 ass 滤镜重编码（libx264 crf 20，音频直接复制），文件名 `原名.双语字幕.mp4` / `原名.简体中文字幕.mp4` / `原名.原文字幕.mp4`
 3. **设置对话框**（齿轮）：两个标签页
    - API Key：OpenAI、Anthropic
    - 场景管理：左侧场景树，右侧术语表、识别提示词、纠错规则、模型选择；CSV / Excel 导入导出
@@ -247,7 +249,16 @@ SubTranslator/
   - 备注：独立客户端由 `build.bat` 打包，成品约 550MB，其中 ffmpeg full 版占 430MB；以后可换成 essentials 版缩小体积。
 - [x] 阶段 1（2026-09-24）：软件骨架。按第 5 节：顶部「实时翻译 / 视频翻译」模式切换 + 右上角齿轮设置（API Key、场景管理两个标签页）；两页都有「语言与模型」面板（原文语言、翻译至、识别 / 翻译模型，两页同步）；实时页有板块/子板块场景选择、输出设备列表（WASAPI loopback，`app/core/audio_devices.py`）、翻译延迟秒数；设置页保存 API Key 到 `%APPDATA%\SubTranslator\config.json`，重启后回填；悬浮字幕窗可打开/关闭/拖动/调字号；两页都有「输出内容」三选一（双语 / 仅中文 / 仅原文）并各自记住；未完成功能点击提示「开发中」并标明计划阶段。自检脚本 `tests/test_skeleton.py`。
   - 备注：`app/config.py` 里的 Config 是全局设置的唯一来源，新增设置项直接加字段即可（读取时会忽略未知字段）。
-- [ ] 阶段 2
+- [x] 阶段 2（2026-10-03）：视频翻译最简版。本地文件 → ffmpeg 抽音频（`app/core/audio/extract.py`）→ Silero VAD 切块（`app/core/audio/vad.py`，ONNX 模型随程序打包，不依赖 torch）→ OpenAI 识别（`app/core/asr/openai_asr.py`）→ 整句合并 / 长句拆分（`app/core/subtitle/sentences.py`）→ 分批翻译（Claude `anthropic_translate.py`、GPT `openai_translate.py`，共用 `prompt.py`，结构化输出保证句数一致）→ SRT（`app/core/subtitle/srt.py`，默认存视频旁边同名 .srt，仅原文为 .orig.srt）。流程在 `app/core/pipeline/video_pipeline.py`，界面在后台线程跑，有进度、实时预览、取消、中文报错（`app/core/errors.py`）。自检 `tests/test_pipeline.py`（假适配器，不花钱）。
+  - 备注：识别 / 翻译都走 `registry.py` 创建，新增服务只加一个适配器文件 + 登记一行。
+  - 备注：whisper-1 有逐段时间戳；gpt-4o-transcribe 系列没有，整块按块起止填时间，精度差一些。
+  - 2026-10-03 模型选型（查过官方文档和价格后定）：识别默认 `gpt-transcribe`（$0.0045/分钟，OpenAI 推荐，支持 keywords/languages，无时间戳 → 流程按「一句话一块」切 VAD 段，块起止即字幕时间，4 路并行）；备选 `whisper-1`（有逐段时间戳，给带标点的提示词才会输出标点）。翻译默认 Claude `claude-sonnet-5-5`（$2/$10），备选 `claude-opus-5-5`（$4/$20）；GPT 侧默认 `gpt-5`（reasoning_effort=low）。旧设置文件按 config_version 自动升级一次。
+  - 2026-10-03 已用用户真实 Key 跑通：gpt-transcribe + GPT-5（日语、英语）、whisper-1，字幕逐句、时间准确。Anthropic Key 用户尚未充值，Claude 路径未实测。
+  - 待办（用户已同意方向）：按原文语言分别记住识别 / 翻译模型（主页「原文语言」切换时显示该语言的模型设置）。
+  - 备注：术语表 / 纠错 / 识别提示词的接口已留好（VideoJob 字段），阶段 3 接上场景即可。
+  - 2026-10-03 用户验收反馈：NASA 英语科普视频 43 条字幕，时间与翻译质量好；要求（已做）输出形式两层选择 + 烧录字号可调。自检 `tests/test_burn.py`（生成测试视频烧录并检查画面）。
+  - 2026-10-03 烧录样式调整（用户反馈）：字幕底边距 3%（MarginV 12/360）；汉字宽按字号 0.78 估算，一行能放 小 51 / 中 42 / 大 34 个字，放不下才换行。用户已验收阶段 2。
+  - 用户在考虑的想法（未定）：软件自带播放器，字幕实时叠加、可调字号位置、切换原文/译文，与阶段 4 的「预览修改」合并。
 - [ ] 阶段 3
 - [ ] 阶段 4
 - [ ] 阶段 5

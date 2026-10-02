@@ -11,3 +11,5 @@ tools/
 # PyInstaller 打包产物
 build/
 dist/
+# 测试用视频和生成的字幕，不进 git
+字幕测试/
