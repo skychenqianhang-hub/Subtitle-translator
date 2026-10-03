@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 
 from app.config import Config, save_config
 from app.core.audio_devices import list_output_devices
+from app.core.profiles.store import ProfileStore
 from app.ui.common import hint, not_implemented
 from app.ui.model_panel import ModelLanguagePanel
 from app.ui.output_mode import OutputModePicker
@@ -19,9 +20,10 @@ from app.ui.scene_picker import ScenePicker
 class RealtimePage(QWidget):
     manage_scenes_requested = Signal()
 
-    def __init__(self, cfg: Config, overlay: OverlayWindow, parent: QWidget | None = None) -> None:
+    def __init__(self, cfg: Config, store: ProfileStore, overlay: OverlayWindow, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.cfg = cfg
+        self.store = store
         self.overlay = overlay
         self._device_connected = False
         layout = QVBoxLayout(self)
@@ -36,7 +38,7 @@ class RealtimePage(QWidget):
         box = QGroupBox("实时参数")
         form = QFormLayout(box)
 
-        self.scene = ScenePicker()
+        self.scene = ScenePicker(store)
         self.scene.set_current(cfg.last_scene)
         self.scene.changed.connect(self._save_scene)
         self.scene.manage_requested.connect(self.manage_scenes_requested.emit)

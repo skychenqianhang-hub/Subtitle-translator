@@ -1,0 +1,161 @@
+name: 游戏
+parent: 通用
+preset_version: 2
+asr_model: null
+translate_provider: null
+translate_model: null
+asr_prompt:
+- GG
+- MVP
+- ping
+- lag
+- buff
+- nerf
+- ランクマッチ
+- ガチャ
+- 周回
+corrections: {}
+glossary:
+  # ---------- 英文 ----------
+  GG: GG
+  GGWP: GG
+  GLHF: 祝好运
+  MVP: MVP
+  AFK: 挂机
+  buff: 加强
+  nerf: 削弱
+  debuff: 负面效果
+  meta: 版本答案
+  ranked: 排位
+  rank: 段位
+  lobby: 大厅
+  queue: 排队匹配
+  matchmaking: 匹配
+  respawn: 复活
+  cooldown: 冷却
+  headshot: 爆头
+  kill: 击杀
+  death: 死亡
+  K/D: KD
+  carry: 带飞
+  throw: 送
+  tilt: 上头
+  smurf: 炸鱼
+  noob: 菜鸟
+  camping: 蹲点
+  lag: 卡
+  ping: 延迟
+  patch: 补丁
+  update: 更新
+  DLC: DLC
+  boss: Boss
+  NPC: NPC
+  HP: 血量
+  OP: 太强了
+  RNG: 运气
+  speedrun: 速通
+  grind: 刷
+  farm: 刷
+  loot: 掉落
+  gacha: 抽卡
+  pity: 保底
+  whale: 氪佬
+  F2P: 零氪
+  co-op: 合作模式
+  PvP: PvP
+  PvE: PvE
+  raid: 团本
+  tank: 坦克
+  healer: 奶妈
+  DPS: 输出
+  aggro: 仇恨
+  CC: 控制
+  AoE: 范围伤害
+  combo: 连招
+  cheater: 外挂
+  hacker: 外挂
+  stream: 直播
+  streamer: 主播
+  chat: 弹幕
+  clip: 切片
+  sub: 订阅
+  donation: 打赏
+  # ---------- 日文 ----------
+  ランクマッチ: 排位
+  ランク: 段位
+  野良: 路人局
+  パーティ: 组队
+  ソロ: 单排
+  フレンド: 好友
+  味方: 队友
+  敵: 敌人
+  キル: 击杀
+  デス: 死亡
+  リスポーン: 复活
+  復活: 复活
+  回復: 回血
+  蘇生: 救人
+  ヘッショ: 爆头
+  ヘッドショット: 爆头
+  エイム: 瞄准
+  ラグ: 卡
+  鯖: 服务器
+  鯖落ち: 服务器炸了
+  バフ: 加强
+  ナーフ: 削弱
+  デバフ: 负面效果
+  メタ: 版本答案
+  ガチャ: 抽卡
+  天井: 保底
+  爆死: 歪了
+  神引き: 欧了
+  すり抜け: 歪了
+  単発: 单抽
+  10連: 十连
+  リセマラ: 刷初始
+  無課金: 零氪
+  微課金: 微氪
+  廃課金: 重氪
+  周回: 刷本
+  沼る: 卡关
+  詰む: 卡死了
+  縛りプレイ: 限制挑战
+  初見: 初见
+  ネタバレ: 剧透
+  芋る: 蹲点
+  キャンプ: 蹲点
+  漁夫: 渔翁得利
+  カバー: 补位
+  クリアリング: 清点
+  安置: 安全区
+  物資: 物资
+  降下: 跳伞
+  チーター: 外挂
+  チート: 外挂
+  グリッチ: 卡 bug
+  煽り: 嘲讽
+  ナイス: 漂亮
+  ドンマイ: 没事
+  おつ: 辛苦了
+  お疲れ: 辛苦了
+  配信: 直播
+  実況: 实况
+  同接: 同时在线
+  スパチャ: 打赏
+  切り抜き: 切片
+  コラボ: 联动
+  耐久: 耐久直播
+  アプデ: 更新
+  パッチ: 补丁
+  ボス: Boss
+  周回プレイ: 刷本
+  RTA: 速通
+  コンボ: 连招
+  必殺技: 必杀技
+  ウルト: 大招
+  アルティメット: 大招
+  スキル: 技能
+  クールダウン: 冷却
+  CT: 冷却
+style: 游戏直播 / 解说口语风格，简短，用中文玩家常用说法；英文术语和缩写按术语表保留或翻译
+description: 所有游戏场景的父场景：通用游戏、直播用语（中英日）。

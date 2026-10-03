@@ -1,0 +1,11 @@
+name: 电影
+parent: 通用
+preset_version: 2
+asr_model: null
+translate_provider: null
+translate_model: null
+asr_prompt: []
+corrections: {}
+glossary: {}
+style: 影视字幕风格：自然流畅、贴合角色语气，书面但不生硬；人名按通行译名
+description: 电影、剧集的父场景。

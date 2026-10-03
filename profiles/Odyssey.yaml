@@ -1,0 +1,33 @@
+name: Odyssey
+parent: 电影
+preset_version: 2
+asr_model: null
+translate_provider: null
+translate_model: null
+asr_prompt:
+- Odyssey
+- Odysseus
+- Penelope
+- Telemachus
+- Ithaca
+- Troy
+- Poseidon
+- Athena
+- Circe
+- Calypso
+- Polyphemus
+corrections: {}
+glossary:
+  The Odyssey: 奥德赛
+  Odysseus: 奥德修斯
+  Penelope: 珀涅罗珀
+  Telemachus: 忒勒马科斯
+  Ithaca: 伊萨卡
+  Troy: 特洛伊
+  Poseidon: 波塞冬
+  Athena: 雅典娜
+  Circe: 喀耳刻
+  Calypso: 卡吕普索
+  Polyphemus: 波吕斐摩斯
+style: null
+description: 电影《奥德赛》：人名、地名按通行中文译名。

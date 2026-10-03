@@ -24,6 +24,25 @@ _PUNCT_LEAD = {
 }
 
 
+_KANA_CJK = re.compile(r"[\u3040-\u30ff\u3400-\u9fff]")
+_HANGUL = re.compile(r"[\uac00-\ud7af]")
+
+
+def terms_for_language(terms: list[str], lang: str | None) -> list[str]:
+    """提示词要和音频语言一致，否则识别模型会被带偏。
+    日语音频：保留含假名 / 汉字的词 + 全大写缩写（AWP、GG 这类日语里也直接说的）；
+    英语音频：去掉含假名 / 汉字 / 韩文的词；其他 / 自动：原样。"""
+    if lang == "ja":
+        return [t for t in terms if _KANA_CJK.search(t) or (t.isupper() and len(t) <= 6) or "/" in t]
+    if lang == "en":
+        return [t for t in terms if not _KANA_CJK.search(t) and not _HANGUL.search(t)]
+    if lang == "ko":
+        return [t for t in terms if _HANGUL.search(t) or (t.isupper() and len(t) <= 6)]
+    if lang == "zh":
+        return [t for t in terms if _KANA_CJK.search(t) or (t.isupper() and len(t) <= 6)]
+    return terms
+
+
 def split_terms(text: str) -> list[str]:
     """把「AWP, Mirage, rush B」这种提示拆成关键词列表。"""
     parts = re.split(r"[,，;；\n]+", text or "")
@@ -56,13 +75,13 @@ class OpenAITranscriber(Transcriber):
         if self.model.startswith(_KEYWORD_MODELS):
             if lang:
                 kwargs["languages"] = [lang]
-            terms = split_terms(prompt)
+            terms = terms_for_language(split_terms(prompt), lang)
             if terms:
                 kwargs["keywords"] = terms[:100]
         else:
             if lang:
                 kwargs["language"] = lang
-            terms = ", ".join(split_terms(prompt))
+            terms = ", ".join(terms_for_language(split_terms(prompt), lang)[:60])
             # whisper 会模仿提示词的风格：给一句带标点的提示，它才会输出标点（日语尤其需要）
             lead = _PUNCT_LEAD.get(lang or "", "")
             full = f"{lead} {terms}".strip() if (lead or terms) else ""

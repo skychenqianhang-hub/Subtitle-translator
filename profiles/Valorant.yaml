@@ -1,0 +1,416 @@
+name: Valorant
+parent: 游戏
+preset_version: 2
+asr_model: null
+translate_provider: null
+translate_model: null
+asr_prompt:
+- Valorant
+- Jett
+- Reyna
+- Phoenix
+- Raze
+- Yoru
+- Neon
+- Iso
+- Waylay
+- Sova
+- Breach
+- Skye
+- KAY/O
+- Fade
+- Gekko
+- Tejo
+- Omen
+- Brimstone
+- Viper
+- Astra
+- Harbor
+- Clove
+- Miks
+- Sage
+- Cypher
+- Killjoy
+- Chamber
+- Deadlock
+- Vyse
+- Veto
+- Ascent
+- Bind
+- Haven
+- Split
+- Icebox
+- Breeze
+- Fracture
+- Pearl
+- Lotus
+- Sunset
+- Abyss
+- Corrode
+- Summit
+- Spike
+- Vandal
+- Phantom
+- Operator
+- Sheriff
+- Odin
+- ヴァロラント
+- ジェット
+- レイナ
+- フェニックス
+- レイズ
+- ヨル
+- ネオン
+- アイソ
+- ウェイレイ
+- ソーヴァ
+- ブリーチ
+- スカイ
+- フェイド
+- ゲッコー
+- テホ
+- オーメン
+- ブリムストーン
+- ヴァイパー
+- アストラ
+- ハーバー
+- クローヴ
+- ミクス
+- セージ
+- サイファー
+- キルジョイ
+- チェンバー
+- デッドロック
+- ヴァイス
+- ヴィトー
+- アセント
+- バインド
+- ヘイヴン
+- スプリット
+- アイスボックス
+- ブリーズ
+- フラクチャー
+- パール
+- ロータス
+- サンセット
+- アビス
+- カロード
+- サミット
+- スパイク
+- ヴァンダル
+- ファントム
+- オペレーター
+corrections:
+  jet: Jett
+  Jet: Jett
+  rayna: Reyna
+  Raina: Reyna
+  kayo: KAY/O
+  Kayo: KAY/O
+  KO: KAY/O
+  Tayho: Tejo
+  Tejoe: Tejo
+  Micks: Miks
+  Mix: Miks
+  Vice: Vyse
+  Vito: Veto
+  ジェト: ジェット
+  レーナ: レイナ
+  ケイオー: KAY/O
+glossary:
+  # ---------- 特工（英文 → 国服译名） ----------
+  Jett: 捷风
+  Reyna: 芮娜
+  Phoenix: 不死鸟
+  Raze: 雷兹
+  Yoru: 夜露
+  Neon: 霓虹
+  Iso: 壹决
+  Waylay: 幻棱
+  Sova: 猎枭
+  Breach: 铁臂
+  Skye: 斯凯
+  KAY/O: K/O
+  Fade: 黑梦
+  Gekko: 盖可
+  Tejo: 钛狐
+  Omen: 幽影
+  Brimstone: 炼狱
+  Viper: 蝰蛇
+  Astra: 星礈
+  Harbor: 海神
+  Clove: 暮蝶
+  Miks: 迷核
+  Sage: 贤者
+  Cypher: 零
+  Killjoy: 奇乐
+  Chamber: 尚勃勒
+  Deadlock: 钢锁
+  Vyse: 维斯
+  Veto: 禁灭
+  duelist: 决斗
+  initiator: 先锋
+  controller: 控场
+  sentinel: 哨卫
+  # ---------- 特工（日文 → 国服译名） ----------
+  ジェット: 捷风
+  レイナ: 芮娜
+  フェニックス: 不死鸟
+  レイズ: 雷兹
+  ヨル: 夜露
+  ネオン: 霓虹
+  アイソ: 壹决
+  ウェイレイ: 幻棱
+  ソーヴァ: 猎枭
+  ブリーチ: 铁臂
+  スカイ: 斯凯
+  ケイオー: K/O
+  フェイド: 黑梦
+  ゲッコー: 盖可
+  テホ: 钛狐
+  オーメン: 幽影
+  ブリムストーン: 炼狱
+  ブリム: 炼狱
+  ヴァイパー: 蝰蛇
+  アストラ: 星礈
+  ハーバー: 海神
+  クローヴ: 暮蝶
+  ミクス: 迷核
+  セージ: 贤者
+  サイファー: 零
+  キルジョイ: 奇乐
+  キルジョ: 奇乐
+  チェンバー: 尚勃勒
+  デッドロック: 钢锁
+  ヴァイス: 维斯
+  ヴィトー: 禁灭
+  デュエリスト: 决斗
+  イニシエーター: 先锋
+  コントローラー: 控场
+  センチネル: 哨卫
+  # ---------- 地图 ----------
+  Ascent: 亚海悬城
+  Bind: 源工重镇
+  Haven: 隐世修所
+  Split: 霓虹町
+  Icebox: 森寒冬港
+  Breeze: 微风岛屿
+  Fracture: 裂变峡谷
+  Pearl: 深海明珠
+  Lotus: 莲华古城
+  Sunset: 日落之城
+  Abyss: 幽邃地窟
+  Corrode: 盐海矿镇
+  Summit: 天枢云阙
+  アセント: 亚海悬城
+  バインド: 源工重镇
+  ヘイヴン: 隐世修所
+  スプリット: 霓虹町
+  アイスボックス: 森寒冬港
+  ブリーズ: 微风岛屿
+  フラクチャー: 裂变峡谷
+  パール: 深海明珠
+  ロータス: 莲华古城
+  サンセット: 日落之城
+  アビス: 幽邃地窟
+  カロード: 盐海矿镇
+  サミット: 天枢云阙
+  # ---------- 武器 ----------
+  Classic: 标配
+  Shorty: 短炮
+  Frenzy: 狂怒
+  Ghost: 鬼魅
+  Sheriff: 正义
+  Bandit: 追猎
+  Stinger: 蜂刺
+  Spectre: 骇灵
+  Bucky: 雄鹿
+  Judge: 判官
+  Bulldog: 獠犬
+  Guardian: 戍卫
+  Phantom: 幻影
+  Vandal: 狂徒
+  Marshal: 飞将
+  Outlaw: 莽侠
+  Operator: 冥驹
+  Ares: 战神
+  Odin: 奥丁
+  knife: 刀
+  クラシック: 标配
+  ショーティ: 短炮
+  フレンジー: 狂怒
+  ゴースト: 鬼魅
+  シェリフ: 正义
+  スティンガー: 蜂刺
+  スペクター: 骇灵
+  バッキー: 雄鹿
+  ジャッジ: 判官
+  ブルドッグ: 獠犬
+  ガーディアン: 戍卫
+  ファントム: 幻影
+  ヴァンダル: 狂徒
+  マーシャル: 飞将
+  アウトロー: 莽侠
+  オペレーター: 冥驹
+  オペ: 冥驹
+  アレス: 战神
+  オーディン: 奥丁
+  ナイフ: 刀
+  # ---------- 战术 / 对局（英文） ----------
+  Spike: 辐能核心
+  plant: 下包
+  defuse: 拆包
+  post-plant: 包后
+  retake: 回防
+  rotate: 转点
+  eco: 经济局
+  anti-eco: 反经济局
+  force buy: 强起
+  full buy: 满购
+  half buy: 半起
+  save: 保枪
+  bonus round: 奖励局
+  pistol round: 手枪局
+  thrifty: 节俭胜利
+  flawless: 零伤亡
+  clutch: 残局
+  ace: 五杀
+  ult: 大招
+  ultimate: 大招
+  ult orb: 大招点
+  orb: 大招点
+  ability: 技能
+  utility: 技能
+  flash: 闪光
+  smoke: 烟
+  molly: 燃烧
+  wall: 墙
+  recon: 侦查箭
+  drone: 无人机
+  trip: 绊线
+  turret: 炮台
+  camera: 摄像头
+  teleport: 传送
+  entry: 首杀突破
+  entry frag: 首杀
+  first blood: 首杀
+  lurk: 偷家
+  lurker: 偷家位
+  flank: 绕后
+  trade: 补枪
+  bait: 当鱼饵
+  peek: 拉枪
+  dry peek: 干拉
+  shoulder peek: 肩膀拉
+  jiggle peek: 晃身
+  wide peek: 大拉
+  hold: 架枪
+  anchor: 守点位
+  stack: 堆人
+  split: 分推
+  execute: 执行战术
+  default: 默认开局
+  fake: 假打
+  rush: 冲
+  push: 前压
+  one tap: 一枪头
+  one way: 单向烟
+  wallbang: 穿墙
+  prefire: 预瞄枪
+  pre-aim: 预瞄
+  spray: 扫射
+  tap: 点射
+  burst: 点射
+  flick: 甩枪
+  whiff: 空枪
+  dink: 打头没死
+  comp: 阵容
+  IGL: 指挥
+  mid: 中路
+  site: 点位
+  A site: A 点
+  B site: B 点
+  heaven: 天堂
+  main: 主通道
+  elbow: 拐角
+  callout: 报点
+  # ---------- 战术 / 对局（日文） ----------
+  スパイク: 辐能核心
+  設置: 下包
+  プラント: 下包
+  解除: 拆包
+  ガチ解除: 硬拆
+  ポストプラント: 包后
+  リテイク: 回防
+  ローテ: 转点
+  ローテート: 转点
+  エコ: 经济局
+  アンチエコ: 反经济局
+  フォースバイ: 强起
+  フルバイ: 满购
+  ハーフバイ: 半起
+  セーブ: 保枪
+  ボーナスラウンド: 奖励局
+  ピストルラウンド: 手枪局
+  スリフティ: 节俭胜利
+  クラッチ: 残局
+  エース: 五杀
+  アビリティ: 技能
+  ユーティリティ: 技能
+  フラッシュ: 闪光
+  スモーク: 烟
+  モク: 烟
+  モリー: 燃烧
+  ウォール: 墙
+  リコン: 侦查箭
+  ドローン: 无人机
+  トリップ: 绊线
+  タレット: 炮台
+  カメラ: 摄像头
+  テレポート: 传送
+  エントリー: 首杀突破
+  ファーストブラッド: 首杀
+  ラーク: 偷家
+  ラーカー: 偷家位
+  裏取り: 绕后
+  トレード: 补枪
+  ピーク: 拉枪
+  ドライピーク: 干拉
+  ショルダーピーク: 肩膀拉
+  ジグルピーク: 晃身
+  ホールド: 架枪
+  アンカー: 守点位
+  スタック: 堆人
+  スプリット: 分推
+  セットプレイ: 战术执行
+  フェイク: 假打
+  ラッシュ: 冲
+  プッシュ: 前压
+  ワンタップ: 一枪头
+  ワンウェイ: 单向烟
+  壁抜き: 穿墙
+  決め撃ち: 预瞄枪
+  置きエイム: 预瞄
+  スプレー: 扫射
+  タップ撃ち: 点射
+  バースト: 点射
+  フリック: 甩枪
+  クリア: 清点
+  構成: 阵容
+  コンポジション: 阵容
+  ミッド: 中路
+  サイト: 点位
+  Aサイト: A 点
+  Bサイト: B 点
+  ヘブン: 天堂
+  メイン: 主通道
+  報告: 报点
+  インフォ: 信息
+  アタック: 进攻方
+  ディフェンス: 防守方
+  攻め: 进攻
+  守り: 防守
+  クレジット: 经济
+  買い物: 买枪
+style: null
+description: 无畏契约（Valorant）：特工、地图、武器的国服译名，以及中英日三语的战术用语（资料来源：无畏契约 BWIKI、日本 VALORANT 用语集）。

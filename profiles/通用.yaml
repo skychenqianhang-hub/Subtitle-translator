@@ -1,0 +1,11 @@
+name: 通用
+parent: null
+preset_version: 2
+asr_model: null
+translate_provider: null
+translate_model: null
+asr_prompt: []
+corrections: {}
+glossary: {}
+style: null
+description: 所有场景的父场景。这里的设置对所有场景生效。

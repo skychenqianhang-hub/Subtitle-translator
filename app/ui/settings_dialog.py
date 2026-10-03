@@ -4,6 +4,7 @@ from __future__ import annotations
 from PySide6.QtWidgets import QDialog, QTabWidget, QVBoxLayout, QWidget
 
 from app.config import Config
+from app.core.profiles.store import ProfileStore
 from app.ui.profiles_page import ProfilesPage
 from app.ui.settings_page import SettingsPage
 
@@ -12,14 +13,14 @@ class SettingsDialog(QDialog):
     TAB_BASIC = 0
     TAB_SCENES = 1
 
-    def __init__(self, cfg: Config, parent: QWidget | None = None) -> None:
+    def __init__(self, cfg: Config, store: ProfileStore, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("设置")
-        self.resize(900, 640)
+        self.resize(960, 720)
         layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
         self.settings_page = SettingsPage(cfg)
-        self.profiles_page = ProfilesPage()
+        self.profiles_page = ProfilesPage(store)
         self.tabs.addTab(self.settings_page, "API Key")
         self.tabs.addTab(self.profiles_page, "场景管理")
         layout.addWidget(self.tabs)

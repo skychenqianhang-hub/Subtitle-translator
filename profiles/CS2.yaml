@@ -1,0 +1,301 @@
+name: CS2
+parent: 游戏
+preset_version: 2
+asr_model: null
+translate_provider: null
+translate_model: null
+asr_prompt:
+- CS2
+- Counter-Strike
+- AWP
+- AK-47
+- M4A4
+- M4A1-S
+- Deagle
+- Glock
+- USP
+- P250
+- Tec-9
+- Five-SeveN
+- Scout
+- Galil
+- FAMAS
+- MAC-10
+- MP9
+- UMP
+- Negev
+- Mirage
+- Inferno
+- Dust 2
+- Nuke
+- Ancient
+- Anubis
+- Vertigo
+- Overpass
+- Train
+- Cache
+- カウンターストライク
+- エコ
+- フォースバイ
+- リテイク
+- クラッチ
+- デグル
+corrections:
+  a w p: AWP
+  AWB: AWP
+  Mirai: Mirage
+  Dust two: Dust 2
+  Dust too: Dust 2
+  de_dust: Dust 2
+  Ancients: Ancient
+  アウプ: AWP
+glossary:
+  # ---------- 武器（英文） ----------
+  AWP: AWP
+  AK: AK
+  AK-47: AK-47
+  M4: M4
+  M4A4: M4A4
+  M4A1-S: M4A1-S
+  Deagle: 沙鹰
+  Desert Eagle: 沙鹰
+  Glock: 格洛克
+  USP: USP
+  P2000: P2000
+  P250: P250
+  Tec-9: Tec-9
+  Five-SeveN: FN57
+  CZ: CZ
+  Dual Berettas: 双枪
+  R8: 左轮
+  Scout: 鸟狙
+  SSG: 鸟狙
+  Galil: 加利尔
+  FAMAS: 法玛斯
+  AUG: AUG
+  SG 553: SG
+  Krieg: SG
+  MAC-10: MAC-10
+  MP9: MP9
+  MP7: MP7
+  MP5: MP5
+  UMP: UMP
+  P90: P90
+  PP-Bizon: 野牛
+  Nova: Nova
+  XM1014: XM
+  MAG-7: MAG-7
+  Sawed-Off: 截短霰弹枪
+  Negev: 内格夫
+  M249: M249
+  Zeus: 电击枪
+  knife: 刀
+  kit: 拆弹器
+  defuse kit: 拆弹器
+  armor: 甲
+  helmet: 头盔
+  kevlar: 甲
+  # ---------- 武器（日文） ----------
+  デグル: 沙鹰
+  デザートイーグル: 沙鹰
+  グロック: 格洛克
+  スカウト: 鸟狙
+  ガリル: 加利尔
+  ファマス: 法玛斯
+  ネゲブ: 内格夫
+  ナイフ: 刀
+  キット: 拆弹器
+  アーマー: 甲
+  ヘルメット: 头盔
+  # ---------- 地图 ----------
+  Mirage: 荒漠迷城
+  Inferno: 炼狱小镇
+  Dust 2: 炙热沙城 2
+  Dust2: 炙热沙城 2
+  Nuke: 核子危机
+  Ancient: 远古遗迹
+  Anubis: 阿努比斯
+  Vertigo: 殒命大厦
+  Overpass: 死亡游乐园
+  Train: 列车停放站
+  Cache: 死亡迷城
+  Cobblestone: 古堡激战
+  Office: 办公室
+  ミラージュ: 荒漠迷城
+  インフェルノ: 炼狱小镇
+  ダスト2: 炙热沙城 2
+  ニューク: 核子危机
+  エンシェント: 远古遗迹
+  アヌビス: 阿努比斯
+  ヴァーティゴ: 殒命大厦
+  オーバーパス: 死亡游乐园
+  トレイン: 列车停放站
+  # ---------- 阵营 / 对局（英文） ----------
+  CT: 警
+  Counter-Terrorist: 警
+  T: 匪
+  Terrorist: 匪
+  T side: 匪方
+  CT side: 警方
+  bomb: 炸弹
+  C4: C4
+  plant: 下包
+  defuse: 拆包
+  ninja defuse: 偷拆
+  retake: 回防
+  rotate: 转点
+  eco: 经济局
+  anti-eco: 反经济局
+  force buy: 强起
+  force: 强起
+  full buy: 满购
+  buy round: 长枪局
+  half buy: 半起
+  save: 保枪
+  pistol round: 手枪局
+  clutch: 残局
+  ace: 五杀
+  entry: 首杀突破
+  entry frag: 首杀
+  first blood: 首杀
+  opening kill: 首杀
+  lurk: 偷家
+  lurker: 偷家位
+  flank: 绕后
+  trade: 补枪
+  refrag: 补枪
+  bait: 当鱼饵
+  peek: 拉枪
+  dry peek: 干拉
+  shoulder peek: 肩膀拉
+  jiggle peek: 晃身
+  wide peek: 大拉
+  double peek: 双拉
+  hold: 架枪
+  anchor: 守点位
+  stack: 堆人
+  split: 分推
+  execute: 执行战术
+  default: 默认开局
+  fake: 假打
+  rush: 冲
+  rush B: 冲 B
+  rush A: 冲 A
+  push: 前压
+  one tap: 一枪头
+  one way: 单向烟
+  wallbang: 穿墙
+  prefire: 预瞄枪
+  pre-aim: 预瞄
+  spray: 扫射
+  spray control: 压枪
+  tap: 点射
+  burst: 点射
+  flick: 甩枪
+  whiff: 空枪
+  dink: 打头没死
+  flash: 闪光
+  pop flash: 顺爆闪
+  smoke: 烟
+  molly: 燃烧弹
+  molotov: 燃烧瓶
+  incendiary: 燃烧弹
+  nade: 手雷
+  HE: 手雷
+  decoy: 诱饵弹
+  utility: 道具
+  util: 道具
+  lineup: 定点道具
+  boost: 搭人梯
+  crosshair: 准星
+  callout: 报点
+  mid: 中路
+  long: 长管
+  short: 短管
+  A site: A 点
+  B site: B 点
+  site: 点位
+  IGL: 指挥
+  AWPer: 狙击手
+  rifler: 步枪手
+  support: 辅助
+  overtime: 加时
+  MR12: 12 局制
+  timeout: 暂停
+  VAC: VAC
+  MM: 官匹
+  Premier: 优先匹配
+  FACEIT: FACEIT
+  Major: Major
+  # ---------- 阵营 / 对局（日文） ----------
+  ボム: 炸弹
+  設置: 下包
+  プラント: 下包
+  解除: 拆包
+  ディフューズ: 拆包
+  リテイク: 回防
+  ローテ: 转点
+  ローテート: 转点
+  エコ: 经济局
+  エコラウンド: 经济局
+  アンチエコ: 反经济局
+  フォースバイ: 强起
+  フルバイ: 满购
+  ハーフバイ: 半起
+  セーブ: 保枪
+  ピストルラウンド: 手枪局
+  クラッチ: 残局
+  エース: 五杀
+  エントリー: 首杀突破
+  ラーク: 偷家
+  裏取り: 绕后
+  トレード: 补枪
+  ピーク: 拉枪
+  ドライピーク: 干拉
+  ショルダーピーク: 肩膀拉
+  ジグルピーク: 晃身
+  ワイドピーク: 大拉
+  ダブピ: 双拉
+  ホールド: 架枪
+  アンカー: 守点位
+  スタック: 堆人
+  スプリット: 分推
+  フェイク: 假打
+  ラッシュ: 冲
+  プッシュ: 前压
+  ワンタップ: 一枪头
+  ワンウェイ: 单向烟
+  壁抜き: 穿墙
+  プリファイア: 预瞄枪
+  プリエイム: 预瞄
+  スプレー: 扫射
+  リコイルコントロール: 压枪
+  タップ撃ち: 点射
+  バースト: 点射
+  フリック: 甩枪
+  フラッシュ: 闪光
+  ポップフラッシュ: 顺爆闪
+  スモーク: 烟
+  モク: 烟
+  モロトフ: 燃烧瓶
+  モリー: 燃烧弹
+  グレ: 手雷
+  グレネード: 手雷
+  デコイ: 诱饵弹
+  ユーティリティ: 道具
+  定点: 定点道具
+  ブースト: 搭人梯
+  クロスヘア: 准星
+  コールアウト: 报点
+  ミッド: 中路
+  ロング: 长管
+  ショート: 短管
+  Aサイト: A 点
+  Bサイト: B 点
+  サイト: 点位
+  クリア: 清点
+  カバー: 补位
+  オーバータイム: 加时
+  タイムアウト: 暂停
+style: null
+description: 反恐精英 2（CS2）：武器保留原名或用通行昵称，地图用国服译名，中英日三语战术用语（资料来源：虎扑 CS 术语词典、CS2 日本語 Wiki 用語集）。

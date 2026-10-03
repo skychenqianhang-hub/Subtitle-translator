@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 
 from app.config import OUTPUT_KINDS, Config, save_config
 from app.core.errors import Cancelled, friendly_message
+from app.core.profiles.store import EffectiveProfile, ProfileStore
 from app.core.subtitle.ass import SIZE_LABELS
 from app.core.subtitle.burn import burn_subtitles, default_video_path
 from app.core.subtitle.document import default_document_path, write_document
@@ -35,14 +36,14 @@ class _Worker(QObject):
     cancelled = Signal()
 
     def __init__(self, cfg: Config, media_path: Path, output_mode: str, output_kinds: list[str],
-                 subtitle_size: str, scene: str) -> None:
+                 subtitle_size: str, profile: EffectiveProfile) -> None:
         super().__init__()
         self.cfg = cfg
         self.media_path = media_path
         self.output_mode = output_mode
         self.output_kinds = output_kinds
         self.subtitle_size = subtitle_size
-        self.scene = scene
+        self.profile = profile
         self.cancel = threading.Event()
 
     def run(self) -> None:
@@ -51,9 +52,16 @@ class _Worker(QObject):
             from app.core.pipeline.video_pipeline import VideoJob, VideoPipeline
             from app.core.translate.registry import create_translator
 
-            transcriber = create_transcriber(self.cfg, source_language=self.cfg.source_language)
-            self.log.emit(f"识别模型：{transcriber.model}" + ("（按原文语言自动选择）" if self.cfg.asr_model == "auto" else ""))
-            translator = None if self.output_mode == "source_only" else create_translator(self.cfg)
+            prof = self.profile
+            transcriber = create_transcriber(self.cfg, model=prof.asr_model, source_language=self.cfg.source_language)
+            how = "（场景指定）" if prof.asr_model else ("（按原文语言自动选择）" if self.cfg.asr_model == "auto" else "")
+            self.log.emit(f"场景：{prof.display_name}；识别模型：{transcriber.model}{how}")
+            translator = None
+            if self.output_mode != "source_only":
+                translator = create_translator(self.cfg, prof.translate_provider, prof.translate_model)
+                self.log.emit(f"翻译模型：{translator.model}" + ("（场景指定）" if prof.translate_model else ""))
+            if prof.glossary or prof.corrections or prof.asr_prompt:
+                self.log.emit(f"术语 {len(prof.glossary)} 条，纠错 {len(prof.corrections)} 条，识别提示词 {len(prof.asr_prompt)} 个")
             pipeline = VideoPipeline(
                 self.cfg, transcriber, translator,
                 progress=self.progress.emit, log=self.log.emit,
@@ -64,7 +72,11 @@ class _Worker(QObject):
                 output_mode=self.output_mode,
                 source_language=self.cfg.source_language,
                 target_language=self.cfg.target_language,
-                scene=self.scene,
+                scene=prof.display_name,
+                asr_prompt=", ".join(prof.asr_prompt),
+                glossary=prof.glossary,
+                corrections=prof.corrections,
+                style=prof.style,
             )
             result = pipeline.run(job)
             outputs: dict[str, Path] = {}
@@ -102,9 +114,10 @@ class _Worker(QObject):
 class VideoPage(QWidget):
     manage_scenes_requested = Signal()
 
-    def __init__(self, cfg: Config, parent: QWidget | None = None) -> None:
+    def __init__(self, cfg: Config, store: ProfileStore, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.cfg = cfg
+        self.store = store
         self._thread: QThread | None = None
         self._worker: _Worker | None = None
         self._lines: list[SubtitleLine] = []
@@ -138,7 +151,7 @@ class VideoPage(QWidget):
         # ---- 参数 ----
         box = QGroupBox("参数")
         form = QFormLayout(box)
-        self.scene = ScenePicker()
+        self.scene = ScenePicker(store)
         self.scene.set_current(cfg.last_scene)
         self.scene.changed.connect(self._save_scene)
         self.scene.manage_requested.connect(self.manage_scenes_requested.emit)
@@ -259,7 +272,7 @@ class VideoPage(QWidget):
         self._set_running(True)
 
         self._worker = _Worker(self.cfg, path, mode, self.selected_kinds(),
-                               self.subtitle_size.currentData(), self.scene.current_name())
+                               self.subtitle_size.currentData(), self.store.resolve(self.scene.current_name()))
         self._thread = QThread(self)
         self._worker.moveToThread(self._thread)
         self._thread.started.connect(self._worker.run)

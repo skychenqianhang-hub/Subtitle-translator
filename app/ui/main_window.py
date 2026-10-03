@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.config import Config, save_config
+from app.core.profiles.store import ProfileStore
 from app.ui.overlay_window import OverlayWindow
 from app.ui.realtime_page import RealtimePage
 from app.ui.settings_dialog import SettingsDialog
@@ -35,7 +36,8 @@ class MainWindow(QMainWindow):
         self.resize(980, 720)
 
         self.overlay = OverlayWindow(cfg)
-        self.settings_dialog = SettingsDialog(cfg, self)
+        self.store = ProfileStore()
+        self.settings_dialog = SettingsDialog(cfg, self.store, self)
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -67,8 +69,8 @@ class MainWindow(QMainWindow):
 
         # ---- 页面 ----
         self.stack = QStackedWidget()
-        self.realtime_page = RealtimePage(cfg, self.overlay)
-        self.video_page = VideoPage(cfg)
+        self.realtime_page = RealtimePage(cfg, self.store, self.overlay)
+        self.video_page = VideoPage(cfg, self.store)
         self.pages = {"realtime": self.realtime_page, "video": self.video_page}
         for key, _, _ in MODES:
             self.stack.addWidget(self.pages[key])
@@ -81,6 +83,8 @@ class MainWindow(QMainWindow):
         # 两页共用同一份语言 / 模型设置：一页改了，另一页同步
         self.realtime_page.model_panel.changed.connect(self.video_page.sync_from_config)
         self.video_page.model_panel.changed.connect(self.realtime_page.sync_from_config)
+        # 场景管理里改了场景树 → 两页的场景选择器刷新
+        self.settings_dialog.profiles_page.profiles_changed.connect(self._on_profiles_changed)
         self.mode_group.idClicked.connect(self._on_mode_clicked)
 
         self.show_mode(cfg.last_mode if cfg.last_mode in self.pages else "realtime")
@@ -100,6 +104,10 @@ class MainWindow(QMainWindow):
                 save_config(self.cfg)
             except OSError:
                 pass
+
+    def _on_profiles_changed(self) -> None:
+        for page in self.pages.values():
+            page.scene.reload(keep=self.cfg.last_scene)
 
     def current_mode(self) -> str:
         for key, page in self.pages.items():

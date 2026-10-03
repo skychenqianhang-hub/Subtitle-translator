@@ -48,15 +48,24 @@ def main() -> int:
     win.settings_dialog.hide()
     print("齿轮设置 / 管理场景：OK")
 
-    # 3. 场景选择：板块 → 子板块，并记住
-    rp.scene.section.setCurrentText("游戏")
+    # 3. 场景选择：板块 → 子板块，并记住（数据来自预置场景文件）
+    rp.scene.section.setCurrentIndex(rp.scene.section.findData("游戏"))
     assert rp.scene.sub.isEnabled()
     rp.scene.sub.setCurrentIndex(rp.scene.sub.findData("Valorant"))
-    assert rp.scene.current_name() == "游戏 → Valorant", rp.scene.current_name()
-    assert config_mod.load_config().last_scene == "游戏 → Valorant"
-    rp.scene.section.setCurrentText("通用")
-    assert not rp.scene.sub.isEnabled()
-    print("场景选择：OK")
+    assert rp.scene.current_name() == "Valorant" and rp.scene.current_display() == "游戏 → Valorant", rp.scene.current_display()
+    assert config_mod.load_config().last_scene == "Valorant"
+    assert win.store.resolve("Valorant").glossary.get("Jett") == "捷风"
+    rp.scene.section.setCurrentIndex(rp.scene.section.findData("通用"))
+    assert not rp.scene.sub.isEnabled() and rp.scene.current_name() == "通用"
+    # 场景管理页：选中 Valorant，改术语并保存，主页选择器仍正常
+    pp = win.settings_dialog.profiles_page
+    pp.reload_tree(select="Valorant")
+    assert pp.current_name() == "Valorant" and pp.glossary.rowCount() > 10
+    pp.glossary.add_row("test term", "测试词")
+    pp.save()
+    assert win.store.resolve("Valorant").glossary["test term"] == "测试词"
+    assert "来自父场景" in pp.inherited.text()
+    print("场景选择 / 场景管理：OK")
 
     # 4. 翻译延迟、音频设备
     rp.delay.setValue(7)
