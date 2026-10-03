@@ -7,11 +7,11 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
 APP_DIR_NAME = "SubTranslator"
-CONFIG_VERSION = 3
+CONFIG_VERSION = 4
 
 # ---- 识别模型（2026-10-03 按公开评测整理，见 PLAN.md 阶段 2 备注）----
 # 下拉框显示 label，保存 id。"auto" = 按原文语言自动选
@@ -77,11 +77,11 @@ TARGET_LANGUAGES = {
     "ja": "日语",
     "ko": "韩语",
 }
-# 视频翻译的输出形式
+# 视频翻译的输出形式（可多选）
 OUTPUT_KINDS = {
-    "srt": "仅字幕文件（.srt）",
+    "srt": "字幕文件（.srt）",
     "video": "带字幕的视频（.mp4）",
-    "both": "两者都要",
+    "doc": "文档（.txt，完成后自动打开）",
 }
 # 输出内容：双语 / 仅译文 / 仅原文（仅原文 = 只做语音识别，不调用翻译）
 OUTPUT_MODES = {
@@ -121,13 +121,13 @@ class Config:
     realtime_output_mode: str = "bilingual"
     # 视频翻译参数
     video_output_mode: str = "bilingual"
-    video_output_kind: str = "srt"          # srt / video / both
+    video_output_kinds: list[str] = field(default_factory=lambda: ["srt"])   # srt / video / doc，可多选
     video_subtitle_size: str = "medium"     # small / medium / large（烧进视频时的字号）
     # 界面
     last_mode: str = "realtime"      # "realtime" 或 "video"
     last_scene: str = "通用"         # 例如 "游戏 → Valorant"
     window_geometry: str = ""
-    config_version: int = 3
+    config_version: int = 4
 
     def has_openai_key(self) -> bool:
         return bool(self.openai_api_key.strip())
@@ -169,6 +169,11 @@ def load_config() -> Config:
             cfg.asr_model = ASR_AUTO
         if cfg.translate_model in ("gpt-5", "gpt-4.1"):
             cfg.translate_model = "gpt-6.1-sol"
+    if version < 4:
+        old_kind = raw.get("video_output_kind", "srt")
+        cfg.video_output_kinds = {"srt": ["srt"], "video": ["video"], "both": ["srt", "video"]}.get(old_kind, ["srt"])
+    if not isinstance(cfg.video_output_kinds, list) or not cfg.video_output_kinds:
+        cfg.video_output_kinds = ["srt"]
     cfg.config_version = CONFIG_VERSION
     return cfg
 

@@ -67,9 +67,18 @@ def main() -> int:
     assert not vp.is_running()
     print("空文件校验：OK")
 
-    # 2. 双语完整跑一遍
+    # 不自动打开文档（测试环境）
+    import os
+    opened: list[str] = []
+    os.startfile = lambda p: opened.append(str(p))
+
+    # 2. 双语完整跑一遍：字幕 + 文档
     vp.file_edit.setText(str(media))
     vp.output_mode.set_current("bilingual")
+    vp.kind_checks["srt"].setChecked(True)
+    vp.kind_checks["doc"].setChecked(True)
+    vp.kind_checks["video"].setChecked(False)
+    assert config_mod.load_config().video_output_kinds == ["srt", "doc"]
     vp._start()
     assert vp.is_running() and not vp.start_button.isEnabled()
     assert wait_until(lambda: not vp.is_running()), "处理超时"
@@ -81,6 +90,21 @@ def main() -> int:
     assert "已保存" in vp.result_label.text()
     assert vp.export_button.isEnabled() and vp.start_button.isEnabled()
     print("双语处理 → SRT：OK", srt.name)
+    doc = media.with_name(media.stem + ".原文+译文.txt")
+    assert doc.exists(), "没有生成文档"
+    dtext = doc.read_text(encoding="utf-8-sig")
+    assert "【原文" in dtext and "【译文" in dtext and "-->" not in dtext
+    assert dtext.index("【原文") < dtext.index("【译文")
+    assert opened and opened[0] == str(doc), "文档应自动打开"
+    print("文档输出并自动打开：OK", doc.name)
+
+    # 2b. 一个都不勾 → 提示，不启动
+    for cb in vp.kind_checks.values():
+        cb.setChecked(False)
+    vp._start()
+    assert not vp.is_running()
+    vp.kind_checks["srt"].setChecked(True)
+    print("空输出形式校验：OK")
 
     # 3. 仅原文 → .orig.srt，不含译文
     vp.output_mode.set_current("source_only")

@@ -6,14 +6,15 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, Qt, QThread, Signal
 from PySide6.QtWidgets import (
-    QComboBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
-    QProgressBar, QPushButton, QTextEdit, QVBoxLayout, QWidget,
+    QCheckBox, QComboBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+    QMessageBox, QProgressBar, QPushButton, QTextEdit, QVBoxLayout, QWidget,
 )
 
 from app.config import OUTPUT_KINDS, Config, save_config
 from app.core.errors import Cancelled, friendly_message
 from app.core.subtitle.ass import SIZE_LABELS
 from app.core.subtitle.burn import burn_subtitles, default_video_path
+from app.core.subtitle.document import default_document_path, write_document
 from app.core.subtitle.models import SubtitleLine
 from app.core.subtitle.srt import default_srt_path, fmt_time, write_srt
 from app.ui.common import hint, not_implemented
@@ -33,13 +34,13 @@ class _Worker(QObject):
     failed = Signal(str)
     cancelled = Signal()
 
-    def __init__(self, cfg: Config, media_path: Path, output_mode: str, output_kind: str,
+    def __init__(self, cfg: Config, media_path: Path, output_mode: str, output_kinds: list[str],
                  subtitle_size: str, scene: str) -> None:
         super().__init__()
         self.cfg = cfg
         self.media_path = media_path
         self.output_mode = output_mode
-        self.output_kind = output_kind
+        self.output_kinds = output_kinds
         self.subtitle_size = subtitle_size
         self.scene = scene
         self.cancel = threading.Event()
@@ -67,12 +68,21 @@ class _Worker(QObject):
             )
             result = pipeline.run(job)
             outputs: dict[str, Path] = {}
-            if self.output_kind in ("srt", "both"):
+            if "srt" in self.output_kinds:
                 srt = default_srt_path(self.media_path, self.output_mode, self.cfg.target_language)
                 write_srt(srt, result, self.output_mode)
                 outputs["srt"] = srt
                 self.log.emit(f"已保存字幕文件：{srt.name}")
-            if self.output_kind in ("video", "both"):
+            if "doc" in self.output_kinds:
+                from app.config import SOURCE_LANGUAGES
+                doc = default_document_path(self.media_path, self.output_mode, self.cfg.target_language_name())
+                src_name = SOURCE_LANGUAGES.get(self.cfg.source_language, "原文")
+                src_name = "原文" if src_name == "自动检测" else f"原文（{src_name}）"
+                write_document(doc, result, self.output_mode, title=self.media_path.stem,
+                               source_name=src_name, target_name=f"译文（{self.cfg.target_language_name()}）")
+                outputs["doc"] = doc
+                self.log.emit(f"已保存文档：{doc.name}")
+            if "video" in self.output_kinds:
                 out = default_video_path(self.media_path, self.output_mode, self.cfg.target_language_name())
                 self.progress.emit(0, "正在把字幕烧进视频（时间约为视频时长的一半到一倍）")
                 burn_subtitles(
@@ -134,12 +144,13 @@ class VideoPage(QWidget):
         self.scene.manage_requested.connect(self.manage_scenes_requested.emit)
         form.addRow("内容场景", self.scene)
         kind_row = QHBoxLayout()
-        self.output_kind = QComboBox()
+        self.kind_checks: dict[str, QCheckBox] = {}
         for key, label in OUTPUT_KINDS.items():
-            self.output_kind.addItem(label, key)
-        self.output_kind.setCurrentIndex(max(0, self.output_kind.findData(cfg.video_output_kind)))
-        self.output_kind.currentIndexChanged.connect(self._save_output_kind)
-        kind_row.addWidget(self.output_kind)
+            cb = QCheckBox(label)
+            cb.setChecked(key in cfg.video_output_kinds)
+            cb.toggled.connect(self._save_output_kind)
+            self.kind_checks[key] = cb
+            kind_row.addWidget(cb)
         kind_row.addSpacing(12)
         self.size_label = QLabel("字幕字号")
         kind_row.addWidget(self.size_label)
@@ -227,6 +238,9 @@ class VideoPage(QWidget):
             QMessageBox.warning(self, "没有文件", "请先选择一个本地视频或音频文件。")
             return
         mode = self.output_mode.current()
+        if not self.selected_kinds():
+            QMessageBox.warning(self, "没有选输出形式", "请至少勾选一种输出形式：字幕文件、带字幕的视频或文档。")
+            return
         if not self.cfg.has_openai_key():
             QMessageBox.warning(self, "缺少 API Key", "还没有填 OpenAI 的 API Key（语音识别需要）。\n请点右上角齿轮，在「API Key」里填写。")
             return
@@ -244,7 +258,7 @@ class VideoPage(QWidget):
         self.progress.setValue(0)
         self._set_running(True)
 
-        self._worker = _Worker(self.cfg, path, mode, self.output_kind.currentData(),
+        self._worker = _Worker(self.cfg, path, mode, self.selected_kinds(),
                                self.subtitle_size.currentData(), self.scene.current_name())
         self._thread = QThread(self)
         self._worker.moveToThread(self._thread)
@@ -282,8 +296,9 @@ class VideoPage(QWidget):
         self.file_edit.setEnabled(not running)
         self.model_panel.setEnabled(not running)
         self.output_mode.setEnabled(not running)
-        self.output_kind.setEnabled(not running)
-        self.subtitle_size.setEnabled(not running and self.output_kind.currentData() != "srt")
+        for cb in self.kind_checks.values():
+            cb.setEnabled(not running)
+        self.subtitle_size.setEnabled(not running and "video" in self.selected_kinds())
         self.scene.setEnabled(not running)
 
     def is_running(self) -> bool:
@@ -329,6 +344,13 @@ class VideoPage(QWidget):
         self.status.setText("完成")
         self.open_folder_button.setEnabled(bool(self._saved_path))
         self.export_button.setEnabled(True)
+        doc = outputs.get("doc")
+        if doc:
+            try:
+                import os
+                os.startfile(str(doc))   # 用系统默认程序（记事本）打开
+            except OSError as e:
+                self.preview.append(f"<span style='color:#c33'>文档已保存，但自动打开失败：{_esc(str(e))}</span>")
 
     def _on_failed(self, message: str) -> None:
         self.status.setText("失败")
@@ -377,8 +399,11 @@ class VideoPage(QWidget):
             self._render_preview()
         self._save()
 
+    def selected_kinds(self) -> list[str]:
+        return [k for k, cb in self.kind_checks.items() if cb.isChecked()]
+
     def _save_output_kind(self) -> None:
-        self.cfg.video_output_kind = self.output_kind.currentData()
+        self.cfg.video_output_kinds = self.selected_kinds()
         self._apply_output_kind()
         self._save()
 
@@ -387,14 +412,19 @@ class VideoPage(QWidget):
         self._save()
 
     def _apply_output_kind(self) -> None:
-        kind = self.output_kind.currentData()
-        burn = kind != "srt"
+        kinds = self.selected_kinds()
+        burn = "video" in kinds
         self.size_label.setEnabled(burn)
         self.subtitle_size.setEnabled(burn)
-        self.kind_hint.setText(
-            "字幕烧进画面，发给别人直接能看；字号由这里控制。" if burn
-            else "播放器会自动加载同名 .srt；字幕大小由播放器决定。"
-        )
+        if burn:
+            text = "字幕烧进画面，发给别人直接能看；字号由这里控制。"
+        elif "doc" in kinds and "srt" not in kinds:
+            text = "文档里原文一整段、译文一整段，不按句切开。"
+        elif kinds:
+            text = "播放器会自动加载同名 .srt；字幕大小由播放器决定。"
+        else:
+            text = "请至少勾选一种。"
+        self.kind_hint.setText(text)
 
     def _on_model_panel_changed(self) -> None:
         self.output_mode.set_target_name(self.cfg.target_language_name())

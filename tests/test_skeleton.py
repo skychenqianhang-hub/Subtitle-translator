@@ -168,7 +168,7 @@ def main() -> int:
     p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
     c = config_mod.load_config()
     assert c.translate_model == "gpt-6.1-sol" and c.asr_model == "auto", (c.translate_model, c.asr_model)
-    assert c.config_version == 3
+    assert c.config_version == config_mod.CONFIG_VERSION
     # 新版本文件里用户自己选的 whisper-1 不能被改掉
     c.asr_model = "whisper-1"
     config_mod.save_config(c)
