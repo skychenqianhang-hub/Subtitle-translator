@@ -70,17 +70,20 @@ def main() -> int:
     mp = rp.model_panel
     mp.source_language.setCurrentIndex(mp.source_language.findData("ja"))
     mp.target_language.setCurrentIndex(mp.target_language.findData("en"))
-    mp.asr_model.setCurrentText("gpt-4o-transcribe")
+    assert mp.asr_model.currentData() == "auto"
+    assert config_mod.load_config().effective_asr_model() == "gpt-4o-transcribe", "日语应自动选 gpt-4o-transcribe"
+    mp.asr_model.setCurrentIndex(mp.asr_model.findData("whisper-1"))
     mp.translate_provider.setCurrentIndex(mp.translate_provider.findData("openai"))
-    assert mp.translate_model.currentText() == "gpt-5", "切换翻译服务后应自动选该服务的默认模型"
-    mp.translate_model.setCurrentText("gpt-5-mini")
+    assert mp.translate_model.currentData() == "gpt-6.1-sol", "切换翻译服务后应自动选该服务的默认模型"
+    mp.translate_model.setCurrentIndex(mp.translate_model.findData("gpt-5-mini"))
     c = config_mod.load_config()
     assert c.source_language == "ja" and c.target_language == "en", (c.source_language, c.target_language)
-    assert c.asr_model == "gpt-4o-transcribe"
+    assert c.asr_model == "whisper-1" and c.effective_asr_model() == "whisper-1"
     assert c.translate_provider == "openai" and c.translate_model == "gpt-5-mini"
     vmp = vp.model_panel
     assert vmp.target_language.currentData() == "en", "视频页未同步目标语言"
-    assert vmp.translate_model.currentText() == "gpt-5-mini", "视频页未同步翻译模型"
+    assert vmp.translate_model.currentData() == "gpt-5-mini", "视频页未同步翻译模型"
+    assert "不推荐" in vmp.translate_model.currentText()
     assert "英语" in vp.output_mode.note.text(), vp.output_mode.note.text()
     # 反向：视频页改 → 实时页同步
     vmp.target_language.setCurrentIndex(vmp.target_language.findData("zh-Hant"))
@@ -133,7 +136,7 @@ def main() -> int:
     win2 = MainWindow(c)
     assert win2.realtime_page.delay.value() == 7
     assert win2.realtime_page.model_panel.target_language.currentData() == "zh-Hant"
-    assert win2.realtime_page.model_panel.translate_model.currentText() == "gpt-5-mini"
+    assert win2.realtime_page.model_panel.translate_model.currentData() == "gpt-5-mini"
     assert win2.realtime_page.output_mode.current() == "target_only"
     assert win2.video_page.output_mode.current() == "source_only"
     assert not win2.video_page.model_panel.translate_model.isEnabled()
@@ -156,7 +159,16 @@ def main() -> int:
     p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
     c = config_mod.load_config()
     assert c.last_mode == "video" and c.video_output_mode == "target_only"
-    assert c.asr_model == "gpt-transcribe" and c.translate_model == "claude-sonnet-5-5", (c.asr_model, c.translate_model)
+    assert c.asr_model == "auto" and c.translate_model == "claude-sonnet-5-5", (c.asr_model, c.translate_model)
+    # 版本 2 文件：gpt-5 → gpt-6.1-sol
+    raw["config_version"] = 2
+    raw["translate_provider"] = "openai"
+    raw["translate_model"] = "gpt-5"
+    raw["asr_model"] = "gpt-transcribe"
+    p.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    c = config_mod.load_config()
+    assert c.translate_model == "gpt-6.1-sol" and c.asr_model == "auto", (c.translate_model, c.asr_model)
+    assert c.config_version == 3
     # 新版本文件里用户自己选的 whisper-1 不能被改掉
     c.asr_model = "whisper-1"
     config_mod.save_config(c)

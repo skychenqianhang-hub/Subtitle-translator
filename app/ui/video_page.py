@@ -50,7 +50,8 @@ class _Worker(QObject):
             from app.core.pipeline.video_pipeline import VideoJob, VideoPipeline
             from app.core.translate.registry import create_translator
 
-            transcriber = create_transcriber(self.cfg)
+            transcriber = create_transcriber(self.cfg, source_language=self.cfg.source_language)
+            self.log.emit(f"识别模型：{transcriber.model}" + ("（按原文语言自动选择）" if self.cfg.asr_model == "auto" else ""))
             translator = None if self.output_mode == "source_only" else create_translator(self.cfg)
             pipeline = VideoPipeline(
                 self.cfg, transcriber, translator,

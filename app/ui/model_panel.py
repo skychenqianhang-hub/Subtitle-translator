@@ -8,7 +8,7 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QWidget
 
 from app.config import (
-    ASR_MODELS, DEFAULT_TRANSLATE_MODEL, SOURCE_LANGUAGES, TARGET_LANGUAGES, TRANSLATE_MODELS,
+    ASR_AUTO, ASR_MODELS, DEFAULT_TRANSLATE_MODEL, SOURCE_LANGUAGES, TARGET_LANGUAGES, TRANSLATE_MODELS,
     TRANSLATE_PROVIDERS, Config, save_config,
 )
 from app.ui.common import hint
@@ -40,11 +40,10 @@ class ModelLanguagePanel(QGroupBox):
         form.addRow("语言", lang_row)
 
         self.asr_model = QComboBox()
-        self.asr_model.setEditable(True)
-        self.asr_model.addItems(ASR_MODELS)
+        for mid, label in ASR_MODELS:
+            self.asr_model.addItem(label, mid)
         asr_row = QHBoxLayout()
         asr_row.addWidget(self.asr_model, 1)
-        asr_row.addWidget(hint("OpenAI 语音识别。gpt-transcribe 最新最便宜；whisper-1 时间戳更细"))
         form.addRow("识别模型", asr_row)
 
         tr_row = QHBoxLayout()
@@ -52,20 +51,19 @@ class ModelLanguagePanel(QGroupBox):
         for key, label in TRANSLATE_PROVIDERS.items():
             self.translate_provider.addItem(label, key)
         self.translate_model = QComboBox()
-        self.translate_model.setEditable(True)
         tr_row.addWidget(self.translate_provider)
         tr_row.addWidget(self.translate_model, 1)
         self.translate_row_label = QLabel("翻译模型")
         form.addRow(self.translate_row_label, tr_row)
-        form.addRow("", hint("模型名称可以直接手动输入。每个场景也可以在「管理场景」里单独指定模型，优先级高于这里。"))
+        form.addRow("", hint("价格是每百万字的输入 / 输出费用；评测依据见项目说明。每个场景也可以在「管理场景」里单独指定模型，优先级高于这里。"))
 
         self.load_from_config()
 
         self.source_language.currentIndexChanged.connect(self._on_change)
         self.target_language.currentIndexChanged.connect(self._on_change)
-        self.asr_model.currentTextChanged.connect(self._on_change)
+        self.asr_model.currentIndexChanged.connect(self._on_change)
         self.translate_provider.currentIndexChanged.connect(self._on_provider_change)
-        self.translate_model.currentTextChanged.connect(self._on_change)
+        self.translate_model.currentIndexChanged.connect(self._on_change)
 
     # ---- 读写 ----
     def load_from_config(self) -> None:
@@ -73,16 +71,26 @@ class ModelLanguagePanel(QGroupBox):
         cfg = self.cfg
         self.source_language.setCurrentIndex(max(0, self.source_language.findData(cfg.source_language)))
         self.target_language.setCurrentIndex(max(0, self.target_language.findData(cfg.target_language)))
-        self.asr_model.setCurrentText(cfg.asr_model)
+        self._select(self.asr_model, cfg.asr_model)
         self.translate_provider.setCurrentIndex(max(0, self.translate_provider.findData(cfg.translate_provider)))
         self._fill_translate_models(cfg.translate_provider)
-        self.translate_model.setCurrentText(cfg.translate_model)
+        self._select(self.translate_model, cfg.translate_model)
         self._loading = False
+
+    @staticmethod
+    def _select(combo: QComboBox, model_id: str) -> None:
+        idx = combo.findData(model_id)
+        if idx < 0 and model_id:
+            # 设置里是列表外的模型名（比如以前手动输入的）：原样加进去
+            combo.addItem(model_id, model_id)
+            idx = combo.count() - 1
+        combo.setCurrentIndex(max(0, idx))
 
     def _fill_translate_models(self, provider: str) -> None:
         self.translate_model.blockSignals(True)
         self.translate_model.clear()
-        self.translate_model.addItems(TRANSLATE_MODELS.get(provider, []))
+        for mid, label in TRANSLATE_MODELS.get(provider, []):
+            self.translate_model.addItem(label, mid)
         self.translate_model.blockSignals(False)
 
     def _on_provider_change(self) -> None:
@@ -90,7 +98,7 @@ class ModelLanguagePanel(QGroupBox):
             return
         provider = self.translate_provider.currentData()
         self._fill_translate_models(provider)
-        self.translate_model.setCurrentText(DEFAULT_TRANSLATE_MODEL.get(provider, ""))
+        self._select(self.translate_model, DEFAULT_TRANSLATE_MODEL.get(provider, ""))
         self._on_change()
 
     def _on_change(self) -> None:
@@ -99,9 +107,9 @@ class ModelLanguagePanel(QGroupBox):
         cfg = self.cfg
         cfg.source_language = self.source_language.currentData()
         cfg.target_language = self.target_language.currentData()
-        cfg.asr_model = self.asr_model.currentText().strip()
+        cfg.asr_model = self.asr_model.currentData() or ASR_AUTO
         cfg.translate_provider = self.translate_provider.currentData()
-        cfg.translate_model = self.translate_model.currentText().strip()
+        cfg.translate_model = self.translate_model.currentData() or ""
         try:
             save_config(cfg)
         except OSError:

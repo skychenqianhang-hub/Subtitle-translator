@@ -254,7 +254,11 @@ SubTranslator/
   - 备注：whisper-1 有逐段时间戳；gpt-4o-transcribe 系列没有，整块按块起止填时间，精度差一些。
   - 2026-10-03 模型选型（查过官方文档和价格后定）：识别默认 `gpt-transcribe`（$0.0045/分钟，OpenAI 推荐，支持 keywords/languages，无时间戳 → 流程按「一句话一块」切 VAD 段，块起止即字幕时间，4 路并行）；备选 `whisper-1`（有逐段时间戳，给带标点的提示词才会输出标点）。翻译默认 Claude `claude-sonnet-5-5`（$2/$10），备选 `claude-opus-5-5`（$4/$20）；GPT 侧默认 `gpt-5`（reasoning_effort=low）。旧设置文件按 config_version 自动升级一次。
   - 2026-10-03 已用用户真实 Key 跑通：gpt-transcribe + GPT-5（日语、英语）、whisper-1，字幕逐句、时间准确。Anthropic Key 用户尚未充值，Claude 路径未实测。
-  - 待办（用户已同意方向）：按原文语言分别记住识别 / 翻译模型（主页「原文语言」切换时显示该语言的模型设置）。
+  - 2026-10-03 模型选型复核（查了 Artificial Analysis 识别榜、HEROZ 日语 11 模型对比、Arena 中/日/英分语言榜、Alconost 与 WMT25 翻译评测、OpenAI/Anthropic 官方价格），结论写进了下拉框标注：
+    - 识别默认「自动」：日语 → gpt-4o-transcribe（日语 FLEURS 字错率 2.26%、JSUT 5.14%，均第一），英语 → gpt-transcribe（AA-WER 3.3%，综合榜第一，$0.0045/分钟）。备选 gpt-4o-mini-transcribe（最便宜）、whisper-1（时间戳最细，日语偏弱）。`resolve_asr_model()` 负责把 auto 换成具体模型。
+    - 翻译：Claude Sonnet 5.5 默认（$2/$10）；Opus 5.5 质量最高（Arena 中文榜第 2，$4/$20）；GPT 侧默认 gpt-6.1-sol（$2/$10，OpenAI 2026 年主力，gpt-5 已过时）；Haiku 4.5 / GPT-5 mini 标「不推荐」（Arena 日语榜 100 名开外）。
+    - 已用真实 Key 验证：gpt-4o-transcribe（日）、gpt-transcribe（英）+ gpt-6.1-sol 全部正常。
+    - 「按语言分别记模型」改为上面的自动选择，不再做成界面功能（用户同意）。
   - 备注：术语表 / 纠错 / 识别提示词的接口已留好（VideoJob 字段），阶段 3 接上场景即可。
   - 2026-10-03 用户验收反馈：NASA 英语科普视频 43 条字幕，时间与翻译质量好；要求（已做）输出形式两层选择 + 烧录字号可调。自检 `tests/test_burn.py`（生成测试视频烧录并检查画面）。
   - 2026-10-03 烧录样式调整（用户反馈）：字幕底边距 3%（MarginV 12/360）；汉字宽按字号 0.78 估算，一行能放 小 51 / 中 42 / 大 34 个字，放不下才换行。用户已验收阶段 2。

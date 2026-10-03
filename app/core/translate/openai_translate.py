@@ -30,7 +30,7 @@ class OpenAITranslator(Translator):
                     f"必须恰好返回 {len(req.sentences)} 条译文，顺序与编号一致。"
                 )
             extra: dict = {}
-            if self.model.startswith("gpt-5"):
+            if self.model.startswith(("gpt-5", "gpt-6")):
                 extra["reasoning_effort"] = "low"   # 字幕翻译不需要长时间思考，省钱也更快
             resp = self.client.chat.completions.create(
                 model=self.model,

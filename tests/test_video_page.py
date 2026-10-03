@@ -46,8 +46,8 @@ def main() -> int:
     QMessageBox.critical = staticmethod(lambda *a, **k: print("  [error box]", a[2] if len(a) > 2 else a))
 
     # 假适配器替换真实的登记表
-    asr_registry.create_transcriber = lambda cfg, provider=None, model=None: FakeTranscriber()
-    tr_registry.create_translator = lambda cfg, provider=None, model=None: FakeTranslator()
+    asr_registry.create_transcriber = lambda cfg, *a, **k: FakeTranscriber()
+    tr_registry.create_translator = lambda cfg, *a, **k: FakeTranslator()
 
     cfg = config_mod.load_config()
     cfg.openai_api_key = "sk-test"
