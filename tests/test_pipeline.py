@@ -76,6 +76,7 @@ class FakeTranslator(Translator):
 
     def translate(self, req: TranslateRequest) -> list[str]:
         self.requests.append(req)
+        self.last_usage = {"input": 100 * len(req.sentences), "output": 40 * len(req.sentences), "cache_read": 0}
         return [f"译：{s}" for s in req.sentences]
 
 
@@ -200,6 +201,21 @@ def test_pipeline(media: Path | None) -> None:
         assert progress[-1][0] == 100
         assert tl.requests and tl.requests[0].target_language == "zh-Hans"
         assert all(ln.start < ln.end for ln in lines)
+        from app.core.cost import CostTracker
+        c = pipe.cost
+        assert c.asr_seconds > 0 and c.input_tokens == 100 * len(lines) and c.output_tokens == 40 * len(lines)
+        c2 = CostTracker(asr_model="gpt-transcribe", translate_model="claude-sonnet-5-5")
+        c2.add_asr(600)                      # 10 分钟
+        c2.add_translate(100_000, 20_000)
+        assert abs(c2.asr_usd() - 0.045) < 1e-9 and abs(c2.translate_usd() - 0.4) < 1e-9, (c2.asr_usd(), c2.translate_usd())
+        assert "合计约 $0.4450" in c2.summary(), c2.summary()
+        c3 = CostTracker(asr_model="某未知模型")
+        c3.add_asr(60)
+        assert "未计入" in c3.summary()
+        from app.core.download import looks_like_url
+        assert looks_like_url("https://www.youtube.com/watch?v=x") and looks_like_url("www.bilibili.com/video/BV1")
+        assert not looks_like_url(r"C:\视频\a.mp4") and not looks_like_url("")
+        print("费用估算 / 网址判断：OK")
         # 没有时间戳的模型：按一句话一块切，时间来自 VAD，顺序必须和时间一致
         tt = FakeTextTranscriber()
         lines_t = VideoPipeline(Config(), tt, FakeTranslator()).run(

@@ -37,6 +37,13 @@ class AnthropicTranslator(Translator):
                 output_config={"format": {"type": "json_schema", "schema": OUTPUT_SCHEMA}},
             ) as stream:
                 resp = stream.get_final_message()
+            u = getattr(resp, "usage", None)
+            self.last_usage = {
+                "input": int(getattr(u, "input_tokens", 0) or 0) + int(getattr(u, "cache_read_input_tokens", 0) or 0)
+                         + int(getattr(u, "cache_creation_input_tokens", 0) or 0),
+                "output": int(getattr(u, "output_tokens", 0) or 0),
+                "cache_read": int(getattr(u, "cache_read_input_tokens", 0) or 0),
+            } if u else {}
             if resp.stop_reason == "refusal":
                 raise UserFacingError("Claude 拒绝翻译这段内容（触发了安全策略）。可以换 GPT 试试。")
             text = next((b.text for b in resp.content if b.type == "text"), "")

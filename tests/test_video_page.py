@@ -78,6 +78,11 @@ def main() -> int:
     vp.kind_checks["srt"].setChecked(True)
     vp.kind_checks["doc"].setChecked(True)
     vp.kind_checks["video"].setChecked(False)
+    # 处理前的样式预设窗口能打开（示例字幕 + 空画面）
+    vp._open_style_editor()
+    assert vp._editor is not None and vp._editor.style_only and vp._editor.table.rowCount() == 2
+    vp._editor.close()
+    vp._editor = None
     assert config_mod.load_config().video_output_kinds == ["srt", "doc"]
     vp._start()
     assert vp.is_running() and not vp.start_button.isEnabled()

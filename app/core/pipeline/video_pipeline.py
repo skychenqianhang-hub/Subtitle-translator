@@ -15,6 +15,7 @@ from app.config import Config
 from app.core.asr.base import Segment, Transcriber
 from app.core.audio.extract import extract_pcm, write_wav
 from app.core.audio.vad import SAMPLE_RATE, Chunk, SileroVad, detect_chunks, make_utterances
+from app.core.cost import CostTracker
 from app.core.errors import Cancelled, UserFacingError
 from app.core.subtitle.models import SubtitleLine
 from app.core.subtitle.sentences import merge_into_sentences, split_long_lines
@@ -62,6 +63,7 @@ class VideoPipeline:
         self.log = log
         self.on_lines = on_lines
         self.cancel = cancel or threading.Event()
+        self.cost = CostTracker(asr_model=transcriber.model, translate_model=translator.model if translator else "")
 
     def _check_cancel(self) -> None:
         if self.cancel.is_set():
@@ -107,6 +109,7 @@ class VideoPipeline:
                     preview = segs[0].text[:40]
                     self.log(f"[{_fmt(chunks[i].start)}] {preview}{'…' if len(segs[0].text) > 40 else ''}")
                 self._check_cancel()
+        self.cost.add_asr(sum(c.duration for c in chunks))
         self.log(f"识别完成，共 {len(segments)} 个片段")
         if not segments:
             raise UserFacingError("识别结果为空。请检查原文语言是否选对，或者视频里确实没有人说话。")
@@ -166,6 +169,8 @@ class VideoPipeline:
                 scene=job.scene,
             )
             translations = self.translator.translate(req)
+            u = self.translator.last_usage or {}
+            self.cost.add_translate(u.get("input", 0), u.get("output", 0), u.get("cache_read", 0))
             for ln, t in zip(batch, translations):
                 ln.target = t
             prev_sources.extend(ln.source for ln in batch)

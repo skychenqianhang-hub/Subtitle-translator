@@ -24,6 +24,8 @@ class Translator(ABC):
 
     def __init__(self, model: str) -> None:
         self.model = model
+        # 最近一次调用的用量：{"input": int, "output": int, "cache_read": int}，给费用估算用
+        self.last_usage: dict[str, int] = {}
 
     @abstractmethod
     def translate(self, req: TranslateRequest) -> list[str]:

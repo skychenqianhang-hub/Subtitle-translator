@@ -11,6 +11,7 @@ from app.core.audio.extract import _NO_WINDOW, probe_duration
 from app.core.errors import Cancelled, UserFacingError
 from app.core.subtitle.ass import write_ass
 from app.core.subtitle.models import SubtitleLine
+from app.core.subtitle.style import SubtitleStyle
 from app.tools import find_ffmpeg
 
 ProgressCb = Callable[[float], None]   # 0.0 - 1.0
@@ -30,6 +31,8 @@ def burn_subtitles(
     size: str = "medium",
     progress: ProgressCb = lambda p: None,
     cancel: threading.Event | None = None,
+    margin_pct: int = 3,
+    style: "SubtitleStyle | None" = None,
 ) -> Path:
     ffmpeg = find_ffmpeg()
     if not ffmpeg:
@@ -42,7 +45,7 @@ def burn_subtitles(
     # 并把工作目录切到那里，滤镜只写相对路径。
     with tempfile.TemporaryDirectory(prefix="subtr_burn_") as td:
         ass = Path(td) / "sub.ass"
-        write_ass(ass, lines, mode, size)
+        write_ass(ass, lines, mode, size, margin_pct, style)
         cmd = [
             ffmpeg, "-y", "-v", "error", "-nostdin", "-nostats", "-progress", "pipe:1",
             "-i", str(media_path),

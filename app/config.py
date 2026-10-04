@@ -91,6 +91,11 @@ OUTPUT_MODES = {
 }
 
 
+def default_download_dir() -> Path:
+    videos = Path(os.environ.get("USERPROFILE", str(Path.home()))) / "Videos"
+    return (videos if videos.exists() else Path.home()) / "字幕翻译器"
+
+
 def config_dir() -> Path:
     base = os.environ.get("APPDATA") or str(Path.home())
     return Path(base) / APP_DIR_NAME
@@ -123,6 +128,10 @@ class Config:
     video_output_mode: str = "bilingual"
     video_output_kinds: list[str] = field(default_factory=lambda: ["srt"])   # srt / video / doc，可多选
     video_subtitle_size: str = "medium"     # small / medium / large（烧进视频时的字号）
+    video_subtitle_margin_pct: int = 3      # 字幕离底边的距离（画面高度百分比）
+    open_editor_after_run: bool = True      # 处理完自动打开字幕编辑器
+    download_dir: str = ""                  # 网址下载的保存位置；空 = 我的视频\字幕翻译器
+    subtitle_style: dict = field(default_factory=dict)   # 默认字幕样式（SubtitleStyle.to_dict()），空 = 内置默认
     # 界面
     last_mode: str = "realtime"      # "realtime" 或 "video"
     last_scene: str = "通用"         # 例如 "游戏 → Valorant"
@@ -140,6 +149,9 @@ class Config:
 
     def effective_asr_model(self) -> str:
         return resolve_asr_model(self.asr_model, self.source_language)
+
+    def effective_download_dir(self) -> Path:
+        return Path(self.download_dir) if self.download_dir.strip() else default_download_dir()
 
 
 def load_config() -> Config:

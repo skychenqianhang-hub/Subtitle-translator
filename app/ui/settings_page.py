@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
-    QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QToolButton, QVBoxLayout,
-    QWidget,
+    QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QToolButton,
+    QVBoxLayout, QWidget,
 )
 
-from app.config import Config, config_path, save_config
+from app.config import Config, config_path, default_download_dir, save_config
 from app.ui.common import hint, page_title
 
 
@@ -26,6 +26,19 @@ class SettingsPage(QWidget):
         key_form.addRow("Anthropic", anthropic_row)
         key_form.addRow("", hint(f"Key 只保存在你自己电脑的这个文件里，不会进入项目代码：\n{config_path()}"))
         layout.addWidget(key_box)
+
+        dl_box = QGroupBox("网址下载")
+        dl_form = QFormLayout(dl_box)
+        dl_row = QHBoxLayout()
+        self.download_dir = QLineEdit()
+        self.download_dir.setPlaceholderText(str(default_download_dir()))
+        self.download_button = QPushButton("选择文件夹…")
+        self.download_button.clicked.connect(self._choose_download_dir)
+        dl_row.addWidget(self.download_dir, 1)
+        dl_row.addWidget(self.download_button)
+        dl_form.addRow("保存位置", dl_row)
+        dl_form.addRow("", hint("粘贴视频网址处理时，视频会先下载到这里，字幕文件也会生成在同一个文件夹。留空用默认位置。"))
+        layout.addWidget(dl_box)
 
         save_row = QHBoxLayout()
         self.status = QLabel("")
@@ -57,13 +70,20 @@ class SettingsPage(QWidget):
         row_layout.addWidget(toggle)
         return edit, row
 
+    def _choose_download_dir(self) -> None:
+        d = QFileDialog.getExistingDirectory(self, "选择下载保存位置", self.download_dir.text() or str(default_download_dir()))
+        if d:
+            self.download_dir.setText(d)
+
     def load_from_config(self) -> None:
         self.openai_key.setText(self.cfg.openai_api_key)
         self.anthropic_key.setText(self.cfg.anthropic_api_key)
+        self.download_dir.setText(self.cfg.download_dir)
 
     def save(self) -> None:
         self.cfg.openai_api_key = self.openai_key.text().strip()
         self.cfg.anthropic_api_key = self.anthropic_key.text().strip()
+        self.cfg.download_dir = self.download_dir.text().strip()
         try:
             save_config(self.cfg)
         except OSError as e:

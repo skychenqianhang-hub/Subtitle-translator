@@ -11,13 +11,16 @@ from PySide6.QtWidgets import (
 )
 
 from app.config import OUTPUT_KINDS, Config, save_config
+from app.core.download import download_video, looks_like_url
 from app.core.errors import Cancelled, friendly_message
 from app.core.profiles.store import EffectiveProfile, ProfileStore
-from app.core.subtitle.ass import SIZE_LABELS
+from app.core.subtitle.style import SubtitleStyle
 from app.core.subtitle.burn import burn_subtitles, default_video_path
 from app.core.subtitle.document import default_document_path, write_document
 from app.core.subtitle.models import SubtitleLine
+from app.core.subtitle.project import PROJECT_SUFFIX, SubtitleProject, project_path_for
 from app.core.subtitle.srt import default_srt_path, fmt_time, write_srt
+from app.ui.subtitle_editor import SubtitleEditorWindow
 from app.ui.common import hint, not_implemented
 from app.ui.model_panel import ModelLanguagePanel
 from app.ui.output_mode import OutputModePicker
@@ -31,14 +34,16 @@ class _Worker(QObject):
     progress = Signal(int, str)
     log = Signal(str)
     lines = Signal(object)
-    finished = Signal(object, object)   # (list[SubtitleLine], dict 输出文件 {"srt": Path, "video": Path})
+    finished = Signal(object, object)   # (list[SubtitleLine], dict 输出文件 {"srt": Path, "video": Path, ...})
     failed = Signal(str)
     cancelled = Signal()
+    media_resolved = Signal(object)     # 网址下载完成后告诉界面实际的文件路径
 
-    def __init__(self, cfg: Config, media_path: Path, output_mode: str, output_kinds: list[str],
-                 subtitle_size: str, profile: EffectiveProfile) -> None:
+    def __init__(self, cfg: Config, media_path: Path | None, output_mode: str, output_kinds: list[str],
+                 subtitle_size: str, profile: EffectiveProfile, url: str = "") -> None:
         super().__init__()
         self.cfg = cfg
+        self.url = url
         self.media_path = media_path
         self.output_mode = output_mode
         self.output_kinds = output_kinds
@@ -48,6 +53,15 @@ class _Worker(QObject):
 
     def run(self) -> None:
         try:
+            if self.url:
+                self.progress.emit(0, "正在下载视频")
+                self.log.emit(f"下载：{self.url}")
+                self.media_path = download_video(
+                    self.url, self.cfg.effective_download_dir(),
+                    progress=lambda p, s: self.progress.emit(int(p * 100), s), cancel=self.cancel,
+                )
+                self.log.emit(f"已下载到：{self.media_path}")
+                self.media_resolved.emit(self.media_path)
             from app.core.asr.registry import create_transcriber
             from app.core.pipeline.video_pipeline import VideoJob, VideoPipeline
             from app.core.translate.registry import create_translator
@@ -79,7 +93,9 @@ class _Worker(QObject):
                 style=prof.style,
             )
             result = pipeline.run(job)
+            self.log.emit("本次费用：" + pipeline.cost.summary())
             outputs: dict[str, Path] = {}
+            outputs["cost"] = pipeline.cost.summary()
             if "srt" in self.output_kinds:
                 srt = default_srt_path(self.media_path, self.output_mode, self.cfg.target_language)
                 write_srt(srt, result, self.output_mode)
@@ -100,10 +116,22 @@ class _Worker(QObject):
                 burn_subtitles(
                     self.media_path, result, out, self.output_mode, self.subtitle_size,
                     progress=lambda p: self.progress.emit(int(p * 100), f"正在把字幕烧进视频 {int(p * 100)}%"),
-                    cancel=self.cancel,
+                    cancel=self.cancel, style=SubtitleStyle.from_dict(self.cfg.subtitle_style),
                 )
                 outputs["video"] = out
                 self.log.emit(f"已保存带字幕的视频：{out.name}")
+            # 字幕工程：以后可以直接打开修改、重新导出，不用再识别翻译
+            project = SubtitleProject(
+                media_path=str(self.media_path), lines=result, source_language=self.cfg.source_language,
+                target_language=self.cfg.target_language, scene=prof.name, output_mode=self.output_mode,
+                subtitle_size=self.subtitle_size, subtitle_margin_pct=self.cfg.video_subtitle_margin_pct,
+                asr_model=transcriber.model, translate_model=translator.model if translator else "",
+                style=SubtitleStyle.from_dict(self.cfg.subtitle_style).to_dict(),
+            )
+            try:
+                outputs["project"] = project.save()
+            except OSError as e:
+                self.log.emit(f"字幕工程保存失败（不影响其他输出）：{e}")
             self.finished.emit(result, outputs)
         except Cancelled:
             self.cancelled.emit()
@@ -123,6 +151,8 @@ class VideoPage(QWidget):
         self._lines: list[SubtitleLine] = []
         self._last_media: Path | None = None
         self._saved_path: Path | None = None
+        self._project: SubtitleProject | None = None
+        self._editor: SubtitleEditorWindow | None = None
 
         layout = QVBoxLayout(self)
         layout.addWidget(hint("适用于已经录好的视频：输入本地文件，整段处理完后输出字幕文件（保存在视频旁边、同名 .srt）。"))
@@ -139,7 +169,7 @@ class VideoPage(QWidget):
         file_row.addWidget(self.file_button)
         src_form.addRow("本地文件", file_row)
         self.url_edit = QLineEdit()
-        self.url_edit.setPlaceholderText("或粘贴视频网址（YouTube、B站等），阶段 4 支持")
+        self.url_edit.setPlaceholderText("或粘贴视频网址（YouTube、B 站等），会先下载到「设置 → 网址下载」里指定的文件夹")
         src_form.addRow("视频网址", self.url_edit)
         layout.addWidget(src_box)
 
@@ -165,14 +195,10 @@ class VideoPage(QWidget):
             self.kind_checks[key] = cb
             kind_row.addWidget(cb)
         kind_row.addSpacing(12)
-        self.size_label = QLabel("字幕字号")
-        kind_row.addWidget(self.size_label)
-        self.subtitle_size = QComboBox()
-        for key, label in SIZE_LABELS.items():
-            self.subtitle_size.addItem(label, key)
-        self.subtitle_size.setCurrentIndex(max(0, self.subtitle_size.findData(cfg.video_subtitle_size)))
-        self.subtitle_size.currentIndexChanged.connect(self._save_subtitle_size)
-        kind_row.addWidget(self.subtitle_size)
+        self.style_button = QPushButton("字幕样式…")
+        self.style_button.setToolTip("像编辑幻灯片一样，在画面上设置字幕的字体、大小、颜色、位置")
+        self.style_button.clicked.connect(self._open_style_editor)
+        kind_row.addWidget(self.style_button)
         self.kind_hint = hint("")
         kind_row.addWidget(self.kind_hint, 1)
         form.addRow("输出形式", kind_row)
@@ -211,6 +237,14 @@ class VideoPage(QWidget):
         self.result_label = QLabel("")
         self.result_label.setStyleSheet("color: #2a7;")
         export_row.addWidget(self.result_label, 1)
+        self.open_project_button = QPushButton("打开以前的结果…")
+        self.open_project_button.setToolTip("打开之前处理过的视频的字幕工程文件（.字幕工程.json），继续修改或重新导出")
+        self.open_project_button.clicked.connect(self._open_project)
+        export_row.addWidget(self.open_project_button)
+        self.edit_button = QPushButton("预览 / 修改字幕")
+        self.edit_button.setEnabled(False)
+        self.edit_button.clicked.connect(self._open_editor)
+        export_row.addWidget(self.edit_button)
         self.open_folder_button = QPushButton("打开所在文件夹")
         self.open_folder_button.setEnabled(False)
         self.open_folder_button.clicked.connect(self._open_folder)
@@ -243,12 +277,21 @@ class VideoPage(QWidget):
             self.file_edit.setText(path)
 
     def _start(self) -> None:
-        if self.url_edit.text().strip() and not self.file_edit.text().strip():
-            not_implemented(self, "从网址下载视频", "阶段 4")
-            return
-        path = Path(self.file_edit.text().strip().strip('"'))
-        if not path.is_file():
-            QMessageBox.warning(self, "没有文件", "请先选择一个本地视频或音频文件。")
+        url = self.url_edit.text().strip()
+        file_text = self.file_edit.text().strip().strip('"')
+        path: Path | None = None
+        if file_text:
+            path = Path(file_text)
+            if not path.is_file():
+                QMessageBox.warning(self, "找不到文件", f"这个文件不存在：{path}")
+                return
+            url = ""
+        elif url:
+            if not looks_like_url(url):
+                QMessageBox.warning(self, "网址不对", "请粘贴以 http:// 或 https:// 开头的视频链接。")
+                return
+        else:
+            QMessageBox.warning(self, "没有文件", "请先选择一个本地视频或音频文件，或粘贴视频网址。")
             return
         mode = self.output_mode.current()
         if not self.selected_kinds():
@@ -264,6 +307,8 @@ class VideoPage(QWidget):
         self._lines = []
         self._last_media = path
         self._saved_path = None
+        self._project = None
+        self.edit_button.setEnabled(False)
         self.preview.clear()
         self.result_label.setText("")
         self.open_folder_button.setEnabled(False)
@@ -272,7 +317,8 @@ class VideoPage(QWidget):
         self._set_running(True)
 
         self._worker = _Worker(self.cfg, path, mode, self.selected_kinds(),
-                               self.subtitle_size.currentData(), self.store.resolve(self.scene.current_name()))
+                               self.cfg.video_subtitle_size, self.store.resolve(self.scene.current_name()), url=url)
+        self._worker.media_resolved.connect(self._on_media_resolved)
         self._thread = QThread(self)
         self._worker.moveToThread(self._thread)
         self._thread.started.connect(self._worker.run)
@@ -286,6 +332,11 @@ class VideoPage(QWidget):
             sig.connect(self._thread.quit)
         self._thread.finished.connect(self._cleanup_thread)
         self._thread.start()
+
+    def _on_media_resolved(self, path: Path) -> None:
+        self._last_media = Path(path)
+        self.file_edit.setText(str(path))
+        self.url_edit.clear()
 
     def _cancel(self) -> None:
         if self._worker:
@@ -307,11 +358,12 @@ class VideoPage(QWidget):
         self.cancel_button.setEnabled(running)
         self.file_button.setEnabled(not running)
         self.file_edit.setEnabled(not running)
+        self.url_edit.setEnabled(not running)
         self.model_panel.setEnabled(not running)
         self.output_mode.setEnabled(not running)
         for cb in self.kind_checks.values():
             cb.setEnabled(not running)
-        self.subtitle_size.setEnabled(not running and "video" in self.selected_kinds())
+        self.style_button.setEnabled(not running)
         self.scene.setEnabled(not running)
 
     def is_running(self) -> bool:
@@ -349,10 +401,11 @@ class VideoPage(QWidget):
     def _on_finished(self, lines: list[SubtitleLine], outputs: dict) -> None:
         self._lines = lines
         self._render_preview()
-        names = [p.name for p in outputs.values()]
-        self._saved_path = outputs.get("video") or outputs.get("srt")
+        cost = outputs.pop("cost", "")
+        names = [p.name for k, p in outputs.items() if k != "project"]
+        self._saved_path = outputs.get("video") or outputs.get("srt") or outputs.get("doc") or outputs.get("project")
         self.result_label.setStyleSheet("color: #2a7;")
-        self.result_label.setText(f"已保存：{'、'.join(names)}（共 {len(lines)} 条字幕）")
+        self.result_label.setText(f"已保存：{'、'.join(names) or '字幕工程'}（{len(lines)} 条字幕）" + (f"　费用：{cost}" if cost else ""))
         self.progress.setValue(100)
         self.status.setText("完成")
         self.open_folder_button.setEnabled(bool(self._saved_path))
@@ -364,6 +417,18 @@ class VideoPage(QWidget):
                 os.startfile(str(doc))   # 用系统默认程序（记事本）打开
             except OSError as e:
                 self.preview.append(f"<span style='color:#c33'>文档已保存，但自动打开失败：{_esc(str(e))}</span>")
+        proj_path = outputs.get("project")
+        if proj_path and self._last_media:
+            self._project = SubtitleProject(
+                media_path=str(self._last_media), lines=lines, source_language=self.cfg.source_language,
+                target_language=self.cfg.target_language, scene=self.scene.current_name(),
+                output_mode=self.output_mode.current(), subtitle_size=self.cfg.video_subtitle_size,
+                subtitle_margin_pct=self.cfg.video_subtitle_margin_pct,
+                style=SubtitleStyle.from_dict(self.cfg.subtitle_style).to_dict(),
+            )
+            self.edit_button.setEnabled(True)
+            if self.cfg.open_editor_after_run:
+                self._open_editor()
 
     def _on_failed(self, message: str) -> None:
         self.status.setText("失败")
@@ -377,6 +442,50 @@ class VideoPage(QWidget):
         self.preview.append("<span style='color:#888'>已取消。</span>")
         if self._lines:
             self.export_button.setEnabled(True)
+
+    # ---------------------------------------------------------------- 字幕编辑器
+    def _open_editor(self) -> None:
+        if self._project is None:
+            return
+        if self._editor is not None:
+            self._editor.close()
+        self._editor = SubtitleEditorWindow(self.cfg, self.store, self._project, self)
+        self._editor.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self._editor.destroyed.connect(lambda: setattr(self, "_editor", None))
+        self._editor.show()
+
+    def _open_style_editor(self) -> None:
+        """处理之前预设样式：用当前选的视频做画面（没选就是黑底），示例文字做字幕。"""
+        media = self.file_edit.text().strip().strip('"')
+        proj = SubtitleProject(media_path=media if media and Path(media).is_file() else "", lines=[],
+                               source_language=self.cfg.source_language, target_language=self.cfg.target_language,
+                               scene=self.scene.current_name(), output_mode=self.output_mode.current(),
+                               style=SubtitleStyle.from_dict(self.cfg.subtitle_style).to_dict())
+        if self._editor is not None:
+            self._editor.close()
+        self._editor = SubtitleEditorWindow(self.cfg, self.store, proj, style_only=True, parent=self)
+        self._editor.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self._editor.destroyed.connect(lambda: setattr(self, "_editor", None))
+        self._editor.show()
+
+    def _open_project(self) -> None:
+        start = str(self._last_media.parent) if self._last_media else ""
+        path, _ = QFileDialog.getOpenFileName(self, "打开字幕工程", start, f"字幕工程 (*{PROJECT_SUFFIX});;所有文件 (*)")
+        if not path:
+            return
+        try:
+            self._project = SubtitleProject.load(path)
+        except Exception as e:  # noqa: BLE001
+            QMessageBox.warning(self, "打开失败", friendly_message(e))
+            return
+        self._lines = self._project.lines
+        self._last_media = Path(self._project.media_path)
+        self._render_preview()
+        self.edit_button.setEnabled(True)
+        self.export_button.setEnabled(True)
+        self.result_label.setStyleSheet("color: #2a7;")
+        self.result_label.setText(f"已打开：{Path(path).name}（{len(self._lines)} 条字幕）")
+        self._open_editor()
 
     # ---------------------------------------------------------------- 导出
     def _export_as(self) -> None:
@@ -420,17 +529,11 @@ class VideoPage(QWidget):
         self._apply_output_kind()
         self._save()
 
-    def _save_subtitle_size(self) -> None:
-        self.cfg.video_subtitle_size = self.subtitle_size.currentData()
-        self._save()
-
     def _apply_output_kind(self) -> None:
         kinds = self.selected_kinds()
         burn = "video" in kinds
-        self.size_label.setEnabled(burn)
-        self.subtitle_size.setEnabled(burn)
         if burn:
-            text = "字幕烧进画面，发给别人直接能看；字号由这里控制。"
+            text = "字幕烧进画面，发给别人直接能看；字体、大小、颜色、位置在「字幕样式…」里设。"
         elif "doc" in kinds and "srt" not in kinds:
             text = "文档里原文一整段、译文一整段，不按句切开。"
         elif kinds:

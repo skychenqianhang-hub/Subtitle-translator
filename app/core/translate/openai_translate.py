@@ -41,6 +41,16 @@ class OpenAITranslator(Translator):
                 },
                 **extra,
             )
+            u = getattr(resp, "usage", None)
+            cached = 0
+            det = getattr(u, "prompt_tokens_details", None) if u else None
+            if det is not None:
+                cached = int(getattr(det, "cached_tokens", 0) or 0)
+            self.last_usage = {
+                "input": int(getattr(u, "prompt_tokens", 0) or 0),
+                "output": int(getattr(u, "completion_tokens", 0) or 0),
+                "cache_read": cached,
+            } if u else {}
             text = resp.choices[0].message.content or ""
             try:
                 return parse_translations(text, len(req.sentences))

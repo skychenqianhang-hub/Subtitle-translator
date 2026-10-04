@@ -48,11 +48,25 @@ def self_check(out_path: str) -> int:
         from app.ui.main_window import MainWindow  # noqa: F401
         return ""
 
+    def _media():
+        import os
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        from PySide6.QtCore import QUrl
+        from PySide6.QtWidgets import QApplication
+        from PySide6.QtMultimedia import QMediaFormat, QMediaPlayer  # noqa: F401
+        from PySide6.QtMultimediaWidgets import QGraphicsVideoItem  # noqa: F401
+        app = QApplication.instance() or QApplication([])
+        fmts = QMediaFormat().supportedFileFormats(QMediaFormat.ConversionMode.Decode)
+        if not fmts:
+            raise RuntimeError("播放器没有可用的解码器")
+        return f"可解码 {len(fmts)} 种格式"
+
     step("ctypes", _ctypes)
     step("音频与 VAD", _audio)
     step("ffmpeg", _ffmpeg)
     step("云端 SDK", _sdks)
     step("界面模块", _ui)
+    step("视频播放器", _media)
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n" + ("全部通过" if ok else "有失败项") + "\n")
     return 0 if ok else 1
