@@ -1,7 +1,7 @@
 """悬浮字幕窗：独立、置顶、可拖动、可调字号。显示原文 / 中文 / 双语由「输出内容」决定。"""
 from __future__ import annotations
 
-from PySide6.QtCore import QPoint, Qt, Signal
+from PySide6.QtCore import QPoint, Qt, QTimer, Signal
 from PySide6.QtGui import QHideEvent, QMouseEvent, QShowEvent
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
@@ -52,6 +52,11 @@ class OverlayWindow(QWidget):
         self.resize(900, 140)
         self._apply_font()
         self.set_mode(self.mode)
+        # 一段时间没有新字幕就清空（直播里对方不说话时不要一直挂着上一句）
+        self._hide_timer = QTimer(self)
+        self._hide_timer.setSingleShot(True)
+        self._hide_timer.timeout.connect(self.clear_subtitle)
+        self.auto_clear_seconds = 8.0
 
     # ---- 显示 ----
     def set_mode(self, mode: str) -> None:
@@ -66,6 +71,27 @@ class OverlayWindow(QWidget):
         self.source_label.setText(source)
         if not self.isVisible():
             self.show()
+        if self.auto_clear_seconds > 0:
+            self._hide_timer.start(int(self.auto_clear_seconds * 1000))
+
+    def show_pending(self, source: str) -> None:
+        """识别出来、还没翻译完：先把原文灰色显示出来（仅在显示原文的模式下）。"""
+        if self.mode == "target_only":
+            return
+        if self.mode == "source_only":
+            self.target_label.setText("")
+            self.source_label.setText(source)
+        else:
+            self.source_label.setText(source)
+            self.target_label.setText("…")
+        if not self.isVisible():
+            self.show()
+        if self.auto_clear_seconds > 0:
+            self._hide_timer.start(int(self.auto_clear_seconds * 1000))
+
+    def clear_subtitle(self) -> None:
+        self.target_label.setText("")
+        self.source_label.setText("")
 
     def show_demo(self) -> None:
         self.show_subtitle("这里会显示翻译后的中文字幕（示例）", "ここに音声認識された原文が表示されます（例）")

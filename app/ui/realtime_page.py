@@ -1,16 +1,35 @@
-"""实时翻译：直播 / 在线视频。抓取某个输出设备的声音，悬浮窗显示字幕。阶段 1 只搭界面。"""
+"""实时翻译：直播 / 在线视频。抓取某个输出设备的声音，实时识别翻译，悬浮窗显示字幕。"""
 from __future__ import annotations
 
-from PySide6.QtCore import Signal
+import threading
+from datetime import datetime
+from pathlib import Path
+
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import (
-    QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QPushButton, QSpinBox, QTextEdit, QVBoxLayout,
-    QWidget,
+    QComboBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QProgressBar,
+    QPushButton, QSpinBox, QTextEdit, QVBoxLayout, QWidget,
 )
 
 from app.config import Config, save_config
 from app.core.audio_devices import list_output_devices
+from app.core.errors import friendly_message
+from app.core.pipeline.live_pipeline import LiveCallbacks, LiveOptions, LiveSession
 from app.core.profiles.store import ProfileStore
-from app.ui.common import hint, not_implemented
+from app.core.subtitle.document import write_document
+from app.core.subtitle.models import SubtitleLine
+from app.core.subtitle.srt import fmt_time, write_srt
+from app.ui.common import hint
+
+
+class _Bridge(QObject):
+    """把后台线程的回调转成 Qt 信号（自动排队到界面线程）。"""
+    status = Signal(str)
+    log = Signal(str)
+    source = Signal(int, object)
+    translated = Signal(int, object)
+    error = Signal(str)
+    level = Signal(float)
 from app.ui.model_panel import ModelLanguagePanel
 from app.ui.output_mode import OutputModePicker
 from app.ui.overlay_window import OverlayWindow
@@ -26,6 +45,15 @@ class RealtimePage(QWidget):
         self.store = store
         self.overlay = overlay
         self._device_connected = False
+        self._session: LiveSession | None = None
+        self._bridge = _Bridge()
+        self._bridge.status.connect(self._on_status)
+        self._bridge.log.connect(self._on_log)
+        self._bridge.source.connect(self._on_source)
+        self._bridge.translated.connect(self._on_translated)
+        self._bridge.error.connect(self._on_error)
+        self._bridge.level.connect(self._on_level)
+        self._session_lines: list[SubtitleLine] = []
         layout = QVBoxLayout(self)
         layout.addWidget(hint("适用于直播和在线视频：抓取电脑正在播放的声音，实时识别并翻译，字幕显示在悬浮窗里。任何平台都能用。"))
 
@@ -73,15 +101,27 @@ class RealtimePage(QWidget):
         ctrl_row = QHBoxLayout()
         self.start_button = QPushButton("开始")
         self.start_button.setMinimumHeight(36)
-        self.start_button.clicked.connect(lambda: not_implemented(self, "实时字幕", "阶段 5"))
+        self.start_button.clicked.connect(self.start_session)
         self.stop_button = QPushButton("停止")
         self.stop_button.setMinimumHeight(36)
         self.stop_button.setEnabled(False)
+        self.stop_button.clicked.connect(self.stop_session)
         self.overlay_button = QPushButton("打开悬浮字幕窗")
         self.overlay_button.setMinimumHeight(36)
         self.overlay_button.clicked.connect(self._toggle_overlay)
         ctrl_row.addWidget(self.start_button)
         ctrl_row.addWidget(self.stop_button)
+        ctrl_row.addSpacing(12)
+        self.status_label = QLabel("未开始")
+        self.status_label.setStyleSheet("color: #555;")
+        ctrl_row.addWidget(self.status_label)
+        self.level = QProgressBar()
+        self.level.setRange(0, 100)
+        self.level.setTextVisible(False)
+        self.level.setFixedWidth(120)
+        self.level.setToolTip("抓到的声音大小。开始后如果一直是空的，说明选错了设备")
+        ctrl_row.addWidget(QLabel("音量"))
+        ctrl_row.addWidget(self.level)
         ctrl_row.addStretch(1)
         ctrl_row.addWidget(self.overlay_button)
         layout.addLayout(ctrl_row)
@@ -94,7 +134,8 @@ class RealtimePage(QWidget):
         save_row = QHBoxLayout()
         save_row.addStretch(1)
         self.save_button = QPushButton("保存本场字幕")
-        self.save_button.clicked.connect(lambda: not_implemented(self, "保存字幕记录", "阶段 5"))
+        self.save_button.clicked.connect(self.save_session)
+        self.save_button.setEnabled(False)
         save_row.addWidget(self.save_button)
         layout.addLayout(save_row)
 
@@ -156,6 +197,146 @@ class RealtimePage(QWidget):
         except OSError:
             pass
 
+    # ---- 实时会话 ----
+    def start_session(self) -> None:
+        if self._session is not None:
+            return
+        mode = self.output_mode.current()
+        if not self.cfg.has_openai_key():
+            QMessageBox.warning(self, "缺少 API Key", "还没有填 OpenAI 的 API Key（语音识别需要）。\n请点右上角齿轮填写。")
+            return
+        if mode != "source_only" and self.cfg.translate_provider == "anthropic" and not self.cfg.has_anthropic_key():
+            QMessageBox.warning(self, "缺少 API Key", "翻译服务选的是 Claude，但还没有填 Anthropic 的 API Key。\n请填写，或把翻译服务换成 GPT。")
+            return
+        try:
+            from app.core.asr.registry import create_transcriber
+            from app.core.translate.registry import create_translator
+            prof = self.store.resolve(self.scene.current_name())
+            transcriber = create_transcriber(self.cfg, model=prof.asr_model, source_language=self.cfg.source_language)
+            translator = None if mode == "source_only" else create_translator(self.cfg, prof.translate_provider, prof.translate_model)
+        except Exception as e:  # noqa: BLE001
+            QMessageBox.critical(self, "无法开始", friendly_message(e))
+            return
+        opts = LiveOptions(
+            device_index=self.device.currentData() if self.device.currentData() not in (None, -1) else None,
+            max_segment_seconds=float(self.delay.value()),
+            output_mode=mode, source_language=self.cfg.source_language, target_language=self.cfg.target_language,
+            asr_prompt=", ".join(prof.asr_prompt), glossary=prof.glossary, corrections=prof.corrections,
+            style=prof.style, scene=prof.display_name,
+        )
+        cbs = LiveCallbacks(
+            on_status=self._bridge.status.emit, on_log=self._bridge.log.emit,
+            on_source=self._bridge.source.emit, on_translated=self._bridge.translated.emit,
+            on_error=self._bridge.error.emit, on_level=self._bridge.level.emit,
+        )
+        self._session = self._make_session(transcriber, translator, opts, cbs)
+        self._session_lines = []
+        self.log.clear()
+        try:
+            self._session.start()
+        except Exception as e:  # noqa: BLE001
+            self._session = None
+            QMessageBox.critical(self, "无法开始", friendly_message(e))
+            return
+        self.overlay.set_mode(mode)
+        self.overlay.clear_subtitle()
+        if not self.overlay.isVisible():
+            self.overlay.show_demo()
+            self.overlay.clear_subtitle()
+        self._set_running(True)
+
+    def _make_session(self, transcriber, translator, opts, cbs) -> LiveSession:
+        return LiveSession(self.cfg, transcriber, translator, opts, cbs)
+
+    def stop_session(self) -> None:
+        if self._session is None:
+            return
+        self.status_label.setText("正在停止，等最后几句处理完……")
+        self.stop_button.setEnabled(False)
+        session = self._session
+
+        def _do_stop():
+            session.stop()
+            self._bridge.status.emit("__stopped__")
+
+        threading.Thread(target=_do_stop, name="live-stop", daemon=True).start()
+
+    def _set_running(self, running: bool) -> None:
+        self.start_button.setEnabled(not running)
+        self.stop_button.setEnabled(running)
+        self.device.setEnabled(not running)
+        self.refresh_button.setEnabled(not running)
+        self.delay.setEnabled(not running)
+        self.model_panel.setEnabled(not running)
+        self.scene.setEnabled(not running)
+        self.output_mode.setEnabled(not running)
+        if not running:
+            self.level.setValue(0)
+
+    def is_running(self) -> bool:
+        return self._session is not None
+
+    # ---- 回调（已在界面线程）----
+    def _on_status(self, text: str) -> None:
+        if text == "__stopped__":
+            self._session_lines = list(self._session.lines) if self._session else []
+            self._session = None
+            self._set_running(False)
+            self.status_label.setText("已停止")
+            self.save_button.setEnabled(bool(self._session_lines))
+            return
+        self.status_label.setText(text)
+
+    def _on_log(self, text: str) -> None:
+        self.log.append(f"<span style='color:#888'>{_esc(text)}</span>")
+
+    def _on_source(self, idx: int, line: SubtitleLine) -> None:
+        self.overlay.show_pending(line.source)
+        self.log.append(f"<span style='color:#888'>[{fmt_time(line.start)[:8]}]</span> {_esc(line.source)}")
+        self.log.verticalScrollBar().setValue(self.log.verticalScrollBar().maximum())
+
+    def _on_translated(self, idx: int, line: SubtitleLine) -> None:
+        mode = self.output_mode.current()
+        if mode == "source_only":
+            self.overlay.show_subtitle("", line.source)
+        else:
+            self.overlay.show_subtitle(line.target or line.source, line.source if mode == "bilingual" else "")
+        if line.target:
+            self.log.append(f"&nbsp;&nbsp;&nbsp;&nbsp;<b>{_esc(line.target)}</b>")
+            self.log.verticalScrollBar().setValue(self.log.verticalScrollBar().maximum())
+
+    def _on_error(self, text: str) -> None:
+        self.log.append(f"<span style='color:#c33'>{_esc(text)}</span>")
+
+    def _on_level(self, v: float) -> None:
+        self.level.setValue(int(v * 100))
+
+    # ---- 保存本场 ----
+    def save_session(self) -> None:
+        lines = self._session_lines or (list(self._session.lines) if self._session else [])
+        if not lines:
+            QMessageBox.information(self, "没有内容", "这场还没有识别到任何字幕。")
+            return
+        stamp = datetime.now().strftime("%Y-%m-%d %H%M")
+        base = self.cfg.effective_download_dir() / "直播记录"
+        try:
+            base.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            base = Path.home()
+        default = base / f"直播字幕 {stamp}.srt"
+        path, _ = QFileDialog.getSaveFileName(self, "保存本场字幕", str(default), "SRT 字幕 (*.srt)")
+        if not path:
+            return
+        mode = self.output_mode.current()
+        try:
+            write_srt(path, lines, mode)
+            doc = Path(path).with_suffix(".txt")
+            write_document(doc, lines, mode, title=f"直播字幕 {stamp}")
+        except OSError as e:
+            QMessageBox.critical(self, "保存失败", str(e))
+            return
+        self.log.append(f"<span style='color:#2a7'>已保存：{_esc(path)} 和同名 .txt 文档</span>")
+
     # ---- 悬浮窗 ----
     def _toggle_overlay(self) -> None:
         if self.overlay.isVisible():
@@ -165,3 +346,7 @@ class RealtimePage(QWidget):
 
     def _sync_overlay_button(self) -> None:
         self.overlay_button.setText("关闭悬浮字幕窗" if self.overlay.isVisible() else "打开悬浮字幕窗")
+
+
+def _esc(s: str) -> str:
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

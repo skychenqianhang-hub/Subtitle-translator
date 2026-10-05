@@ -188,3 +188,123 @@ def detect_chunks(samples: np.ndarray, vad: SileroVad | None = None, **kw) -> tu
     probs = vad.speech_probabilities(samples)
     regions = find_speech(probs, total_seconds=len(samples) / SAMPLE_RATE)
     return regions, make_chunks(regions, **kw)
+
+
+class StreamingVad:
+    """逐帧版 Silero：状态跨帧保留，给实时抓取用。每次喂 512 个采样点（32 毫秒）。"""
+
+    def __init__(self, vad: SileroVad | None = None) -> None:
+        self.vad = vad or SileroVad()
+        self.reset()
+
+    def reset(self) -> None:
+        self.state = np.zeros((2, 1, 128), dtype=np.float32)
+        self.context = np.zeros(CONTEXT, dtype=np.float32)
+        self._sr = np.array(SAMPLE_RATE, dtype=np.int64)
+
+    def process(self, frame: np.ndarray) -> float:
+        if len(frame) < WINDOW:
+            frame = np.pad(frame, (0, WINDOW - len(frame)))
+        x = np.concatenate([self.context, frame[:WINDOW]]).astype(np.float32)[None, :]
+        out, self.state = self.vad.session.run(None, {"input": x, "state": self.state, "sr": self._sr})
+        self.context = frame[:WINDOW][-CONTEXT:]
+        return float(out[0, 0])
+
+
+@dataclass
+class LiveSegment:
+    start: float          # 秒，相对会话开始
+    end: float
+    samples: np.ndarray   # 16kHz float32
+
+
+class Segmenter:
+    """实时切段：检测到说话就开始攒，停顿够长或攒够最长时长就切出一段。
+
+    - threshold / neg：开始 / 结束说话的概率门槛
+    - min_silence：停顿多久算一句结束
+    - max_len：一直不停顿时最多攒多少秒（对应界面上的「翻译延迟」）
+    - pre_roll：切段时往前多带一点，避免吃掉第一个字
+    """
+
+    def __init__(self, vad: StreamingVad | None = None, threshold: float = 0.5, neg: float = 0.35,
+                 min_silence: float = 0.6, max_len: float = 6.0, min_speech: float = 0.3, pre_roll: float = 0.4) -> None:
+        self.vad = vad or StreamingVad()
+        self.threshold, self.neg = threshold, neg
+        self.min_silence, self.max_len, self.min_speech, self.pre_roll = min_silence, max_len, min_speech, pre_roll
+        self._pending = np.zeros(0, dtype=np.float32)
+        self._frames_seen = 0
+        self._in_speech = False
+        self._buf: list[np.ndarray] = []
+        self._buf_start = 0.0
+        self._silence_frames = 0
+        self._speech_frames = 0
+        self._ring: list[np.ndarray] = []   # 最近几帧，用作 pre_roll
+        self._ring_max = max(1, int(pre_roll * SAMPLE_RATE / WINDOW))
+
+    @property
+    def now(self) -> float:
+        return self._frames_seen * WINDOW / SAMPLE_RATE
+
+    def feed(self, samples: np.ndarray) -> list[LiveSegment]:
+        """喂任意长度的音频，返回这次切出来的段（可能为空）。"""
+        out: list[LiveSegment] = []
+        data = np.concatenate([self._pending, samples.astype(np.float32, copy=False)])
+        n = len(data) // WINDOW
+        for i in range(n):
+            frame = data[i * WINDOW:(i + 1) * WINDOW]
+            seg = self._process_frame(frame)
+            if seg is not None:
+                out.append(seg)
+        self._pending = data[n * WINDOW:]
+        return out
+
+    def _process_frame(self, frame: np.ndarray) -> LiveSegment | None:
+        prob = self.vad.process(frame)
+        self._frames_seen += 1
+        t = self.now
+        self._ring.append(frame)
+        if len(self._ring) > self._ring_max:
+            self._ring.pop(0)
+        if not self._in_speech:
+            if prob >= self.threshold:
+                self._in_speech = True
+                self._buf = list(self._ring)
+                self._buf_start = t - len(self._ring) * WINDOW / SAMPLE_RATE
+                self._silence_frames = 0
+                self._speech_frames = 1
+            return None
+        self._buf.append(frame)
+        if prob >= self.threshold:
+            self._speech_frames += 1
+            self._silence_frames = 0
+        elif prob < self.neg:
+            self._silence_frames += 1
+        duration = t - self._buf_start
+        silence = self._silence_frames * WINDOW / SAMPLE_RATE
+        if silence >= self.min_silence or duration >= self.max_len:
+            return self._close(t, trim_silence=silence >= self.min_silence)
+        return None
+
+    def _close(self, t: float, trim_silence: bool) -> LiveSegment | None:
+        buf = self._buf
+        self._buf = []
+        self._in_speech = False
+        speech_sec = self._speech_frames * WINDOW / SAMPLE_RATE
+        start = self._buf_start
+        end = t
+        if trim_silence:
+            keep = max(1, len(buf) - self._silence_frames + int(0.15 * SAMPLE_RATE / WINDOW))
+            buf = buf[:keep]
+            end = start + len(buf) * WINDOW / SAMPLE_RATE
+        self._silence_frames = 0
+        self._speech_frames = 0
+        if speech_sec < self.min_speech or not buf:
+            return None
+        return LiveSegment(start, end, np.concatenate(buf))
+
+    def flush(self) -> LiveSegment | None:
+        """停止时把正在攒的半句吐出来。"""
+        if self._in_speech and self._buf:
+            return self._close(self.now, trim_silence=False)
+        return None
