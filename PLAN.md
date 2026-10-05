@@ -90,7 +90,7 @@ style: "电竞解说风格，简短口语化，使用中文玩家常用说法"
 - 界面：PySide6（Qt）
 - 识别：`openai` 官方 SDK
 - 翻译：`anthropic`、`openai` 官方 SDK
-- 音视频处理：ffmpeg（若用户电脑没有，协助用 winget 安装）
+- 音视频处理：ffmpeg（打包用精简版 Gyan.FFmpeg.Essentials；开发电脑上两个版本都装着也没关系）
 - 下载在线视频：yt-dlp
 - 语音活动检测（切段、过滤静音）：Silero VAD
 - 直播抓电脑声音：WASAPI loopback（例如 `pyaudiowpatch` 或 `soundcard`）
@@ -270,7 +270,7 @@ SubTranslator/
 - [x] 阶段 0（2026-09-24）：conda 环境 `subtranslator`（Python 3.11.16）已建立，依赖已装；ffmpeg 9.0.2 通过 winget 安装；git 仓库已初始化；`run.bat` 可启动空白窗口。
   - 备注：这台电脑上 `conda` 命令本身报错「Unable to create process」，改用 `C:\Users\Sky Chen\anaconda3\python.exe -m conda ...` 即可。
   - 备注：`app/tools.py` 负责查找 ffmpeg（先查打包目录 `_internalin`，再查 PATH，再查 winget 安装目录），后续阶段统一用它。
-  - 备注：独立客户端由 `build.bat` 打包，成品约 550MB，其中 ffmpeg full 版占 430MB；以后可换成 essentials 版缩小体积。
+  - 备注：独立客户端由 `build.bat` 打包。2026-10-05 瘦身：658MB → 285MB。做法：打包改用精简版 ffmpeg（`winget install Gyan.FFmpeg.Essentials`，`tools.find_ffmpeg_for_bundle()` 优先选它，98MB，含 libx264 / libass）；不再带 ffprobe，时长和音轨改用 `ffmpeg -i` 的输出解析；spec 里剔除没用到的 Qt 部件（opengl32sw、Quick、Qml、Pdf）。`--check` 自检现在会实际编码一段 H.264、确认有 ass 滤镜、并用播放器加载一段视频。
 - [x] 阶段 1（2026-09-24）：软件骨架。按第 5 节：顶部「实时翻译 / 视频翻译」模式切换 + 右上角齿轮设置（API Key、场景管理两个标签页）；两页都有「语言与模型」面板（原文语言、翻译至、识别 / 翻译模型，两页同步）；实时页有板块/子板块场景选择、输出设备列表（WASAPI loopback，`app/core/audio_devices.py`）、翻译延迟秒数；设置页保存 API Key 到 `%APPDATA%\SubTranslator\config.json`，重启后回填；悬浮字幕窗可打开/关闭/拖动/调字号；两页都有「输出内容」三选一（双语 / 仅中文 / 仅原文）并各自记住；未完成功能点击提示「开发中」并标明计划阶段。自检脚本 `tests/test_skeleton.py`。
   - 备注：`app/config.py` 里的 Config 是全局设置的唯一来源，新增设置项直接加字段即可（读取时会忽略未知字段）。
 - [x] 阶段 2（2026-10-03）：视频翻译最简版。本地文件 → ffmpeg 抽音频（`app/core/audio/extract.py`）→ Silero VAD 切块（`app/core/audio/vad.py`，ONNX 模型随程序打包，不依赖 torch）→ OpenAI 识别（`app/core/asr/openai_asr.py`）→ 整句合并 / 长句拆分（`app/core/subtitle/sentences.py`）→ 分批翻译（Claude `anthropic_translate.py`、GPT `openai_translate.py`，共用 `prompt.py`，结构化输出保证句数一致）→ SRT（`app/core/subtitle/srt.py`，默认存视频旁边同名 .srt，仅原文为 .orig.srt）。流程在 `app/core/pipeline/video_pipeline.py`，界面在后台线程跑，有进度、实时预览、取消、中文报错（`app/core/errors.py`）。自检 `tests/test_pipeline.py`（假适配器，不花钱）。

@@ -67,6 +67,19 @@ def find_ffmpeg() -> str | None:
     return find_tool("ffmpeg")
 
 
+def find_ffmpeg_for_bundle() -> str | None:
+    """打包时用哪个 ffmpeg：优先精简版（Gyan.FFmpeg.Essentials，约 90MB），没有再用别的。
+    精简版包含我们用到的全部功能：解码常见格式、libx264 编码、libass 烧字幕。"""
+    local = os.environ.get("LOCALAPPDATA")
+    if local:
+        packages = Path(local) / "Microsoft" / "WinGet" / "Packages"
+        if packages.exists():
+            for c in sorted(packages.glob("Gyan.FFmpeg.Essentials*/**/bin/ffmpeg.exe")):
+                if c.is_file():
+                    return str(c)
+    return find_ffmpeg()
+
+
 def find_ffprobe() -> str | None:
     return find_tool("ffprobe")
 

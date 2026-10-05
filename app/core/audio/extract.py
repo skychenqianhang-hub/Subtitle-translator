@@ -1,14 +1,14 @@
 """用 ffmpeg 从视频 / 音频文件里抽出 16kHz 单声道音频。"""
 from __future__ import annotations
 
-import json
+import re
 import subprocess
 from pathlib import Path
 
 import numpy as np
 
 from app.core.errors import UserFacingError
-from app.tools import find_ffmpeg, find_ffprobe
+from app.tools import find_ffmpeg
 
 SAMPLE_RATE = 16000
 
@@ -22,26 +22,35 @@ def _need(tool: str | None, name: str) -> str:
     return tool
 
 
+_DURATION_RE = re.compile(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)")
+_AUDIO_RE = re.compile(r"Stream #\d+:\d+.*?: Audio:")
+
+
+def _probe(path: str | Path) -> str:
+    """用 ffmpeg -i 读文件信息（输出在 stderr）。不需要单独的 ffprobe。"""
+    ffmpeg = _need(find_ffmpeg(), "ffmpeg")
+    try:
+        out = subprocess.run([ffmpeg, "-hide_banner", "-nostdin", "-i", str(path)], capture_output=True,
+                             creationflags=_NO_WINDOW, timeout=60)
+        return out.stderr.decode("utf-8", "ignore")
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 def probe_duration(path: str | Path) -> float:
     """返回媒体时长（秒）。拿不到返回 0。"""
-    ffprobe = _need(find_ffprobe(), "ffprobe")
-    cmd = [ffprobe, "-v", "error", "-show_entries", "format=duration", "-of", "json", str(path)]
-    try:
-        out = subprocess.run(cmd, capture_output=True, text=True, creationflags=_NO_WINDOW, timeout=60)
-        return float(json.loads(out.stdout)["format"]["duration"])
-    except Exception:
+    m = _DURATION_RE.search(_probe(path))
+    if not m:
         return 0.0
+    h, mi, sec = m.groups()
+    return int(h) * 3600 + int(mi) * 60 + float(sec)
 
 
 def has_audio_stream(path: str | Path) -> bool:
-    ffprobe = _need(find_ffprobe(), "ffprobe")
-    cmd = [ffprobe, "-v", "error", "-select_streams", "a", "-show_entries", "stream=codec_type",
-           "-of", "json", str(path)]
-    try:
-        out = subprocess.run(cmd, capture_output=True, text=True, creationflags=_NO_WINDOW, timeout=60)
-        return bool(json.loads(out.stdout).get("streams"))
-    except Exception:
-        return True  # 探测失败就交给 ffmpeg 去试
+    info = _probe(path)
+    if not info:
+        return True   # 探测失败就交给后面的解码去试
+    return bool(_AUDIO_RE.search(info))
 
 
 def extract_pcm(path: str | Path) -> np.ndarray:
