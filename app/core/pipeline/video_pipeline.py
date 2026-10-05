@@ -55,6 +55,7 @@ class VideoPipeline:
         log: LogCb = lambda s: None,
         on_lines: LinesCb = lambda lines: None,
         cancel: threading.Event | None = None,
+        detect_scene: Callable[[str], object] | None = None,
     ) -> None:
         self.cfg = cfg
         self.transcriber = transcriber
@@ -63,6 +64,9 @@ class VideoPipeline:
         self.log = log
         self.on_lines = on_lines
         self.cancel = cancel or threading.Event()
+        # 场景「自动」：识别完后把全文交给它，返回 EffectiveProfile（或 None 表示不变）
+        self.detect_scene = detect_scene
+        self.detected_scene = None
         self.cost = CostTracker(asr_model=transcriber.model, translate_model=translator.model if translator else "")
 
     def _check_cancel(self) -> None:
@@ -113,6 +117,20 @@ class VideoPipeline:
         self.log(f"识别完成，共 {len(segments)} 个片段")
         if not segments:
             raise UserFacingError("识别结果为空。请检查原文语言是否选对，或者视频里确实没有人说话。")
+
+        # ---- 场景自动判断（识别完才知道内容是什么）----
+        if self.detect_scene is not None:
+            try:
+                prof = self.detect_scene(" ".join(s.text for s in segments))
+            except Exception:  # noqa: BLE001
+                prof = None
+            if prof is not None:
+                self.detected_scene = prof
+                job.scene = prof.display_name
+                job.glossary = prof.glossary
+                job.corrections = prof.corrections
+                job.style = prof.style
+                self.log(f"自动判断场景：{prof.display_name}（术语 {len(prof.glossary)} 条，纠错 {len(prof.corrections)} 条）")
 
         # ---- 纠错 + 整句 ----
         if job.corrections:

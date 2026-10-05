@@ -9,7 +9,7 @@ from __future__ import annotations
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QPushButton, QWidget
 
-from app.core.profiles.store import ROOT_NAME, ProfileStore
+from app.core.profiles.store import AUTO_LABEL, AUTO_SCENE, ROOT_NAME, ProfileStore
 
 _NONE = ""
 
@@ -47,6 +47,7 @@ class ScenePicker(QWidget):
         current = keep if keep is not None else self.current_name()
         self._loading = True
         self.section.clear()
+        self.section.addItem(AUTO_LABEL, AUTO_SCENE)
         self.section.addItem(ROOT_NAME, ROOT_NAME)
         for p in self.store.children(ROOT_NAME):
             self.section.addItem(p.name, p.name)
@@ -57,7 +58,7 @@ class ScenePicker(QWidget):
         self._loading = True
         self.sub.clear()
         self.sub.addItem("（不选）", _NONE)
-        if section != ROOT_NAME:
+        if section not in (ROOT_NAME, AUTO_SCENE):
             for d in self.store.descendants(section):
                 path = self.store.path(d.name)
                 # 去掉「通用 → 板块」前缀，只显示板块下面的层级
@@ -86,7 +87,17 @@ class ScenePicker(QWidget):
     def current_display(self) -> str:
         return self.store.display_name(self.current_name())
 
+    def is_auto(self) -> bool:
+        return self.section.currentData() == AUTO_SCENE
+
     def set_current(self, name: str) -> None:
+        if name == AUTO_SCENE:
+            self._loading = True
+            self.section.setCurrentIndex(max(0, self.section.findData(AUTO_SCENE)))
+            self._loading = False
+            self._fill_sub(AUTO_SCENE)
+            self.changed.emit(AUTO_SCENE)
+            return
         if name not in self.store.profiles:
             name = ROOT_NAME
         path = self.store.path(name)          # ["通用", 板块, ..., name]

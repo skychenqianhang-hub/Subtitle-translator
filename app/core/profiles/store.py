@@ -17,6 +17,8 @@ from app.config import config_dir
 from app.core.errors import UserFacingError
 
 ROOT_NAME = "通用"
+AUTO_SCENE = "__auto__"                 # 场景选「自动」时保存的值
+AUTO_LABEL = "自动（按内容判断）"
 
 
 @dataclass
@@ -186,6 +188,8 @@ class ProfileStore:
         return list(reversed(out))
 
     def display_name(self, name: str) -> str:
+        if name == AUTO_SCENE:
+            return AUTO_LABEL
         path = self.path(name)
         return " → ".join(path[1:]) if len(path) > 1 else (path[0] if path else name)
 
@@ -242,6 +246,8 @@ class ProfileStore:
 
     # ------------------------------------------------------------ 继承合并
     def resolve(self, name: str) -> EffectiveProfile:
+        if name == AUTO_SCENE:
+            name = ROOT_NAME               # 自动模式一开始先用「通用」，判断出来再换
         path = self.path(name) or [ROOT_NAME]
         asr_model = translate_provider = translate_model = None
         style = ""

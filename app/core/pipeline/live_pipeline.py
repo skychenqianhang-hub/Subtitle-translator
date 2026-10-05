@@ -44,6 +44,7 @@ class LiveCallbacks:
     on_translated: Callable[[int, SubtitleLine], None] = lambda i, ln: None  # 翻译完成
     on_error: Callable[[str], None] = lambda s: None
     on_level: Callable[[float], None] = lambda v: None                       # 音量（0-1），给界面画电平
+    on_scene: Callable[[str, str], None] = lambda name, display: None        # 自动模式下场景切换了
 
 
 @dataclass
@@ -60,6 +61,10 @@ class LiveOptions:
     scene: str = ""
     context_size: int = 3
     hold_half_sentence_seconds: float = 2.5   # 半句话最多等多久再翻译
+    auto_scene: bool = False                  # 场景选了「自动」
+    scene_name: str = "通用"                  # 当前场景（自动模式下会变）
+    auto_window_lines: int = 14               # 自动判断时看最近多少句
+    auto_min_interval: float = 20.0           # 两次切换至少隔多少秒
 
 
 class SentenceBuffer:
@@ -113,8 +118,14 @@ class SentenceBuffer:
 
 class LiveSession:
     def __init__(self, cfg: Config, transcriber: Transcriber, translator: Translator | None,
-                 options: LiveOptions, callbacks: LiveCallbacks, capture_factory=None) -> None:
+                 options: LiveOptions, callbacks: LiveCallbacks, capture_factory=None,
+                 scene_detector=None, scene_resolver=None) -> None:
+        """scene_detector / scene_resolver：自动场景用。resolver(name) 返回 EffectiveProfile。"""
         self.cfg = cfg
+        self.scene_detector = scene_detector
+        self.scene_resolver = scene_resolver
+        self._recent_sources: list[str] = []
+        self._last_scene_switch = 0.0
         self.transcriber = transcriber
         self.translator = translator
         self.opt = options
@@ -242,6 +253,7 @@ class LiveSession:
                     continue
                 self.lines.append(line)
                 self.cb.on_source(len(self.lines) - 1, line)
+                self._maybe_switch_scene(line.source)
                 for ready in buffer.push(line, time.time()):
                     self._translate_line(ready)
             held = buffer.poll(time.time())
@@ -252,6 +264,36 @@ class LiveSession:
                 if last is not None:
                     self._translate_line(last)
                 break
+
+    def _maybe_switch_scene(self, new_text: str) -> None:
+        """自动场景：看最近若干句里哪个场景的特征词最多，证据充分就切换。"""
+        if not (self.opt.auto_scene and self.scene_detector and self.scene_resolver):
+            return
+        self._recent_sources.append(new_text)
+        if len(self._recent_sources) > self.opt.auto_window_lines:
+            self._recent_sources.pop(0)
+        now = time.time()
+        if now - self._last_scene_switch < self.opt.auto_min_interval and self._last_scene_switch > 0:
+            return
+        try:
+            chosen = self.scene_detector.choose(" ".join(self._recent_sources), self.opt.scene_name)
+        except Exception:  # noqa: BLE001
+            return
+        if chosen == self.opt.scene_name:
+            return
+        try:
+            prof = self.scene_resolver(chosen)
+        except Exception:  # noqa: BLE001
+            return
+        self.opt.scene_name = chosen
+        self.opt.scene = prof.display_name
+        self.opt.glossary = prof.glossary
+        self.opt.corrections = prof.corrections
+        self.opt.asr_prompt = ", ".join(prof.asr_prompt)
+        self.opt.style = prof.style
+        self._last_scene_switch = now
+        self.cb.on_scene(chosen, prof.display_name)
+        self.cb.on_log(f"场景自动切换为：{prof.display_name}（术语 {len(prof.glossary)} 条）")
 
     def _translate_line(self, line: SubtitleLine) -> None:
         if self.translator is None or self.opt.output_mode == "source_only":

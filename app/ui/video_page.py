@@ -13,7 +13,8 @@ from PySide6.QtWidgets import (
 from app.config import OUTPUT_KINDS, Config, save_config
 from app.core.download import download_video, looks_like_url
 from app.core.errors import Cancelled, friendly_message
-from app.core.profiles.store import EffectiveProfile, ProfileStore
+from app.core.profiles.detect import SceneDetector
+from app.core.profiles.store import AUTO_SCENE, EffectiveProfile, ProfileStore
 from app.core.subtitle.style import SubtitleStyle
 from app.core.subtitle.burn import burn_subtitles, default_video_path
 from app.core.subtitle.document import default_document_path, write_document
@@ -40,9 +41,12 @@ class _Worker(QObject):
     media_resolved = Signal(object)     # 网址下载完成后告诉界面实际的文件路径
 
     def __init__(self, cfg: Config, media_path: Path | None, output_mode: str, output_kinds: list[str],
-                 subtitle_size: str, profile: EffectiveProfile, url: str = "") -> None:
+                 subtitle_size: str, profile: EffectiveProfile, url: str = "", store: ProfileStore | None = None,
+                 auto_scene: bool = False) -> None:
         super().__init__()
         self.cfg = cfg
+        self.store = store
+        self.auto_scene = auto_scene
         self.url = url
         self.media_path = media_path
         self.output_mode = output_mode
@@ -76,10 +80,20 @@ class _Worker(QObject):
                 self.log.emit(f"翻译模型：{translator.model}" + ("（场景指定）" if prof.translate_model else ""))
             if prof.glossary or prof.corrections or prof.asr_prompt:
                 self.log.emit(f"术语 {len(prof.glossary)} 条，纠错 {len(prof.corrections)} 条，识别提示词 {len(prof.asr_prompt)} 个")
+            detect = None
+            if self.auto_scene and self.store is not None:
+                detector = SceneDetector(self.store)
+                store = self.store
+
+                def detect(text: str):
+                    name = detector.choose(text, "通用")
+                    return store.resolve(name)
+                self.log.emit("场景：自动（识别完成后按内容判断）")
             pipeline = VideoPipeline(
                 self.cfg, transcriber, translator,
                 progress=self.progress.emit, log=self.log.emit,
                 on_lines=lambda ls: self.lines.emit(list(ls)), cancel=self.cancel,
+                detect_scene=detect,
             )
             job = VideoJob(
                 media_path=self.media_path,
@@ -93,6 +107,8 @@ class _Worker(QObject):
                 style=prof.style,
             )
             result = pipeline.run(job)
+            if pipeline.detected_scene is not None:
+                prof = pipeline.detected_scene
             self.log.emit("本次费用：" + pipeline.cost.summary())
             outputs: dict[str, Path] = {}
             outputs["cost"] = pipeline.cost.summary()
@@ -317,7 +333,8 @@ class VideoPage(QWidget):
         self._set_running(True)
 
         self._worker = _Worker(self.cfg, path, mode, self.selected_kinds(),
-                               self.cfg.video_subtitle_size, self.store.resolve(self.scene.current_name()), url=url)
+                               self.cfg.video_subtitle_size, self.store.resolve(self.scene.current_name()), url=url,
+                               store=self.store, auto_scene=self.scene.current_name() == AUTO_SCENE)
         self._worker.media_resolved.connect(self._on_media_resolved)
         self._thread = QThread(self)
         self._worker.moveToThread(self._thread)

@@ -15,7 +15,8 @@ from app.config import Config, save_config
 from app.core.audio_devices import list_output_devices
 from app.core.errors import friendly_message
 from app.core.pipeline.live_pipeline import LiveCallbacks, LiveOptions, LiveSession
-from app.core.profiles.store import ProfileStore
+from app.core.profiles.detect import SceneDetector
+from app.core.profiles.store import AUTO_SCENE, ProfileStore
 from app.core.subtitle.document import write_document
 from app.core.subtitle.models import SubtitleLine
 from app.core.subtitle.srt import fmt_time, write_srt
@@ -30,6 +31,7 @@ class _Bridge(QObject):
     translated = Signal(int, object)
     error = Signal(str)
     level = Signal(float)
+    scene = Signal(str, str)
 from app.ui.model_panel import ModelLanguagePanel
 from app.ui.output_mode import OutputModePicker
 from app.ui.overlay_window import OverlayWindow
@@ -53,6 +55,7 @@ class RealtimePage(QWidget):
         self._bridge.translated.connect(self._on_translated)
         self._bridge.error.connect(self._on_error)
         self._bridge.level.connect(self._on_level)
+        self._bridge.scene.connect(self._on_scene_changed)
         self._session_lines: list[SubtitleLine] = []
         layout = QVBoxLayout(self)
         layout.addWidget(hint("适用于直播和在线视频：抓取电脑正在播放的声音，实时识别并翻译，字幕显示在悬浮窗里。任何平台都能用。"))
@@ -71,6 +74,9 @@ class RealtimePage(QWidget):
         self.scene.changed.connect(self._save_scene)
         self.scene.manage_requested.connect(self.manage_scenes_requested.emit)
         form.addRow("内容场景", self.scene)
+        self.scene_now = QLabel("")
+        self.scene_now.setStyleSheet("color: #2f6fd6;")
+        form.addRow("", self.scene_now)
 
         dev_row = QHBoxLayout()
         self.device = QComboBox()
@@ -211,6 +217,7 @@ class RealtimePage(QWidget):
         try:
             from app.core.asr.registry import create_transcriber
             from app.core.translate.registry import create_translator
+            auto = self.scene.current_name() == AUTO_SCENE
             prof = self.store.resolve(self.scene.current_name())
             transcriber = create_transcriber(self.cfg, model=prof.asr_model, source_language=self.cfg.source_language)
             translator = None if mode == "source_only" else create_translator(self.cfg, prof.translate_provider, prof.translate_model)
@@ -223,13 +230,16 @@ class RealtimePage(QWidget):
             output_mode=mode, source_language=self.cfg.source_language, target_language=self.cfg.target_language,
             asr_prompt=", ".join(prof.asr_prompt), glossary=prof.glossary, corrections=prof.corrections,
             style=prof.style, scene=prof.display_name,
+            auto_scene=auto, scene_name=prof.name,
         )
         cbs = LiveCallbacks(
             on_status=self._bridge.status.emit, on_log=self._bridge.log.emit,
             on_source=self._bridge.source.emit, on_translated=self._bridge.translated.emit,
             on_error=self._bridge.error.emit, on_level=self._bridge.level.emit,
+            on_scene=self._bridge.scene.emit,
         )
         self._session = self._make_session(transcriber, translator, opts, cbs)
+        self.scene_now.setText("当前场景：通用（自动判断中）" if auto else "")
         self._session_lines = []
         self.log.clear()
         try:
@@ -246,7 +256,12 @@ class RealtimePage(QWidget):
         self._set_running(True)
 
     def _make_session(self, transcriber, translator, opts, cbs) -> LiveSession:
-        return LiveSession(self.cfg, transcriber, translator, opts, cbs)
+        detector = SceneDetector(self.store) if opts.auto_scene else None
+        return LiveSession(self.cfg, transcriber, translator, opts, cbs,
+                           scene_detector=detector, scene_resolver=self.store.resolve)
+
+    def _on_scene_changed(self, name: str, display: str) -> None:
+        self.scene_now.setText(f"当前场景：{display}（自动）")
 
     def stop_session(self) -> None:
         if self._session is None:
