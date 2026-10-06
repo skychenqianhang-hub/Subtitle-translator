@@ -6,6 +6,8 @@
 """
 from __future__ import annotations
 
+from app.i18n import tr
+
 import os
 import subprocess
 import threading
@@ -251,26 +253,26 @@ class StylePanel(QWidget):
         form = QFormLayout(self)
         form.setContentsMargins(6, 6, 6, 6)
 
-        self.visible = QCheckBox(f"显示{title}")
+        self.visible = QCheckBox(tr("显示{0}", title))
         self.visible.setChecked(True)
         form.addRow(self.visible)
 
         self.font = QFontComboBox()
-        form.addRow("字体", self.font)
+        form.addRow(tr("字体"), self.font)
         size_row = QHBoxLayout()
         self.size = QSpinBox()
         self.size.setRange(6, 80)
         self.size.setSuffix("")
         size_row.addWidget(self.size)
-        self.bold = QCheckBox("粗体")
-        self.italic = QCheckBox("斜体")
+        self.bold = QCheckBox(tr("粗体"))
+        self.italic = QCheckBox(tr("斜体"))
         size_row.addWidget(self.bold)
         size_row.addWidget(self.italic)
         size_row.addStretch(1)
-        form.addRow("字号", size_row)
+        form.addRow(tr("字号"), size_row)
 
         self.color = self._color_button()
-        form.addRow("文字颜色", self.color)
+        form.addRow(tr("文字颜色"), self.color)
 
         ol_row = QHBoxLayout()
         self.outline_color = self._color_button()
@@ -279,31 +281,31 @@ class StylePanel(QWidget):
         self.outline.setSingleStep(0.2)
         self.outline.setDecimals(1)
         ol_row.addWidget(self.outline_color)
-        ol_row.addWidget(QLabel("粗细"))
+        ol_row.addWidget(QLabel(tr("粗细")))
         ol_row.addWidget(self.outline)
-        form.addRow("描边", ol_row)
+        form.addRow(tr("描边"), ol_row)
 
         self.shadow = QDoubleSpinBox()
         self.shadow.setRange(0, 8)
         self.shadow.setSingleStep(0.2)
         self.shadow.setDecimals(1)
-        form.addRow("阴影", self.shadow)
+        form.addRow(tr("阴影"), self.shadow)
 
         bg_row = QHBoxLayout()
         self.back_color = self._color_button()
         self.back_alpha = QSlider(Qt.Orientation.Horizontal)
         self.back_alpha.setRange(0, 100)
-        self.back_alpha_label = QLabel("无")
+        self.back_alpha_label = QLabel(tr("无"))
         bg_row.addWidget(self.back_color)
-        bg_row.addWidget(QLabel("不透明度"))
+        bg_row.addWidget(QLabel(tr("不透明度")))
         bg_row.addWidget(self.back_alpha, 1)
         bg_row.addWidget(self.back_alpha_label)
-        form.addRow("底框", bg_row)
+        form.addRow(tr("底框"), bg_row)
 
         self.align = QComboBox()
-        for key, label in (("left", "左对齐"), ("center", "居中"), ("right", "右对齐")):
+        for key, label in (("left", tr("左对齐")), ("center", tr("居中")), ("right", tr("右对齐"))):
             self.align.addItem(label, key)
-        form.addRow("对齐", self.align)
+        form.addRow(tr("对齐"), self.align)
 
         pos_row = QHBoxLayout()
         self.x = QDoubleSpinBox()
@@ -314,12 +316,12 @@ class StylePanel(QWidget):
         self.y.setRange(0, 100)
         self.y.setDecimals(1)
         self.y.setSuffix(" %")
-        pos_row.addWidget(QLabel("横"))
+        pos_row.addWidget(QLabel(tr("横")))
         pos_row.addWidget(self.x)
-        pos_row.addWidget(QLabel("纵"))
+        pos_row.addWidget(QLabel(tr("纵")))
         pos_row.addWidget(self.y)
-        form.addRow("位置", pos_row)
-        form.addRow("", hint("位置也可以直接在画面上拖字幕块；在字幕块上滚动鼠标滚轮可以调字号。"))
+        form.addRow(tr("位置"), pos_row)
+        form.addRow("", hint(tr("位置也可以直接在画面上拖字幕块；在字幕块上滚动鼠标滚轮可以调字号。")))
 
         self.visible.toggled.connect(self._emit)
         self.font.currentFontChanged.connect(self._emit)
@@ -346,7 +348,7 @@ class StylePanel(QWidget):
         b.setText("")
 
     def _pick_color(self, b: QPushButton) -> None:
-        c = QColorDialog.getColor(QColor(b.property("hex") or "#FFFFFF"), self, "选择颜色")
+        c = QColorDialog.getColor(QColor(b.property("hex") or "#FFFFFF"), self, tr("选择颜色"))
         if c.isValid():
             self._paint_button(b, c.name().upper())
             self._emit()
@@ -365,7 +367,7 @@ class StylePanel(QWidget):
         self.shadow.setValue(st.shadow)
         self._paint_button(self.back_color, st.back_color)
         self.back_alpha.setValue(st.back_alpha)
-        self.back_alpha_label.setText("无" if st.back_alpha == 0 else f"{st.back_alpha}%")
+        self.back_alpha_label.setText(tr("无") if st.back_alpha == 0 else f"{st.back_alpha}%")
         self.align.setCurrentIndex(max(0, self.align.findData(st.align)))
         self.x.setValue(st.x_pct)
         self.y.setValue(st.y_pct)
@@ -386,7 +388,7 @@ class StylePanel(QWidget):
         st.shadow = round(self.shadow.value(), 2)
         st.back_color = self.back_color.property("hex") or "#000000"
         st.back_alpha = self.back_alpha.value()
-        self.back_alpha_label.setText("无" if st.back_alpha == 0 else f"{st.back_alpha}%")
+        self.back_alpha_label.setText(tr("无") if st.back_alpha == 0 else f"{st.back_alpha}%")
         st.align = self.align.currentData() or "center"
         st.x_pct = round(self.x.value(), 1)
         st.y_pct = round(self.y.value(), 1)
@@ -437,7 +439,7 @@ class SubtitleEditorWindow(QMainWindow):
         self._burn_worker: _BurnWorker | None = None
 
         media = Path(project.media_path) if project.media_path else None
-        self.setWindowTitle(("字幕样式 - " if style_only else "字幕编辑 - ") + (media.name if media else "未选择视频"))
+        self.setWindowTitle((tr("字幕样式 - ") if style_only else tr("字幕编辑 - ")) + (media.name if media else tr("未选择视频")))
         self.resize(1280, 860)
 
         central = QWidget()
@@ -478,7 +480,7 @@ class SubtitleEditorWindow(QMainWindow):
         self.play_button = QPushButton()
         self.play_button.setIcon(self.style_icon(QStyle.StandardPixmap.SP_MediaPlay))
         self.play_button.setFixedWidth(44)
-        self.play_button.setToolTip("播放 / 暂停（预览输出效果）")
+        self.play_button.setToolTip(tr("播放 / 暂停（预览输出效果）"))
         self.play_button.clicked.connect(self.toggle_play)
         ctrl.addWidget(self.play_button)
         self.time_label = QLabel("00:00:00 / 00:00:00")
@@ -495,28 +497,29 @@ class SubtitleEditorWindow(QMainWindow):
         self.volume.setFixedWidth(90)
         self.volume.valueChanged.connect(lambda v: self.audio.setVolume(v / 100))
         self.audio.setVolume(0.8)
-        ctrl.addWidget(QLabel("音量"))
+        ctrl.addWidget(QLabel(tr("音量")))
         ctrl.addWidget(self.volume)
         left_layout.addLayout(ctrl)
 
         disp = QHBoxLayout()
-        disp.addWidget(QLabel("显示"))
+        disp.addWidget(QLabel(tr("显示")))
         self.mode = QComboBox()
-        for key, label in OUTPUT_MODES.items():
-            self.mode.addItem(label.split("（")[0], key)
+        short_labels = {"bilingual": tr("原文 + 译文"), "target_only": tr("仅译文"), "source_only": tr("仅原文")}
+        for key in OUTPUT_MODES:
+            self.mode.addItem(short_labels.get(key, key), key)
         self.mode.setCurrentIndex(max(0, self.mode.findData(project.output_mode)))
         self.mode.currentIndexChanged.connect(self._on_mode_changed)
         disp.addWidget(self.mode)
         disp.addSpacing(12)
-        disp.addWidget(QLabel("预设"))
+        disp.addWidget(QLabel(tr("预设")))
         self.preset = QComboBox()
-        self.preset.addItem("（选择预设…）", "")
+        self.preset.addItem(tr("（选择预设…）"), "")
         for name in PRESETS:
-            self.preset.addItem(name, name)
+            self.preset.addItem(tr(name), name)
         self.preset.currentIndexChanged.connect(self._apply_preset)
         disp.addWidget(self.preset)
         disp.addStretch(1)
-        disp.addWidget(hint("在画面上直接拖字幕块、滚轮调字号；右边面板调字体和颜色。"))
+        disp.addWidget(hint(tr("在画面上直接拖字幕块、滚轮调字号；右边面板调字体和颜色。")))
         left_layout.addLayout(disp)
         top.addWidget(left)
 
@@ -525,14 +528,14 @@ class SubtitleEditorWindow(QMainWindow):
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(0, 0, 0, 0)
         self.tabs = QTabWidget()
-        self.panel_target = StylePanel("译文")
-        self.panel_source = StylePanel("原文")
-        self.tabs.addTab(self.panel_target, "译文样式")
-        self.tabs.addTab(self.panel_source, "原文样式")
+        self.panel_target = StylePanel(tr("译文"))
+        self.panel_source = StylePanel(tr("原文"))
+        self.tabs.addTab(self.panel_target, tr("译文样式"))
+        self.tabs.addTab(self.panel_source, tr("原文样式"))
         self.panel_target.changed.connect(lambda: self._on_panel_changed("target"))
         self.panel_source.changed.connect(lambda: self._on_panel_changed("source"))
         right_layout.addWidget(self.tabs, 1)
-        self.default_button = QPushButton("设为默认样式（以后的视频都用这套）")
+        self.default_button = QPushButton(tr("设为默认样式（以后的视频都用这套）"))
         self.default_button.clicked.connect(self._set_default_style)
         right_layout.addWidget(self.default_button)
         self.style_status = QLabel("")
@@ -547,7 +550,7 @@ class SubtitleEditorWindow(QMainWindow):
         bottom_layout = QVBoxLayout(bottom)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
         self.table = QTableWidget(0, 4)
-        self.table.setHorizontalHeaderLabels(["开始", "结束", "原文", "译文"])
+        self.table.setHorizontalHeaderLabels([tr("开始"), tr("结束"), tr("原文"), tr("译文")])
         hh = self.table.horizontalHeader()
         hh.setSectionResizeMode(self.COL_START, QHeaderView.ResizeMode.ResizeToContents)
         hh.setSectionResizeMode(self.COL_END, QHeaderView.ResizeMode.ResizeToContents)
@@ -559,18 +562,18 @@ class SubtitleEditorWindow(QMainWindow):
         self.table.cellChanged.connect(self._on_cell_changed)
         self.table.currentCellChanged.connect(self._on_row_selected)
         bottom_layout.addWidget(self.table, 1)
-        bottom_layout.addWidget(hint("单击一行：画面跳到那一句。双击「原文」或「译文」格子：修改文字。" +
-                                     ("" if style_only else "改完点右下角「保存修改」。")))
+        bottom_layout.addWidget(hint(tr("单击一行：画面跳到那一句。双击「原文」或「译文」格子：修改文字。") +
+                                     ("" if style_only else tr("改完点右下角「保存修改」。"))))
 
         act = QHBoxLayout()
-        self.glossary_button = QPushButton("把这行的词加进术语表…")
+        self.glossary_button = QPushButton(tr("把这行的词加进术语表…"))
         self.glossary_button.clicked.connect(self._add_to_glossary)
-        self.correction_button = QPushButton("加进纠错规则…")
+        self.correction_button = QPushButton(tr("加进纠错规则…"))
         self.correction_button.clicked.connect(self._add_correction)
         act.addWidget(self.glossary_button)
         act.addWidget(self.correction_button)
         act.addSpacing(20)
-        self.scene_label = QLabel(f"当前场景：{self.store.display_name(project.scene)}")
+        self.scene_label = QLabel(tr("当前场景：{0}", self.store.display_name(project.scene)))
         self.scene_label.setStyleSheet("color: #666;")
         act.addWidget(self.scene_label)
         act.addStretch(1)
@@ -580,21 +583,21 @@ class SubtitleEditorWindow(QMainWindow):
         bottom_layout.addLayout(act)
 
         out = QHBoxLayout()
-        self.export_srt_button = QPushButton("导出 SRT")
+        self.export_srt_button = QPushButton(tr("导出 SRT"))
         self.export_srt_button.clicked.connect(self._export_srt)
-        self.export_doc_button = QPushButton("生成文档")
+        self.export_doc_button = QPushButton(tr("生成文档"))
         self.export_doc_button.clicked.connect(self._export_doc)
-        self.burn_button = QPushButton("生成带字幕的视频")
+        self.burn_button = QPushButton(tr("生成带字幕的视频"))
         self.burn_button.clicked.connect(self._burn)
-        self.burn_cancel = QPushButton("取消")
+        self.burn_cancel = QPushButton(tr("取消"))
         self.burn_cancel.setEnabled(False)
         self.burn_cancel.clicked.connect(self._cancel_burn)
         self.burn_progress = QProgressBar()
         self.burn_progress.setFixedWidth(160)
         self.burn_progress.setVisible(False)
-        self.open_folder_button = QPushButton("打开所在文件夹")
+        self.open_folder_button = QPushButton(tr("打开所在文件夹"))
         self.open_folder_button.clicked.connect(self._open_folder)
-        self.save_button = QPushButton("保存修改")
+        self.save_button = QPushButton(tr("保存修改"))
         self.save_button.setMinimumHeight(32)
         self.save_button.clicked.connect(self.save_project)
         for w in (self.export_srt_button, self.export_doc_button, self.burn_button, self.burn_cancel, self.burn_progress):
@@ -610,7 +613,7 @@ class SubtitleEditorWindow(QMainWindow):
             for w in (self.export_srt_button, self.export_doc_button, self.burn_button, self.glossary_button,
                       self.correction_button, self.save_button):
                 w.setEnabled(False)
-            self.save_button.setToolTip("处理完视频后才有可保存的字幕")
+            self.save_button.setToolTip(tr("处理完视频后才有可保存的字幕"))
 
         self.panel_target.load(self.sub_style.target)
         self.panel_source.load(self.sub_style.source)
@@ -674,7 +677,7 @@ class SubtitleEditorWindow(QMainWindow):
         self.preset.blockSignals(True)
         self.preset.setCurrentIndex(0)
         self.preset.blockSignals(False)
-        self.style_status.setText("样式已修改（生成视频时按当前样式；点上面按钮可设为默认）")
+        self.style_status.setText(tr("样式已修改（生成视频时按当前样式；点上面按钮可设为默认）"))
 
     def _apply_preset(self) -> None:
         name = self.preset.currentData()
@@ -687,16 +690,16 @@ class SubtitleEditorWindow(QMainWindow):
         self._refresh_boxes()
         self.project.style = self.sub_style.to_dict()
         self._dirty = True
-        self.style_status.setText(f"已套用预设「{name}」")
+        self.style_status.setText(tr("已套用预设「{0}」", tr(name)))
 
     def _set_default_style(self) -> None:
         self.cfg.subtitle_style = self.sub_style.to_dict()
         try:
             save_config(self.cfg)
         except OSError as e:
-            QMessageBox.warning(self, "保存失败", str(e))
+            QMessageBox.warning(self, tr("保存失败"), str(e))
             return
-        self.style_status.setText("已设为默认样式，以后处理的视频都用这套。")
+        self.style_status.setText(tr("已设为默认样式，以后处理的视频都用这套。"))
 
     def _on_mode_changed(self) -> None:
         self.project.output_mode = self.current_mode()
@@ -742,7 +745,7 @@ class SubtitleEditorWindow(QMainWindow):
         else:
             return
         self._dirty = True
-        self.status.setText("有未保存的修改")
+        self.status.setText(tr("有未保存的修改"))
         self.table.resizeRowToContents(row)
         if row == self._current_row:
             self._refresh_boxes()
@@ -789,7 +792,7 @@ class SubtitleEditorWindow(QMainWindow):
 
     def _on_player_error(self, _err, text: str) -> None:
         self.status.setStyleSheet("color: #c33;")
-        self.status.setText(f"播放器：{text or '无法播放这个文件'}（字幕编辑不受影响）")
+        self.status.setText(tr("播放器：{0}（字幕编辑不受影响）", text or '无法播放这个文件'))
 
     def line_index_at(self, t: float) -> int:
         for i, ln in enumerate(self.lines):
@@ -802,7 +805,7 @@ class SubtitleEditorWindow(QMainWindow):
         row = self.table.currentRow()
         if 0 <= row < len(self.lines):
             return self.lines[row]
-        QMessageBox.information(self, "先选一行", "请先在表格里点一行字幕。")
+        QMessageBox.information(self, tr("先选一行"), tr("请先在表格里点一行字幕。"))
         return None
 
     def _pair_dialog(self, title: str, left_label: str, right_label: str, left: str, right: str,
@@ -818,8 +821,8 @@ class SubtitleEditorWindow(QMainWindow):
         form.addRow("", hint(note))
         row = QHBoxLayout()
         row.addStretch(1)
-        ok = QPushButton("加入")
-        cancel = QPushButton("取消")
+        ok = QPushButton(tr("加入"))
+        cancel = QPushButton(tr("取消"))
         ok.clicked.connect(dlg.accept)
         cancel.clicked.connect(dlg.reject)
         row.addWidget(cancel)
@@ -833,29 +836,29 @@ class SubtitleEditorWindow(QMainWindow):
         ln = self._selected_line()
         if ln is None:
             return
-        res = self._pair_dialog("加入术语表", "原文", "译文", ln.source, ln.target,
-                                f"把两边都改成只剩那个词，然后加入。会存进场景「{self.store.display_name(self.project.scene)}」。")
+        res = self._pair_dialog(tr("加入术语表"), tr("原文"), tr("译文"), ln.source, ln.target,
+                                tr("把两边都改成只剩那个词，然后加入。会存进场景「{0}」。", self.store.display_name(self.project.scene)))
         if not res or not res[0]:
             return
         p = self.store.get(self.project.scene) or self.store.get("通用")
         p.glossary[res[0]] = res[1]
         self.store.save(p)
         self.status.setStyleSheet("color: #2a7;")
-        self.status.setText(f"已加入术语表：{res[0]} → {res[1]}")
+        self.status.setText(tr("已加入术语表：{0} → {1}", res[0], res[1]))
 
     def _add_correction(self) -> None:
         ln = self._selected_line()
         if ln is None:
             return
-        res = self._pair_dialog("加入纠错规则", "听错的词", "改成", ln.source, "",
-                                f"识别后会自动把左边替换成右边。会存进场景「{self.store.display_name(self.project.scene)}」。")
+        res = self._pair_dialog(tr("加入纠错规则"), tr("听错的词"), tr("改成"), ln.source, "",
+                                tr("识别后会自动把左边替换成右边。会存进场景「{0}」。", self.store.display_name(self.project.scene)))
         if not res or not res[0] or not res[1]:
             return
         p = self.store.get(self.project.scene) or self.store.get("通用")
         p.corrections[res[0]] = res[1]
         self.store.save(p)
         self.status.setStyleSheet("color: #2a7;")
-        self.status.setText(f"已加入纠错规则：{res[0]} → {res[1]}")
+        self.status.setText(tr("已加入纠错规则：{0} → {1}", res[0], res[1]))
 
     # ------------------------------------------------------------ 保存 / 导出
     def save_project(self) -> None:
@@ -865,49 +868,51 @@ class SubtitleEditorWindow(QMainWindow):
         try:
             p = self.project.save()
         except OSError as e:
-            QMessageBox.warning(self, "保存失败", str(e))
+            QMessageBox.warning(self, tr("保存失败"), str(e))
             return
         self._dirty = False
         self.status.setStyleSheet("color: #2a7;")
-        self.status.setText(f"已保存修改：{p.name}")
+        self.status.setText(tr("已保存修改：{0}", p.name))
 
     def _export_srt(self) -> None:
         default = default_srt_path(self.project.media_path, self.current_mode(), self.project.target_language)
-        path, _ = QFileDialog.getSaveFileName(self, "导出 SRT", str(default), "SRT 字幕 (*.srt)")
+        path, _ = QFileDialog.getSaveFileName(self, tr("导出 SRT"), str(default), tr("SRT 字幕 (*.srt)"))
         if not path:
             return
         try:
             write_srt(path, self.lines, self.current_mode())
         except OSError as e:
-            QMessageBox.warning(self, "导出失败", str(e))
+            QMessageBox.warning(self, tr("导出失败"), str(e))
             return
-        self.status.setText(f"已导出：{Path(path).name}")
+        self.status.setText(tr("已导出：{0}", Path(path).name))
 
     def _export_doc(self) -> None:
         from app.config import SOURCE_LANGUAGES, TARGET_LANGUAGES
-        tgt = TARGET_LANGUAGES.get(self.project.target_language, self.project.target_language)
+        tgt = tr(TARGET_LANGUAGES.get(self.project.target_language, self.project.target_language))
         default = default_document_path(self.project.media_path, self.current_mode(), tgt)
-        path, _ = QFileDialog.getSaveFileName(self, "生成文档", str(default), "文本文档 (*.txt)")
+        path, _ = QFileDialog.getSaveFileName(self, tr("生成文档"), str(default), tr("文本文档 (*.txt)"))
         if not path:
             return
-        src = SOURCE_LANGUAGES.get(self.project.source_language, "原文")
-        src = "原文" if src == "自动检测" else f"原文（{src}）"
+        if self.project.source_language == "auto" or self.project.source_language not in SOURCE_LANGUAGES:
+            src = tr("原文")
+        else:
+            src = tr("原文（{0}）", tr(SOURCE_LANGUAGES[self.project.source_language]))
         try:
             write_document(path, self.lines, self.current_mode(), title=Path(self.project.media_path).stem,
-                           source_name=src, target_name=f"译文（{tgt}）")
+                           source_name=src, target_name=tr("译文（{0}）", tgt))
             os.startfile(path)
         except OSError as e:
-            QMessageBox.warning(self, "生成失败", str(e))
+            QMessageBox.warning(self, tr("生成失败"), str(e))
             return
-        self.status.setText(f"已生成文档：{Path(path).name}")
+        self.status.setText(tr("已生成文档：{0}", Path(path).name))
 
     def _burn(self) -> None:
         media = Path(self.project.media_path)
         if not media.exists():
-            QMessageBox.warning(self, "找不到视频", f"原视频不在了：{media}")
+            QMessageBox.warning(self, tr("找不到视频"), tr("原视频不在了：{0}", media))
             return
         from app.config import TARGET_LANGUAGES
-        tgt = TARGET_LANGUAGES.get(self.project.target_language, self.project.target_language)
+        tgt = tr(TARGET_LANGUAGES.get(self.project.target_language, self.project.target_language))
         out = default_video_path(media, self.current_mode(), tgt)
         self._burn_worker = _BurnWorker(media, list(self.lines), out, self.current_mode(),
                                         SubtitleStyle.from_dict(self.sub_style.to_dict()))
@@ -917,7 +922,7 @@ class SubtitleEditorWindow(QMainWindow):
         self._burn_worker.progress.connect(self.burn_progress.setValue)
         self._burn_worker.finished.connect(self._on_burn_done)
         self._burn_worker.failed.connect(self._on_burn_failed)
-        self._burn_worker.cancelled.connect(lambda: self._on_burn_failed("已取消。"))
+        self._burn_worker.cancelled.connect(lambda: self._on_burn_failed(tr("已取消。")))
         for sig in (self._burn_worker.finished, self._burn_worker.failed, self._burn_worker.cancelled):
             sig.connect(self._burn_thread.quit)
         self._burn_thread.finished.connect(self._burn_cleanup)
@@ -926,7 +931,7 @@ class SubtitleEditorWindow(QMainWindow):
         self.burn_progress.setVisible(True)
         self.burn_progress.setValue(0)
         self.status.setStyleSheet("color: #555;")
-        self.status.setText("正在按当前样式把字幕烧进视频……")
+        self.status.setText(tr("正在按当前样式把字幕烧进视频……"))
         self._burn_thread.start()
 
     def _cancel_burn(self) -> None:
@@ -946,7 +951,7 @@ class SubtitleEditorWindow(QMainWindow):
 
     def _on_burn_done(self, out: Path) -> None:
         self.status.setStyleSheet("color: #2a7;")
-        self.status.setText(f"已生成：{out.name}")
+        self.status.setText(tr("已生成：{0}", out.name))
 
     def _on_burn_failed(self, msg: str) -> None:
         self.status.setStyleSheet("color: #c33;")
@@ -959,7 +964,7 @@ class SubtitleEditorWindow(QMainWindow):
     # ------------------------------------------------------------ 关闭
     def closeEvent(self, event) -> None:
         if self._dirty and not self.style_only:
-            r = QMessageBox.question(self, "有未保存的修改", "字幕或样式有修改还没保存，要保存吗？",
+            r = QMessageBox.question(self, tr("有未保存的修改"), tr("字幕或样式有修改还没保存，要保存吗？"),
                                      QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
             if r == QMessageBox.StandardButton.Cancel:
                 event.ignore()

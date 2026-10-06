@@ -5,6 +5,8 @@
 """
 from __future__ import annotations
 
+from app.i18n import tr
+
 import re
 import shutil
 import sys
@@ -88,7 +90,11 @@ class EffectiveProfile:
 
     @property
     def display_name(self) -> str:
-        return " → ".join(self.path[1:]) if len(self.path) > 1 else self.path[0]
+        return " → ".join(tr(x) for x in self.path[1:]) if len(self.path) > 1 else tr(self.path[0])
+
+
+# 预置场景的名字要进翻译清单（下面这个函数不会被调用，只是让提取工具看到这几个词）
+_PRESET_SCENE_NAMES = lambda: [tr("通用"), tr("游戏"), tr("电影"), tr("自动（按内容判断）")]  # noqa: E731
 
 
 def _safe_filename(name: str) -> str:
@@ -164,7 +170,7 @@ class ProfileStore:
 
     def save(self, p: Profile, from_user: bool = True) -> None:
         if not p.name.strip():
-            raise UserFacingError("场景名不能为空。")
+            raise UserFacingError(tr("场景名不能为空。"))
         if from_user:
             p.user_modified = True
         self.profiles[p.name] = p
@@ -188,10 +194,13 @@ class ProfileStore:
         return list(reversed(out))
 
     def display_name(self, name: str) -> str:
+        """给人看的名字：「游戏 → Valorant」。预置场景的名字跟随界面语言，用户自建的原样显示。"""
         if name == AUTO_SCENE:
-            return AUTO_LABEL
+            return tr(AUTO_LABEL)
         path = self.path(name)
-        return " → ".join(path[1:]) if len(path) > 1 else (path[0] if path else name)
+        if len(path) > 1:
+            return " → ".join(tr(x) for x in path[1:])
+        return tr(path[0]) if path else name
 
     def descendants(self, name: str) -> list[Profile]:
         out: list[Profile] = []
@@ -206,11 +215,11 @@ class ProfileStore:
     def create_child(self, parent: str, name: str) -> Profile:
         name = name.strip()
         if not name:
-            raise UserFacingError("场景名不能为空。")
+            raise UserFacingError(tr("场景名不能为空。"))
         if name in self.profiles:
-            raise UserFacingError(f"已经有一个叫「{name}」的场景了，换个名字。")
+            raise UserFacingError(tr("已经有一个叫「{0}」的场景了，换个名字。", name))
         if parent not in self.profiles:
-            raise UserFacingError(f"父场景「{parent}」不存在。")
+            raise UserFacingError(tr("父场景「{0}」不存在。", parent))
         p = Profile(name=name, parent=parent)
         self.save(p)
         return p
@@ -218,11 +227,11 @@ class ProfileStore:
     def rename(self, old: str, new: str) -> None:
         new = new.strip()
         if old == ROOT_NAME:
-            raise UserFacingError("「通用」是根场景，不能改名。")
+            raise UserFacingError(tr("「通用」是根场景，不能改名。"))
         if not new:
-            raise UserFacingError("场景名不能为空。")
+            raise UserFacingError(tr("场景名不能为空。"))
         if new in self.profiles and new != old:
-            raise UserFacingError(f"已经有一个叫「{new}」的场景了。")
+            raise UserFacingError(tr("已经有一个叫「{0}」的场景了。", new))
         p = self.profiles.pop(old)
         self._path_for(old).unlink(missing_ok=True)
         p.name = new
@@ -234,7 +243,7 @@ class ProfileStore:
 
     def delete(self, name: str) -> None:
         if name == ROOT_NAME:
-            raise UserFacingError("「通用」是根场景，不能删除。")
+            raise UserFacingError(tr("「通用」是根场景，不能删除。"))
         if name not in self.profiles:
             return
         # 子场景一起删

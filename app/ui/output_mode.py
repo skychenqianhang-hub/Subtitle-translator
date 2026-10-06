@@ -1,6 +1,8 @@
 """输出内容选择：原文 + 译文 / 仅译文 / 仅原文（不翻译）。实时页和视频页共用。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QComboBox, QHBoxLayout, QWidget
 
@@ -19,7 +21,7 @@ class OutputModePicker(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.combo = QComboBox()
         for key, label in OUTPUT_MODES.items():
-            self.combo.addItem(label, key)
+            self.combo.addItem(tr(label), key)
         self.combo.setMinimumWidth(220)
         layout.addWidget(self.combo)
         self.note = hint("")
@@ -47,8 +49,8 @@ class OutputModePicker(QWidget):
     def _update_note(self) -> None:
         t = self._target_name
         notes = {
-            "bilingual": f"原文在上，{t}译文在下。",
-            "target_only": f"只显示 / 输出{t}译文。",
-            "source_only": "跳过翻译这一步，只做语音识别，速度更快、费用更低。",
+            "bilingual": tr("原文在上，{0}译文在下。", t),
+            "target_only": tr("只显示 / 输出{0}译文。", t),
+            "source_only": tr("跳过翻译这一步，只做语音识别，速度更快、费用更低。"),
         }
         self.note.setText(notes.get(self.current(), ""))

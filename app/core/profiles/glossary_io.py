@@ -1,6 +1,8 @@
 """术语表 / 纠错规则的导入导出：CSV 和 Excel（.xlsx），两列：原文, 译文。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 import csv
 from pathlib import Path
 
@@ -25,7 +27,7 @@ def import_pairs(path: str | Path) -> dict[str, str]:
     """读 CSV 或 Excel，返回 {原文: 译文}。只看前两列。"""
     p = Path(path)
     if not p.exists():
-        raise UserFacingError(f"找不到文件：{p}")
+        raise UserFacingError(tr("找不到文件：{0}", p))
     suffix = p.suffix.lower()
     rows: list[tuple[str, str]] = []
     if suffix in (".xlsx", ".xlsm"):
@@ -43,7 +45,7 @@ def import_pairs(path: str | Path) -> dict[str, str]:
         except UserFacingError:
             raise
         except Exception as e:  # noqa: BLE001
-            raise UserFacingError(f"读取 Excel 失败：{e}") from e
+            raise UserFacingError(tr("读取 Excel 失败：{0}", e)) from e
     elif suffix in (".csv", ".txt", ".tsv"):
         raw = p.read_bytes()
         for enc in ("utf-8-sig", "utf-8", "gb18030", "shift_jis"):
@@ -53,7 +55,7 @@ def import_pairs(path: str | Path) -> dict[str, str]:
             except UnicodeDecodeError:
                 continue
         else:
-            raise UserFacingError("无法识别这个文件的文字编码，请在 Excel 里另存为 UTF-8 的 CSV。")
+            raise UserFacingError(tr("无法识别这个文件的文字编码，请在 Excel 里另存为 UTF-8 的 CSV。"))
         sample = text[:2000]
         try:
             dialect = csv.Sniffer().sniff(sample, delimiters=",\t;")
@@ -66,10 +68,10 @@ def import_pairs(path: str | Path) -> dict[str, str]:
             b = row[1] if len(row) > 1 else ""
             rows.append((a, b))
     else:
-        raise UserFacingError("只支持 .csv 和 .xlsx 文件。")
+        raise UserFacingError(tr("只支持 .csv 和 .xlsx 文件。"))
     result = _clean_rows(rows)
     if not result:
-        raise UserFacingError("文件里没有读到任何「原文, 译文」的数据行。")
+        raise UserFacingError(tr("文件里没有读到任何「原文, 译文」的数据行。"))
     return result
 
 

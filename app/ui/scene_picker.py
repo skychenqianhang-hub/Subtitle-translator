@@ -6,6 +6,8 @@
 """
 from __future__ import annotations
 
+from app.i18n import tr
+
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QPushButton, QWidget
 
@@ -24,15 +26,15 @@ class ScenePicker(QWidget):
         self._loading = False
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(QLabel("板块"))
+        layout.addWidget(QLabel(tr("板块")))
         self.section = QComboBox()
         self.section.setMinimumWidth(120)
         layout.addWidget(self.section)
-        layout.addWidget(QLabel("子板块"))
+        layout.addWidget(QLabel(tr("子板块")))
         self.sub = QComboBox()
         self.sub.setMinimumWidth(160)
         layout.addWidget(self.sub)
-        self.manage = QPushButton("管理场景…")
+        self.manage = QPushButton(tr("管理场景…"))
         self.manage.clicked.connect(self.manage_requested.emit)
         layout.addWidget(self.manage)
         layout.addStretch(1)
@@ -47,22 +49,22 @@ class ScenePicker(QWidget):
         current = keep if keep is not None else self.current_name()
         self._loading = True
         self.section.clear()
-        self.section.addItem(AUTO_LABEL, AUTO_SCENE)
-        self.section.addItem(ROOT_NAME, ROOT_NAME)
+        self.section.addItem(tr(AUTO_LABEL), AUTO_SCENE)
+        self.section.addItem(tr(ROOT_NAME), ROOT_NAME)
         for p in self.store.children(ROOT_NAME):
-            self.section.addItem(p.name, p.name)
+            self.section.addItem(tr(p.name), p.name)
         self._loading = False
         self.set_current(current or ROOT_NAME)
 
     def _fill_sub(self, section: str) -> None:
         self._loading = True
         self.sub.clear()
-        self.sub.addItem("（不选）", _NONE)
+        self.sub.addItem(tr("（不选）"), _NONE)
         if section not in (ROOT_NAME, AUTO_SCENE):
             for d in self.store.descendants(section):
                 path = self.store.path(d.name)
                 # 去掉「通用 → 板块」前缀，只显示板块下面的层级
-                label = " → ".join(path[2:]) if len(path) > 2 else d.name
+                label = " → ".join(tr(x) for x in path[2:]) if len(path) > 2 else tr(d.name)
                 self.sub.addItem(label, d.name)
         self.sub.setEnabled(self.sub.count() > 1)
         self._loading = False

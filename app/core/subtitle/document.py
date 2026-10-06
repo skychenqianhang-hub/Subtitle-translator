@@ -1,6 +1,8 @@
 """文档输出：把字幕整理成通顺的全文（原文一整段、译文一整段），存成 .txt，可以直接用记事本打开。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 import re
 from pathlib import Path
 
@@ -79,13 +81,15 @@ def _with_blank_lines(paras: list[str]) -> list[str]:
 
 def default_document_path(media_path: str | Path, mode: str, target_name: str) -> Path:
     src = Path(media_path)
-    tag = {"bilingual": "原文+译文", "source_only": "原文"}.get(mode, f"{target_name}译文")
+    tag = {"bilingual": tr("原文+译文"), "source_only": tr("原文")}.get(mode, tr("{0}译文", target_name))
     return src.with_name(f"{src.stem}.{tag}.txt")
 
 
 def write_document(path: str | Path, lines: list[SubtitleLine], mode: str, title: str = "",
-                   source_name: str = "原文", target_name: str = "译文") -> Path:
+                   source_name: str | None = None, target_name: str | None = None) -> Path:
     p = Path(path)
+    source_name = source_name or tr("原文")
+    target_name = target_name or tr("译文")
     # 记事本用 \r\n 换行最稳；带 BOM 让旧版记事本也能正确识别 UTF-8
     text = to_document(lines, mode, title, source_name, target_name).replace("\n", "\r\n")
     p.write_text(text, encoding="utf-8-sig")

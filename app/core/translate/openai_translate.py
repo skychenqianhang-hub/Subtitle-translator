@@ -1,6 +1,8 @@
 """OpenAI GPT 翻译适配器。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 from app.core.errors import UserFacingError
 from app.core.translate.base import TranslateRequest, Translator
 from app.core.translate.prompt import OUTPUT_SCHEMA, parse_translations, system_prompt, user_prompt
@@ -12,7 +14,7 @@ class OpenAITranslator(Translator):
     def __init__(self, model: str, api_key: str, timeout: float = 180.0) -> None:
         super().__init__(model)
         if not api_key:
-            raise UserFacingError("还没有填 OpenAI 的 API Key。请到右上角「设置 → API Key」填写。")
+            raise UserFacingError(tr("还没有填 OpenAI 的 API Key。请到右上角「设置 → API Key」填写。"))
         import openai
         self.client = openai.OpenAI(api_key=api_key, timeout=timeout, max_retries=3)
 
@@ -56,4 +58,4 @@ class OpenAITranslator(Translator):
                 return parse_translations(text, len(req.sentences))
             except ValueError as e:
                 last_error = e
-        raise UserFacingError(f"翻译结果对不上句数，已重试一次仍失败：{last_error}")
+        raise UserFacingError(tr("翻译结果对不上句数，已重试一次仍失败：{0}", last_error))

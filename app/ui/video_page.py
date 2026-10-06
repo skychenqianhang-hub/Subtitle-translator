@@ -1,6 +1,8 @@
 """视频翻译：本地视频文件 → 整段处理 → 字幕文件。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 import threading
 from pathlib import Path
 
@@ -58,13 +60,13 @@ class _Worker(QObject):
     def run(self) -> None:
         try:
             if self.url:
-                self.progress.emit(0, "正在下载视频")
-                self.log.emit(f"下载：{self.url}")
+                self.progress.emit(0, tr("正在下载视频"))
+                self.log.emit(tr("下载：{0}", self.url))
                 self.media_path = download_video(
                     self.url, self.cfg.effective_download_dir(),
                     progress=lambda p, s: self.progress.emit(int(p * 100), s), cancel=self.cancel,
                 )
-                self.log.emit(f"已下载到：{self.media_path}")
+                self.log.emit(tr("已下载到：{0}", self.media_path))
                 self.media_resolved.emit(self.media_path)
             from app.core.asr.registry import create_transcriber
             from app.core.pipeline.video_pipeline import VideoJob, VideoPipeline
@@ -72,14 +74,14 @@ class _Worker(QObject):
 
             prof = self.profile
             transcriber = create_transcriber(self.cfg, model=prof.asr_model, source_language=self.cfg.source_language)
-            how = "（场景指定）" if prof.asr_model else ("（按原文语言自动选择）" if self.cfg.asr_model == "auto" else "")
-            self.log.emit(f"场景：{prof.display_name}；识别模型：{transcriber.model}{how}")
+            how = tr("（场景指定）") if prof.asr_model else (tr("（按原文语言自动选择）") if self.cfg.asr_model == "auto" else "")
+            self.log.emit(tr("场景：{0}；识别模型：{1}{2}", prof.display_name, transcriber.model, how))
             translator = None
             if self.output_mode != "source_only":
                 translator = create_translator(self.cfg, prof.translate_provider, prof.translate_model)
-                self.log.emit(f"翻译模型：{translator.model}" + ("（场景指定）" if prof.translate_model else ""))
+                self.log.emit(tr("翻译模型：{0}", translator.model) + (tr("（场景指定）") if prof.translate_model else ""))
             if prof.glossary or prof.corrections or prof.asr_prompt:
-                self.log.emit(f"术语 {len(prof.glossary)} 条，纠错 {len(prof.corrections)} 条，识别提示词 {len(prof.asr_prompt)} 个")
+                self.log.emit(tr("术语 {0} 条，纠错 {1} 条，识别提示词 {2} 个", len(prof.glossary), len(prof.corrections), len(prof.asr_prompt)))
             detect = None
             if self.auto_scene and self.store is not None:
                 detector = SceneDetector(self.store)
@@ -88,7 +90,7 @@ class _Worker(QObject):
                 def detect(text: str):
                     name = detector.choose(text, "通用")
                     return store.resolve(name)
-                self.log.emit("场景：自动（识别完成后按内容判断）")
+                self.log.emit(tr("场景：自动（识别完成后按内容判断）"))
             pipeline = VideoPipeline(
                 self.cfg, transcriber, translator,
                 progress=self.progress.emit, log=self.log.emit,
@@ -109,33 +111,35 @@ class _Worker(QObject):
             result = pipeline.run(job)
             if pipeline.detected_scene is not None:
                 prof = pipeline.detected_scene
-            self.log.emit("本次费用：" + pipeline.cost.summary())
+            self.log.emit(tr("本次费用：") + pipeline.cost.summary())
             outputs: dict[str, Path] = {}
             outputs["cost"] = pipeline.cost.summary()
             if "srt" in self.output_kinds:
                 srt = default_srt_path(self.media_path, self.output_mode, self.cfg.target_language)
                 write_srt(srt, result, self.output_mode)
                 outputs["srt"] = srt
-                self.log.emit(f"已保存字幕文件：{srt.name}")
+                self.log.emit(tr("已保存字幕文件：{0}", srt.name))
             if "doc" in self.output_kinds:
                 from app.config import SOURCE_LANGUAGES
                 doc = default_document_path(self.media_path, self.output_mode, self.cfg.target_language_name())
-                src_name = SOURCE_LANGUAGES.get(self.cfg.source_language, "原文")
-                src_name = "原文" if src_name == "自动检测" else f"原文（{src_name}）"
+                if self.cfg.source_language == "auto" or self.cfg.source_language not in SOURCE_LANGUAGES:
+                    src_name = tr("原文")
+                else:
+                    src_name = tr("原文（{0}）", tr(SOURCE_LANGUAGES[self.cfg.source_language]))
                 write_document(doc, result, self.output_mode, title=self.media_path.stem,
-                               source_name=src_name, target_name=f"译文（{self.cfg.target_language_name()}）")
+                               source_name=src_name, target_name=tr("译文（{0}）", self.cfg.target_language_name()))
                 outputs["doc"] = doc
-                self.log.emit(f"已保存文档：{doc.name}")
+                self.log.emit(tr("已保存文档：{0}", doc.name))
             if "video" in self.output_kinds:
                 out = default_video_path(self.media_path, self.output_mode, self.cfg.target_language_name())
-                self.progress.emit(0, "正在把字幕烧进视频（时间约为视频时长的一半到一倍）")
+                self.progress.emit(0, tr("正在把字幕烧进视频（时间约为视频时长的一半到一倍）"))
                 burn_subtitles(
                     self.media_path, result, out, self.output_mode, self.subtitle_size,
-                    progress=lambda p: self.progress.emit(int(p * 100), f"正在把字幕烧进视频 {int(p * 100)}%"),
+                    progress=lambda p: self.progress.emit(int(p * 100), tr("正在把字幕烧进视频 {0}%", int(p * 100))),
                     cancel=self.cancel, style=SubtitleStyle.from_dict(self.cfg.subtitle_style),
                 )
                 outputs["video"] = out
-                self.log.emit(f"已保存带字幕的视频：{out.name}")
+                self.log.emit(tr("已保存带字幕的视频：{0}", out.name))
             # 字幕工程：以后可以直接打开修改、重新导出，不用再识别翻译
             project = SubtitleProject(
                 media_path=str(self.media_path), lines=result, source_language=self.cfg.source_language,
@@ -147,7 +151,7 @@ class _Worker(QObject):
             try:
                 outputs["project"] = project.save()
             except OSError as e:
-                self.log.emit(f"字幕工程保存失败（不影响其他输出）：{e}")
+                self.log.emit(tr("字幕工程保存失败（不影响其他输出）：{0}", e))
             self.finished.emit(result, outputs)
         except Cancelled:
             self.cancelled.emit()
@@ -171,22 +175,22 @@ class VideoPage(QWidget):
         self._editor: SubtitleEditorWindow | None = None
 
         layout = QVBoxLayout(self)
-        layout.addWidget(hint("适用于已经录好的视频：输入本地文件，整段处理完后输出字幕文件（保存在视频旁边、同名 .srt）。"))
+        layout.addWidget(hint(tr("适用于已经录好的视频：输入本地文件，整段处理完后输出字幕文件（保存在视频旁边、同名 .srt）。")))
 
         # ---- 来源 ----
-        src_box = QGroupBox("视频来源")
+        src_box = QGroupBox(tr("视频来源"))
         src_form = QFormLayout(src_box)
         file_row = QHBoxLayout()
         self.file_edit = QLineEdit()
-        self.file_edit.setPlaceholderText("选择本地视频或音频文件，或把文件拖进这个窗口……")
-        self.file_button = QPushButton("选择文件")
+        self.file_edit.setPlaceholderText(tr("选择本地视频或音频文件，或把文件拖进这个窗口……"))
+        self.file_button = QPushButton(tr("选择文件"))
         self.file_button.clicked.connect(self._choose_file)
         file_row.addWidget(self.file_edit, 1)
         file_row.addWidget(self.file_button)
-        src_form.addRow("本地文件", file_row)
+        src_form.addRow(tr("本地文件"), file_row)
         self.url_edit = QLineEdit()
-        self.url_edit.setPlaceholderText("或粘贴视频网址（YouTube、B 站等），会先下载到「设置 → 网址下载」里指定的文件夹")
-        src_form.addRow("视频网址", self.url_edit)
+        self.url_edit.setPlaceholderText(tr("或粘贴视频网址（YouTube、B 站等），会先下载到「设置 → 网址下载」里指定的文件夹"))
+        src_form.addRow(tr("视频网址"), self.url_edit)
         layout.addWidget(src_box)
 
         # ---- 语言与模型 ----
@@ -195,41 +199,41 @@ class VideoPage(QWidget):
         layout.addWidget(self.model_panel)
 
         # ---- 参数 ----
-        box = QGroupBox("参数")
+        box = QGroupBox(tr("参数"))
         form = QFormLayout(box)
         self.scene = ScenePicker(store)
         self.scene.set_current(cfg.last_scene)
         self.scene.changed.connect(self._save_scene)
         self.scene.manage_requested.connect(self.manage_scenes_requested.emit)
-        form.addRow("内容场景", self.scene)
+        form.addRow(tr("内容场景"), self.scene)
         kind_row = QHBoxLayout()
         self.kind_checks: dict[str, QCheckBox] = {}
         for key, label in OUTPUT_KINDS.items():
-            cb = QCheckBox(label)
+            cb = QCheckBox(tr(label))
             cb.setChecked(key in cfg.video_output_kinds)
             cb.toggled.connect(self._save_output_kind)
             self.kind_checks[key] = cb
             kind_row.addWidget(cb)
         kind_row.addSpacing(12)
-        self.style_button = QPushButton("字幕样式…")
-        self.style_button.setToolTip("像编辑幻灯片一样，在画面上设置字幕的字体、大小、颜色、位置")
+        self.style_button = QPushButton(tr("字幕样式…"))
+        self.style_button.setToolTip(tr("像编辑幻灯片一样，在画面上设置字幕的字体、大小、颜色、位置"))
         self.style_button.clicked.connect(self._open_style_editor)
         kind_row.addWidget(self.style_button)
         self.kind_hint = hint("")
         kind_row.addWidget(self.kind_hint, 1)
-        form.addRow("输出形式", kind_row)
+        form.addRow(tr("输出形式"), kind_row)
         self.output_mode = OutputModePicker(cfg.video_output_mode, cfg.target_language_name())
         self.output_mode.changed.connect(self._save_output_mode)
-        form.addRow("输出内容", self.output_mode)
+        form.addRow(tr("输出内容"), self.output_mode)
         layout.addWidget(box)
         self._apply_output_kind()
 
         # ---- 处理 ----
         run_row = QHBoxLayout()
-        self.start_button = QPushButton("开始处理")
+        self.start_button = QPushButton(tr("开始处理"))
         self.start_button.setMinimumHeight(36)
         self.start_button.clicked.connect(self._start)
-        self.cancel_button = QPushButton("取消")
+        self.cancel_button = QPushButton(tr("取消"))
         self.cancel_button.setMinimumHeight(36)
         self.cancel_button.setEnabled(False)
         self.cancel_button.clicked.connect(self._cancel)
@@ -246,26 +250,26 @@ class VideoPage(QWidget):
 
         self.preview = QTextEdit()
         self.preview.setReadOnly(True)
-        self.preview.setPlaceholderText("处理过程中，识别和翻译的结果会显示在这里。")
+        self.preview.setPlaceholderText(tr("处理过程中，识别和翻译的结果会显示在这里。"))
         layout.addWidget(self.preview, 1)
 
         export_row = QHBoxLayout()
         self.result_label = QLabel("")
         self.result_label.setStyleSheet("color: #2a7;")
         export_row.addWidget(self.result_label, 1)
-        self.open_project_button = QPushButton("打开以前的结果…")
-        self.open_project_button.setToolTip("打开之前处理过的视频的字幕工程文件（.字幕工程.json），继续修改或重新导出")
+        self.open_project_button = QPushButton(tr("打开以前的结果…"))
+        self.open_project_button.setToolTip(tr("打开之前处理过的视频的字幕工程文件（.字幕工程.json），继续修改或重新导出"))
         self.open_project_button.clicked.connect(self._open_project)
         export_row.addWidget(self.open_project_button)
-        self.edit_button = QPushButton("预览 / 修改字幕")
+        self.edit_button = QPushButton(tr("预览 / 修改字幕"))
         self.edit_button.setEnabled(False)
         self.edit_button.clicked.connect(self._open_editor)
         export_row.addWidget(self.edit_button)
-        self.open_folder_button = QPushButton("打开所在文件夹")
+        self.open_folder_button = QPushButton(tr("打开所在文件夹"))
         self.open_folder_button.setEnabled(False)
         self.open_folder_button.clicked.connect(self._open_folder)
         export_row.addWidget(self.open_folder_button)
-        self.export_button = QPushButton("另存为 SRT…")
+        self.export_button = QPushButton(tr("另存为 SRT…"))
         self.export_button.setEnabled(False)
         self.export_button.clicked.connect(self._export_as)
         export_row.addWidget(self.export_button)
@@ -288,7 +292,7 @@ class VideoPage(QWidget):
 
     # ---------------------------------------------------------------- 处理
     def _choose_file(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "选择视频或音频文件", "", VIDEO_FILTER)
+        path, _ = QFileDialog.getOpenFileName(self, tr("选择视频或音频文件"), "", tr(VIDEO_FILTER))
         if path:
             self.file_edit.setText(path)
 
@@ -299,25 +303,25 @@ class VideoPage(QWidget):
         if file_text:
             path = Path(file_text)
             if not path.is_file():
-                QMessageBox.warning(self, "找不到文件", f"这个文件不存在：{path}")
+                QMessageBox.warning(self, tr("找不到文件"), tr("这个文件不存在：{0}", path))
                 return
             url = ""
         elif url:
             if not looks_like_url(url):
-                QMessageBox.warning(self, "网址不对", "请粘贴以 http:// 或 https:// 开头的视频链接。")
+                QMessageBox.warning(self, tr("网址不对"), tr("请粘贴以 http:// 或 https:// 开头的视频链接。"))
                 return
         else:
-            QMessageBox.warning(self, "没有文件", "请先选择一个本地视频或音频文件，或粘贴视频网址。")
+            QMessageBox.warning(self, tr("没有文件"), tr("请先选择一个本地视频或音频文件，或粘贴视频网址。"))
             return
         mode = self.output_mode.current()
         if not self.selected_kinds():
-            QMessageBox.warning(self, "没有选输出形式", "请至少勾选一种输出形式：字幕文件、带字幕的视频或文档。")
+            QMessageBox.warning(self, tr("没有选输出形式"), tr("请至少勾选一种输出形式：字幕文件、带字幕的视频或文档。"))
             return
         if not self.cfg.has_openai_key():
-            QMessageBox.warning(self, "缺少 API Key", "还没有填 OpenAI 的 API Key（语音识别需要）。\n请点右上角齿轮，在「API Key」里填写。")
+            QMessageBox.warning(self, tr("缺少 API Key"), tr("还没有填 OpenAI 的 API Key（语音识别需要）。\n请点右上角齿轮，在「API Key」里填写。"))
             return
         if mode != "source_only" and self.cfg.translate_provider == "anthropic" and not self.cfg.has_anthropic_key():
-            QMessageBox.warning(self, "缺少 API Key", "翻译服务选的是 Claude，但还没有填 Anthropic 的 API Key。\n请点右上角齿轮，在「API Key」里填写，或把翻译服务换成 GPT。")
+            QMessageBox.warning(self, tr("缺少 API Key"), tr("翻译服务选的是 Claude，但还没有填 Anthropic 的 API Key。\n请点右上角齿轮，在「API Key」里填写，或把翻译服务换成 GPT。"))
             return
 
         self._lines = []
@@ -358,7 +362,7 @@ class VideoPage(QWidget):
     def _cancel(self) -> None:
         if self._worker:
             self._worker.cancel.set()
-            self.status.setText("正在取消，等当前这一步结束……")
+            self.status.setText(tr("正在取消，等当前这一步结束……"))
             self.cancel_button.setEnabled(False)
 
     def _cleanup_thread(self) -> None:
@@ -422,9 +426,9 @@ class VideoPage(QWidget):
         names = [p.name for k, p in outputs.items() if k != "project"]
         self._saved_path = outputs.get("video") or outputs.get("srt") or outputs.get("doc") or outputs.get("project")
         self.result_label.setStyleSheet("color: #2a7;")
-        self.result_label.setText(f"已保存：{'、'.join(names) or '字幕工程'}（{len(lines)} 条字幕）" + (f"　费用：{cost}" if cost else ""))
+        self.result_label.setText(tr("已保存：{0}（{1} 条字幕）", '、'.join(names) or '字幕工程', len(lines)) + (tr("　费用：{0}", cost) if cost else ""))
         self.progress.setValue(100)
-        self.status.setText("完成")
+        self.status.setText(tr("完成"))
         self.open_folder_button.setEnabled(bool(self._saved_path))
         self.export_button.setEnabled(True)
         doc = outputs.get("doc")
@@ -433,7 +437,7 @@ class VideoPage(QWidget):
                 import os
                 os.startfile(str(doc))   # 用系统默认程序（记事本）打开
             except OSError as e:
-                self.preview.append(f"<span style='color:#c33'>文档已保存，但自动打开失败：{_esc(str(e))}</span>")
+                self.preview.append(tr("<span style='color:#c33'>文档已保存，但自动打开失败：{0}</span>", _esc(str(e))))
         proj_path = outputs.get("project")
         if proj_path and self._last_media:
             self._project = SubtitleProject(
@@ -448,15 +452,15 @@ class VideoPage(QWidget):
                 self._open_editor()
 
     def _on_failed(self, message: str) -> None:
-        self.status.setText("失败")
-        self.preview.append(f"<span style='color:#c33'><b>出错：</b>{_esc(message)}</span>")
-        QMessageBox.critical(self, "处理失败", message)
+        self.status.setText(tr("失败"))
+        self.preview.append(tr("<span style='color:#c33'><b>出错：</b>{0}</span>", _esc(message)))
+        QMessageBox.critical(self, tr("处理失败"), message)
         if self._lines:
             self.export_button.setEnabled(True)
 
     def _on_cancelled(self) -> None:
-        self.status.setText("已取消")
-        self.preview.append("<span style='color:#888'>已取消。</span>")
+        self.status.setText(tr("已取消"))
+        self.preview.append(tr("<span style='color:#888'>已取消。</span>"))
         if self._lines:
             self.export_button.setEnabled(True)
 
@@ -487,13 +491,13 @@ class VideoPage(QWidget):
 
     def _open_project(self) -> None:
         start = str(self._last_media.parent) if self._last_media else ""
-        path, _ = QFileDialog.getOpenFileName(self, "打开字幕工程", start, f"字幕工程 (*{PROJECT_SUFFIX});;所有文件 (*)")
+        path, _ = QFileDialog.getOpenFileName(self, tr("打开字幕工程"), start, tr("字幕工程 (*{0});;所有文件 (*)", PROJECT_SUFFIX))
         if not path:
             return
         try:
             self._project = SubtitleProject.load(path)
         except Exception as e:  # noqa: BLE001
-            QMessageBox.warning(self, "打开失败", friendly_message(e))
+            QMessageBox.warning(self, tr("打开失败"), friendly_message(e))
             return
         self._lines = self._project.lines
         self._last_media = Path(self._project.media_path)
@@ -501,7 +505,7 @@ class VideoPage(QWidget):
         self.edit_button.setEnabled(True)
         self.export_button.setEnabled(True)
         self.result_label.setStyleSheet("color: #2a7;")
-        self.result_label.setText(f"已打开：{Path(path).name}（{len(self._lines)} 条字幕）")
+        self.result_label.setText(tr("已打开：{0}（{1} 条字幕）", Path(path).name, len(self._lines)))
         self._open_editor()
 
     # ---------------------------------------------------------------- 导出
@@ -509,17 +513,17 @@ class VideoPage(QWidget):
         if not self._lines:
             return
         start_dir = str(self._last_media.with_suffix(".srt")) if self._last_media else ""
-        path, _ = QFileDialog.getSaveFileName(self, "保存字幕", start_dir, "SRT 字幕 (*.srt)")
+        path, _ = QFileDialog.getSaveFileName(self, tr("保存字幕"), start_dir, tr("SRT 字幕 (*.srt)"))
         if not path:
             return
         try:
             write_srt(path, self._lines, self.output_mode.current())
             self._saved_path = Path(path)
             self.result_label.setStyleSheet("color: #2a7;")
-            self.result_label.setText(f"已保存：{Path(path).name}")
+            self.result_label.setText(tr("已保存：{0}", Path(path).name))
             self.open_folder_button.setEnabled(True)
         except OSError as e:
-            QMessageBox.critical(self, "保存失败", str(e))
+            QMessageBox.critical(self, tr("保存失败"), str(e))
 
     def _open_folder(self) -> None:
         if self._saved_path:
@@ -550,13 +554,13 @@ class VideoPage(QWidget):
         kinds = self.selected_kinds()
         burn = "video" in kinds
         if burn:
-            text = "字幕烧进画面，发给别人直接能看；字体、大小、颜色、位置在「字幕样式…」里设。"
+            text = tr("字幕烧进画面，发给别人直接能看；字体、大小、颜色、位置在「字幕样式…」里设。")
         elif "doc" in kinds and "srt" not in kinds:
-            text = "文档里原文一整段、译文一整段，不按句切开。"
+            text = tr("文档里原文一整段、译文一整段，不按句切开。")
         elif kinds:
-            text = "播放器会自动加载同名 .srt；字幕大小由播放器决定。"
+            text = tr("播放器会自动加载同名 .srt；字幕大小由播放器决定。")
         else:
-            text = "请至少勾选一种。"
+            text = tr("请至少勾选一种。")
         self.kind_hint.setText(text)
 
     def _on_model_panel_changed(self) -> None:

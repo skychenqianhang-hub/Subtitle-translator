@@ -1,6 +1,8 @@
 """从视频网址下载（YouTube、B 站等），用 yt-dlp。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 import re
 import shutil
 import threading
@@ -33,11 +35,11 @@ def download_video(url: str, out_dir: Path, progress: ProgressCb = lambda p, s: 
     try:
         import yt_dlp
     except ImportError as e:
-        raise UserFacingError("下载组件没有装好，请告诉 Claude Code 重新打包。") from e
+        raise UserFacingError(tr("下载组件没有装好，请告诉 Claude Code 重新打包。")) from e
 
     url = url.strip()
     if not looks_like_url(url):
-        raise UserFacingError("这不像一个网址。请粘贴以 http:// 或 https:// 开头的视频链接。")
+        raise UserFacingError(tr("这不像一个网址。请粘贴以 http:// 或 https:// 开头的视频链接。"))
     out_dir.mkdir(parents=True, exist_ok=True)
     fmt = f"bv*[height<={max_height}][ext=mp4]+ba[ext=m4a]/b[height<={max_height}][ext=mp4]/b"
     result: dict[str, str] = {}
@@ -63,9 +65,9 @@ def download_video(url: str, out_dir: Path, progress: ProgressCb = lambda p, s: 
         speed = d.get("speed") or 0
         spd = f"{speed / 1024 / 1024:.1f} MB/s" if speed and status == "downloading" else ""
         if status == "finished" and overall >= 0.999:
-            progress(0.99, "下载完成，正在合并音视频")
+            progress(0.99, tr("下载完成，正在合并音视频"))
         else:
-            progress(state["best"], f"下载中 {int(state['best'] * 100)}% {spd}".strip())
+            progress(state["best"], tr("下载中 {0}% {1}", int(state['best'] * 100), spd).strip())
 
     def post_hook(d: dict) -> None:
         if d.get("status") == "finished" and d.get("info_dict", {}).get("filepath"):
@@ -91,7 +93,7 @@ def download_video(url: str, out_dir: Path, progress: ProgressCb = lambda p, s: 
     if js:
         opts["js_runtimes"] = {js[0]: {}}
 
-    progress(0.0, "正在获取视频信息")
+    progress(0.0, tr("正在获取视频信息"))
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)
@@ -100,16 +102,16 @@ def download_video(url: str, out_dir: Path, progress: ProgressCb = lambda p, s: 
     except yt_dlp.utils.DownloadError as e:
         msg = str(e)
         if "Unsupported URL" in msg:
-            raise UserFacingError("不支持这个网站的链接。") from e
+            raise UserFacingError(tr("不支持这个网站的链接。")) from e
         if "Private video" in msg or "Sign in" in msg or "login" in msg.lower():
-            raise UserFacingError("这个视频需要登录或是私密视频，无法下载。") from e
+            raise UserFacingError(tr("这个视频需要登录或是私密视频，无法下载。")) from e
         if "not available" in msg or "unavailable" in msg:
-            raise UserFacingError("视频不存在或已被删除。") from e
+            raise UserFacingError(tr("视频不存在或已被删除。")) from e
         if "HTTP Error 4" in msg or "Unable to download" in msg:
-            raise UserFacingError("下载失败：网络不通或网站拒绝了请求。可以试试开关代理后重试。") from e
-        raise UserFacingError(f"下载失败：{msg.splitlines()[-1][:200]}") from e
+            raise UserFacingError(tr("下载失败：网络不通或网站拒绝了请求。可以试试开关代理后重试。")) from e
+        raise UserFacingError(tr("下载失败：{0}", msg.splitlines()[-1][:200])) from e
     except Exception as e:  # noqa: BLE001
-        raise UserFacingError(f"下载失败：{type(e).__name__}: {str(e)[:200]}") from e
+        raise UserFacingError(tr("下载失败：{0}: {1}", type(e).__name__, str(e)[:200])) from e
 
     path = result.get("file") or ""
     if not path and info:
@@ -123,7 +125,7 @@ def download_video(url: str, out_dir: Path, progress: ProgressCb = lambda p, s: 
         cands = sorted(out_dir.glob(f"*[{info.get('id', '')}].*"), key=lambda x: x.stat().st_mtime, reverse=True) if info else []
         cands = [c for c in cands if c.suffix.lower() in (".mp4", ".mkv", ".webm", ".m4a", ".mp3")]
         if not cands:
-            raise UserFacingError("下载似乎完成了，但找不到文件。")
+            raise UserFacingError(tr("下载似乎完成了，但找不到文件。"))
         p = cands[0]
-    progress(1.0, "下载完成")
+    progress(1.0, tr("下载完成"))
     return p

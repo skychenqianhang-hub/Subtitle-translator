@@ -69,6 +69,13 @@ def self_check(out_path: str) -> int:
         from app.ui.main_window import MainWindow  # noqa: F401
         return ""
 
+    def _languages():
+        from app import i18n
+        sizes = {lang: len(i18n.load_table(lang)) for lang in ("en", "ja")}
+        if min(sizes.values()) < 300:
+            raise RuntimeError(f"界面翻译表没有带上：{sizes}")
+        return f"英语 {sizes['en']} 条，日语 {sizes['ja']} 条"
+
     def _media():
         import os
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -116,6 +123,7 @@ def self_check(out_path: str) -> int:
     step("ffmpeg", _ffmpeg)
     step("云端 SDK", _sdks)
     step("界面模块", _ui)
+    step("界面语言", _languages)
     step("视频播放器", _media)
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n" + ("全部通过" if ok else "有失败项") + "\n")
@@ -128,13 +136,22 @@ def main() -> int:
 
     from PySide6.QtWidgets import QApplication
 
+    from app import i18n
     from app.config import load_config
+
+    # 先读设置、定下界面语言，再加载界面模块（界面文字在加载时就按语言取好了）
+    cfg = load_config()
+    i18n.set_language(cfg.ui_language)
     from app.ui.main_window import APP_NAME, MainWindow
 
     app = QApplication(sys.argv)
-    app.setApplicationName(APP_NAME)
+    app.setApplicationName(i18n.tr(APP_NAME))
     app.setStyle("Fusion")
-    cfg = load_config()
+    if i18n.current_language() == "ja":
+        # 中文系统的默认字体会把日文汉字画成中文写法（直、選 等字形不同），日文界面换成日文字体
+        font = app.font()
+        font.setFamilies(["Yu Gothic UI", "Meiryo UI", font.family()])
+        app.setFont(font)
     window = MainWindow(cfg)
     window.show()
     return app.exec()

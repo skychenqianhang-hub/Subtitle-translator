@@ -4,6 +4,8 @@
 """
 from __future__ import annotations
 
+from app.i18n import tr
+
 import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -75,22 +77,22 @@ class VideoPipeline:
 
     # ---------------------------------------------------------------
     def run(self, job: VideoJob) -> list[SubtitleLine]:
-        self.progress(0, "读取音频")
-        self.log(f"开始处理：{job.media_path.name}")
+        self.progress(0, tr("读取音频"))
+        self.log(tr("开始处理：{0}", job.media_path.name))
         samples = extract_pcm(job.media_path)
         total_sec = len(samples) / SAMPLE_RATE
-        self.log(f"音频时长 {_fmt(total_sec)}")
+        self.log(tr("音频时长 {0}", _fmt(total_sec)))
         self._check_cancel()
 
-        self.progress(3, "检测说话段落")
+        self.progress(3, tr("检测说话段落"))
         regions, chunks = detect_chunks(samples, SileroVad())
         if not self.transcriber.has_timestamps:
             # 模型不给时间戳：按一句话一块切，块的起止就是字幕时间
             chunks = make_utterances(regions, merge_gap=job.utterance_gap, max_len=job.utterance_max_len)
         speech_sec = sum(r.end - r.start for r in regions)
-        self.log(f"检测到说话 {_fmt(speech_sec)}，切成 {len(chunks)} 块送识别")
+        self.log(tr("检测到说话 {0}，切成 {1} 块送识别", _fmt(speech_sec), len(chunks)))
         if not chunks:
-            raise UserFacingError("没有检测到任何说话的声音。可能是纯音乐，或声音太小。")
+            raise UserFacingError(tr("没有检测到任何说话的声音。可能是纯音乐，或声音太小。"))
         self._check_cancel()
 
         # ---- 识别（几块同时发，顺序不变）----
@@ -107,16 +109,16 @@ class VideoPipeline:
                         f.cancel()
                     raise
                 done += 1
-                self.progress(5 + int(60 * done / len(chunks)), f"识别中 {done}/{len(chunks)}（{_fmt(chunks[i].start)}）")
+                self.progress(5 + int(60 * done / len(chunks)), tr("识别中 {0}/{1}（{2}）", done, len(chunks), _fmt(chunks[i].start)))
                 segments.extend(segs)
                 if segs:
                     preview = segs[0].text[:40]
                     self.log(f"[{_fmt(chunks[i].start)}] {preview}{'…' if len(segs[0].text) > 40 else ''}")
                 self._check_cancel()
         self.cost.add_asr(sum(c.duration for c in chunks))
-        self.log(f"识别完成，共 {len(segments)} 个片段")
+        self.log(tr("识别完成，共 {0} 个片段", len(segments)))
         if not segments:
-            raise UserFacingError("识别结果为空。请检查原文语言是否选对，或者视频里确实没有人说话。")
+            raise UserFacingError(tr("识别结果为空。请检查原文语言是否选对，或者视频里确实没有人说话。"))
 
         # ---- 场景自动判断（识别完才知道内容是什么）----
         if self.detect_scene is not None:
@@ -130,7 +132,7 @@ class VideoPipeline:
                 job.glossary = prof.glossary
                 job.corrections = prof.corrections
                 job.style = prof.style
-                self.log(f"自动判断场景：{prof.display_name}（术语 {len(prof.glossary)} 条，纠错 {len(prof.corrections)} 条）")
+                self.log(tr("自动判断场景：{0}（术语 {1} 条，纠错 {2} 条）", prof.display_name, len(prof.glossary), len(prof.corrections)))
 
         # ---- 纠错 + 整句 ----
         if job.corrections:
@@ -139,16 +141,16 @@ class VideoPipeline:
                     if wrong and wrong in s.text:
                         s.text = s.text.replace(wrong, right)
         lines = split_long_lines(merge_into_sentences(segments))
-        self.log(f"整理成 {len(lines)} 句")
-        self.progress(66, "整理句子")
+        self.log(tr("整理成 {0} 句", len(lines)))
+        self.progress(66, tr("整理句子"))
         self.on_lines(lines)
 
         # ---- 翻译 ----
         if job.output_mode == "source_only" or self.translator is None:
-            self.progress(100, "完成（仅原文）")
+            self.progress(100, tr("完成（仅原文）"))
             return lines
         self._translate_all(lines, job)
-        self.progress(100, "完成")
+        self.progress(100, tr("完成"))
         return lines
 
     # ---------------------------------------------------------------
@@ -176,7 +178,7 @@ class VideoPipeline:
         for start in range(0, total, job.batch_size):
             self._check_cancel()
             batch = lines[start:start + job.batch_size]
-            self.progress(68 + int(30 * done / total), f"翻译中 {done + 1}-{min(done + len(batch), total)}/{total}")
+            self.progress(68 + int(30 * done / total), tr("翻译中 {0}-{1}/{2}", done + 1, min(done + len(batch), total), total))
             req = TranslateRequest(
                 sentences=[ln.source for ln in batch],
                 source_language=job.source_language,
@@ -194,7 +196,7 @@ class VideoPipeline:
             prev_sources.extend(ln.source for ln in batch)
             done += len(batch)
             self.on_lines(lines)
-        self.log(f"翻译完成，共 {total} 句")
+        self.log(tr("翻译完成，共 {0} 句", total))
 
 
 def _fmt(sec: float) -> str:

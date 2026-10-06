@@ -132,6 +132,7 @@ class Config:
     open_editor_after_run: bool = True      # 处理完自动打开字幕编辑器
     download_dir: str = ""                  # 网址下载的保存位置；空 = 我的视频\字幕翻译器
     subtitle_style: dict = field(default_factory=dict)   # 默认字幕样式（SubtitleStyle.to_dict()），空 = 内置默认
+    ui_language: str = ""                   # 界面语言 zh / ja / en；空 = 还没选过
     # 界面
     last_mode: str = "realtime"      # "realtime" 或 "video"
     last_scene: str = "通用"         # 例如 "游戏 → Valorant"
@@ -145,7 +146,9 @@ class Config:
         return bool(self.anthropic_api_key.strip())
 
     def target_language_name(self) -> str:
-        return TARGET_LANGUAGES.get(self.target_language, self.target_language)
+        """目标语言的名字，按当前界面语言显示（简体中文 / Simplified Chinese / 簡体字中国語）。"""
+        from app.i18n import tr
+        return tr(TARGET_LANGUAGES.get(self.target_language, self.target_language))
 
     def effective_asr_model(self) -> str:
         return resolve_asr_model(self.asr_model, self.source_language)
@@ -157,7 +160,11 @@ class Config:
 def load_config() -> Config:
     path = config_path()
     if not path.exists():
-        return Config()
+        # 全新安装：界面语言跟随系统
+        from app.i18n import detect_system_language
+        cfg = Config()
+        cfg.ui_language = detect_system_language()
+        return cfg
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -186,6 +193,8 @@ def load_config() -> Config:
         cfg.video_output_kinds = {"srt": ["srt"], "video": ["video"], "both": ["srt", "video"]}.get(old_kind, ["srt"])
     if not isinstance(cfg.video_output_kinds, list) or not cfg.video_output_kinds:
         cfg.video_output_kinds = ["srt"]
+    if not cfg.ui_language:
+        cfg.ui_language = "zh"              # 加入多语言之前的老用户：保持中文，不要突然变脸
     cfg.config_version = CONFIG_VERSION
     return cfg
 

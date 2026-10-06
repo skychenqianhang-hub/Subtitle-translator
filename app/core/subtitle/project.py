@@ -2,6 +2,8 @@
 以后可以直接打开修改、重新导出，不用再识别翻译。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -40,14 +42,14 @@ class SubtitleProject:
     def load(cls, path: str | Path) -> "SubtitleProject":
         p = Path(path)
         if not p.exists():
-            raise UserFacingError(f"找不到字幕工程文件：{p}")
+            raise UserFacingError(tr("找不到字幕工程文件：{0}", p))
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
             lines = [SubtitleLine(**ln) for ln in data.pop("lines", [])]
             known = {f for f in cls.__dataclass_fields__}
             return cls(lines=lines, **{k: v for k, v in data.items() if k in known and k != "lines"})
         except (json.JSONDecodeError, TypeError, KeyError) as e:
-            raise UserFacingError(f"字幕工程文件损坏，无法读取：{e}") from e
+            raise UserFacingError(tr("字幕工程文件损坏，无法读取：{0}", e)) from e
 
 
 def project_path_for(media_path: str | Path) -> Path:

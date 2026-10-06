@@ -10,6 +10,8 @@
 """
 from __future__ import annotations
 
+from app.i18n import tr
+
 import queue
 import re
 import tempfile
@@ -157,9 +159,8 @@ class LiveSession:
         for t in self._threads:
             t.start()
         self.running = True
-        self.cb.on_status("正在监听")
-        self.cb.on_log(f"开始：设备 {getattr(self._capture, 'rate', '?')}Hz，识别 {self.transcriber.model}，"
-                       f"翻译 {self.translator.model if self.translator else '无'}，最长 {self.opt.max_segment_seconds:.0f} 秒切一段")
+        self.cb.on_status(tr("正在监听"))
+        self.cb.on_log(tr("开始：设备 {0}Hz，识别 {1}，翻译 {2}，最长 {3:.0f} 秒切一段", getattr(self._capture, 'rate', '?'), self.transcriber.model, self.translator.model if self.translator else '无', self.opt.max_segment_seconds))
 
     def stop(self) -> None:
         if not self.running:
@@ -173,8 +174,8 @@ class LiveSession:
             t.join(timeout=15.0)
         if self._pool is not None:
             self._pool.shutdown(wait=True)
-        self.cb.on_status("已停止")
-        self.cb.on_log("结束。本次费用：" + self.cost.summary())
+        self.cb.on_status(tr("已停止"))
+        self.cb.on_log(tr("结束。本次费用：") + self.cost.summary())
 
     # ------------------------------------------------------------ 抓取 → 切段
     def _on_chunk(self, chunk: np.ndarray) -> None:
@@ -226,7 +227,7 @@ class LiveSession:
                     text = text.replace(wrong, right)
             line = SubtitleLine(s.start, s.end, text) if text else None
         except Exception as e:  # noqa: BLE001
-            self.cb.on_error("识别出错：" + friendly_message(e))
+            self.cb.on_error(tr("识别出错：") + friendly_message(e))
             line = None
         self._asr_results.put((idx, line))
 
@@ -293,7 +294,7 @@ class LiveSession:
         self.opt.style = prof.style
         self._last_scene_switch = now
         self.cb.on_scene(chosen, prof.display_name)
-        self.cb.on_log(f"场景自动切换为：{prof.display_name}（术语 {len(prof.glossary)} 条）")
+        self.cb.on_log(tr("场景自动切换为：{0}（术语 {1} 条）", prof.display_name, len(prof.glossary)))
 
     def _translate_line(self, line: SubtitleLine) -> None:
         if self.translator is None or self.opt.output_mode == "source_only":
@@ -310,7 +311,7 @@ class LiveSession:
             u = self.translator.last_usage or {}
             self.cost.add_translate(u.get("input", 0), u.get("output", 0), u.get("cache_read", 0))
         except Exception as e:  # noqa: BLE001
-            self.cb.on_error("翻译出错：" + friendly_message(e))
+            self.cb.on_error(tr("翻译出错：") + friendly_message(e))
             target = ""
         self._publish(line, target)
 

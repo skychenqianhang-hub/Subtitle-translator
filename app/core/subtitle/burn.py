@@ -1,6 +1,8 @@
 """把字幕烧进视频画面（硬字幕），用 ffmpeg 重新编码视频，声音原样复制。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 import subprocess
 import tempfile
 import threading
@@ -19,7 +21,7 @@ ProgressCb = Callable[[float], None]   # 0.0 - 1.0
 
 def default_video_path(media_path: str | Path, mode: str, target_name: str) -> Path:
     src = Path(media_path)
-    tag = {"bilingual": "双语字幕", "source_only": "原文字幕"}.get(mode, f"{target_name}字幕")
+    tag = {"bilingual": tr("双语字幕"), "source_only": tr("原文字幕")}.get(mode, tr("{0}字幕", target_name))
     return src.with_name(f"{src.stem}.{tag}.mp4")
 
 
@@ -36,7 +38,7 @@ def burn_subtitles(
 ) -> Path:
     ffmpeg = find_ffmpeg()
     if not ffmpeg:
-        raise UserFacingError("找不到 ffmpeg，无法生成带字幕的视频。")
+        raise UserFacingError(tr("找不到 ffmpeg，无法生成带字幕的视频。"))
     media_path = Path(media_path)
     out_path = Path(out_path)
     duration = probe_duration(media_path) or 0.0
@@ -80,8 +82,8 @@ def burn_subtitles(
                 proc.kill()
         if proc.returncode != 0:
             err = (proc.stderr.read() if proc.stderr else "").strip().splitlines()
-            detail = err[-1] if err else "未知原因"
+            detail = err[-1] if err else tr("未知原因")
             out_path.unlink(missing_ok=True)
-            raise UserFacingError(f"生成带字幕的视频失败：{detail}")
+            raise UserFacingError(tr("生成带字幕的视频失败：{0}", detail))
     progress(1.0)
     return out_path

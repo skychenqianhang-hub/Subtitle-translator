@@ -1,6 +1,8 @@
 """Anthropic Claude 翻译适配器。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 from app.core.errors import UserFacingError
 from app.core.translate.base import TranslateRequest, Translator
 from app.core.translate.prompt import OUTPUT_SCHEMA, parse_translations, system_prompt, user_prompt
@@ -12,7 +14,7 @@ class AnthropicTranslator(Translator):
     def __init__(self, model: str, api_key: str, timeout: float = 180.0) -> None:
         super().__init__(model)
         if not api_key:
-            raise UserFacingError("还没有填 Anthropic 的 API Key。请到右上角「设置 → API Key」填写。")
+            raise UserFacingError(tr("还没有填 Anthropic 的 API Key。请到右上角「设置 → API Key」填写。"))
         import anthropic
         self.client = anthropic.Anthropic(api_key=api_key, timeout=timeout, max_retries=3)
 
@@ -45,10 +47,10 @@ class AnthropicTranslator(Translator):
                 "cache_read": int(getattr(u, "cache_read_input_tokens", 0) or 0),
             } if u else {}
             if resp.stop_reason == "refusal":
-                raise UserFacingError("Claude 拒绝翻译这段内容（触发了安全策略）。可以换 GPT 试试。")
+                raise UserFacingError(tr("Claude 拒绝翻译这段内容（触发了安全策略）。可以换 GPT 试试。"))
             text = next((b.text for b in resp.content if b.type == "text"), "")
             try:
                 return parse_translations(text, len(req.sentences))
             except ValueError as e:
                 last_error = e
-        raise UserFacingError(f"翻译结果对不上句数，已重试一次仍失败：{last_error}")
+        raise UserFacingError(tr("翻译结果对不上句数，已重试一次仍失败：{0}", last_error))

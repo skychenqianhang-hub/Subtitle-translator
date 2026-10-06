@@ -1,6 +1,8 @@
 """悬浮字幕窗：独立、置顶、可拖动、可调字号。显示原文 / 中文 / 双语由「输出内容」决定。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 from PySide6.QtCore import QPoint, Qt, QTimer, Signal
 from PySide6.QtGui import QHideEvent, QMouseEvent, QShowEvent
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
@@ -94,7 +96,7 @@ class OverlayWindow(QWidget):
         self.source_label.setText("")
 
     def show_demo(self) -> None:
-        self.show_subtitle("这里会显示翻译后的中文字幕（示例）", "ここに音声認識された原文が表示されます（例）")
+        self.show_subtitle(tr("这里会显示翻译后的中文字幕（示例）"), tr("ここに音声認識された原文が表示されます（例）"))
         self._center_bottom()
 
     def _center_bottom(self) -> None:

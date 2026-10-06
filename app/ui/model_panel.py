@@ -4,6 +4,8 @@
 """
 from __future__ import annotations
 
+from app.i18n import tr
+
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QWidget
 
@@ -18,7 +20,7 @@ class ModelLanguagePanel(QGroupBox):
     changed = Signal()
 
     def __init__(self, cfg: Config, parent: QWidget | None = None) -> None:
-        super().__init__("语言与模型", parent)
+        super().__init__(tr("语言与模型"), parent)
         self.cfg = cfg
         self._loading = False
         form = QFormLayout(self)
@@ -26,36 +28,36 @@ class ModelLanguagePanel(QGroupBox):
         lang_row = QHBoxLayout()
         self.source_language = QComboBox()
         for key, label in SOURCE_LANGUAGES.items():
-            self.source_language.addItem(label, key)
+            self.source_language.addItem(tr(label), key)
         self.target_language = QComboBox()
         for key, label in TARGET_LANGUAGES.items():
-            self.target_language.addItem(label, key)
-        lang_row.addWidget(QLabel("原文语言"))
+            self.target_language.addItem(tr(label), key)
+        lang_row.addWidget(QLabel(tr("原文语言")))
         lang_row.addWidget(self.source_language)
         lang_row.addSpacing(16)
-        self.target_label = QLabel("翻译至")
+        self.target_label = QLabel(tr("翻译至"))
         lang_row.addWidget(self.target_label)
         lang_row.addWidget(self.target_language)
         lang_row.addStretch(1)
-        form.addRow("语言", lang_row)
+        form.addRow(tr("语言"), lang_row)
 
         self.asr_model = QComboBox()
         for mid, label in ASR_MODELS:
-            self.asr_model.addItem(label, mid)
+            self.asr_model.addItem(tr(label), mid)
         asr_row = QHBoxLayout()
         asr_row.addWidget(self.asr_model, 1)
-        form.addRow("识别模型", asr_row)
+        form.addRow(tr("识别模型"), asr_row)
 
         tr_row = QHBoxLayout()
         self.translate_provider = QComboBox()
         for key, label in TRANSLATE_PROVIDERS.items():
-            self.translate_provider.addItem(label, key)
+            self.translate_provider.addItem(tr(label), key)
         self.translate_model = QComboBox()
         tr_row.addWidget(self.translate_provider)
         tr_row.addWidget(self.translate_model, 1)
-        self.translate_row_label = QLabel("翻译模型")
+        self.translate_row_label = QLabel(tr("翻译模型"))
         form.addRow(self.translate_row_label, tr_row)
-        form.addRow("", hint("价格是每百万字的输入 / 输出费用；评测依据见项目说明。每个场景也可以在「管理场景」里单独指定模型，优先级高于这里。"))
+        form.addRow("", hint(tr("价格是每百万字的输入 / 输出费用；评测依据见项目说明。每个场景也可以在「管理场景」里单独指定模型，优先级高于这里。")))
 
         self.load_from_config()
 
@@ -90,7 +92,7 @@ class ModelLanguagePanel(QGroupBox):
         self.translate_model.blockSignals(True)
         self.translate_model.clear()
         for mid, label in TRANSLATE_MODELS.get(provider, []):
-            self.translate_model.addItem(label, mid)
+            self.translate_model.addItem(tr(label), mid)
         self.translate_model.blockSignals(False)
 
     def _on_provider_change(self) -> None:

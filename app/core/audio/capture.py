@@ -5,6 +5,8 @@
 """
 from __future__ import annotations
 
+from app.i18n import tr
+
 import threading
 from typing import Callable
 
@@ -45,7 +47,7 @@ class LoopbackCapture:
         try:
             import pyaudiowpatch as pyaudio
         except ImportError as e:
-            raise UserFacingError("音频抓取组件没有装好，请告诉 Claude Code 重新打包。") from e
+            raise UserFacingError(tr("音频抓取组件没有装好，请告诉 Claude Code 重新打包。")) from e
         self._pa = pyaudio.PyAudio()
         try:
             if self.device_index is None or self.device_index < 0:
@@ -55,7 +57,7 @@ class LoopbackCapture:
         except Exception as e:  # noqa: BLE001
             self._pa.terminate()
             self._pa = None
-            raise UserFacingError("找不到可以抓取的声音设备。请在列表里换一个设备，或点「刷新」。") from e
+            raise UserFacingError(tr("找不到可以抓取的声音设备。请在列表里换一个设备，或点「刷新」。")) from e
         self.rate = int(info["defaultSampleRate"])
         self.channels = max(1, int(info["maxInputChannels"]))
         self._stopping = False
@@ -84,7 +86,7 @@ class LoopbackCapture:
         except Exception as e:  # noqa: BLE001
             self._pa.terminate()
             self._pa = None
-            raise UserFacingError(f"打不开声音设备「{info.get('name', '')}」：{e}") from e
+            raise UserFacingError(tr("打不开声音设备「{0}」：{1}", info.get('name', ''), e)) from e
 
     def stop(self) -> None:
         with self._lock:

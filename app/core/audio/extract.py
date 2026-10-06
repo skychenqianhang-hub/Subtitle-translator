@@ -1,6 +1,8 @@
 """用 ffmpeg 从视频 / 音频文件里抽出 16kHz 单声道音频。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 import re
 import subprocess
 from pathlib import Path
@@ -18,7 +20,7 @@ _NO_WINDOW = 0x08000000 if hasattr(subprocess, "STARTUPINFO") else 0
 
 def _need(tool: str | None, name: str) -> str:
     if not tool:
-        raise UserFacingError(f"找不到 {name}。请把问题告诉 Claude Code，需要重新打包程序。")
+        raise UserFacingError(tr("找不到 {0}。请把问题告诉 Claude Code，需要重新打包程序。", name))
     return tool
 
 
@@ -57,9 +59,9 @@ def extract_pcm(path: str | Path) -> np.ndarray:
     """把文件解码成 16kHz 单声道 float32 数组（范围 -1 到 1）。"""
     src = Path(path)
     if not src.exists():
-        raise UserFacingError(f"找不到文件：{src}")
+        raise UserFacingError(tr("找不到文件：{0}", src))
     if not has_audio_stream(src):
-        raise UserFacingError("这个文件里没有音轨，无法识别。")
+        raise UserFacingError(tr("这个文件里没有音轨，无法识别。"))
     ffmpeg = _need(find_ffmpeg(), "ffmpeg")
     cmd = [
         ffmpeg, "-v", "error", "-nostdin", "-i", str(src),
@@ -68,11 +70,11 @@ def extract_pcm(path: str | Path) -> np.ndarray:
     proc = subprocess.run(cmd, capture_output=True, creationflags=_NO_WINDOW)
     if proc.returncode != 0:
         err = proc.stderr.decode("utf-8", "ignore").strip().splitlines()
-        detail = err[-1] if err else "未知原因"
-        raise UserFacingError(f"ffmpeg 无法读取这个文件：{detail}")
+        detail = err[-1] if err else tr("未知原因")
+        raise UserFacingError(tr("ffmpeg 无法读取这个文件：{0}", detail))
     data = np.frombuffer(proc.stdout, dtype=np.int16)
     if data.size == 0:
-        raise UserFacingError("这个文件里没有声音内容。")
+        raise UserFacingError(tr("这个文件里没有声音内容。"))
     return data.astype(np.float32) / 32768.0
 
 

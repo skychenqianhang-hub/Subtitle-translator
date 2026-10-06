@@ -8,6 +8,8 @@
 """
 from __future__ import annotations
 
+from app.i18n import tr
+
 import re
 from pathlib import Path
 
@@ -60,7 +62,7 @@ class OpenAITranscriber(Transcriber):
     def __init__(self, model: str, api_key: str, timeout: float = 120.0) -> None:
         super().__init__(model)
         if not api_key:
-            raise UserFacingError("还没有填 OpenAI 的 API Key。请到右上角「设置 → API Key」填写。")
+            raise UserFacingError(tr("还没有填 OpenAI 的 API Key。请到右上角「设置 → API Key」填写。"))
         import openai
         self.client = openai.OpenAI(api_key=api_key, timeout=timeout, max_retries=3)
 

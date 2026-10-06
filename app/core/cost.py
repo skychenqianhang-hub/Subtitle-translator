@@ -1,6 +1,8 @@
 """费用估算：识别按分钟、翻译按 token。价格是 2026-10 的官方标价（美元），模型列表不在表里的按 0 算并标注「未知」。"""
 from __future__ import annotations
 
+from app.i18n import tr
+
 from dataclasses import dataclass, field
 
 # 识别：美元 / 分钟
@@ -71,14 +73,14 @@ class CostTracker:
         parts = []
         a = self.asr_usd()
         if self.asr_seconds > 0:
-            parts.append(f"识别 {self.asr_seconds / 60:.1f} 分钟 ≈ ${a:.4f}")
+            parts.append(tr("识别 {0:.1f} 分钟 ≈ ${1:.4f}", self.asr_seconds / 60, a))
         t = self.translate_usd()
         if self.input_tokens or self.output_tokens:
-            parts.append(f"翻译 {self.input_tokens + self.output_tokens:,} token ≈ ${t:.4f}")
+            parts.append(tr("翻译 {0:,} token ≈ ${1:.4f}", self.input_tokens + self.output_tokens, t))
         total = a + t
-        text = "；".join(parts) if parts else "本次没有调用云端模型"
+        text = tr("；").join(parts) if parts else tr("本次没有调用云端模型")
         if parts:
-            text += f"；合计约 ${total:.4f}（约 ¥{total * USD_TO_CNY:.3f}）"
+            text += tr("；合计约 ${0:.4f}（约 ¥{1:.3f}）", total, total * USD_TO_CNY)
         if self.unknown:
-            text += f"（{', '.join(self.unknown)} 不在价格表里，未计入）"
+            text += tr("（{0} 不在价格表里，未计入）", ', '.join(self.unknown))
         return text
