@@ -25,6 +25,7 @@ FILES = [
     "app/ui/common.py", "app/ui/main_window.py", "app/ui/model_panel.py", "app/ui/output_mode.py",
     "app/ui/overlay_window.py", "app/ui/profiles_page.py", "app/ui/realtime_page.py", "app/ui/scene_picker.py",
     "app/ui/settings_dialog.py", "app/ui/settings_page.py", "app/ui/subtitle_editor.py", "app/ui/video_page.py",
+    "app/ui/tone_picker.py", "app/ui/glossary_generate_dialog.py", "app/core/profiles/generate.py",
     "app/core/errors.py", "app/core/download.py", "app/core/cost.py", "app/core/subtitle/burn.py",
     "app/core/subtitle/document.py", "app/core/subtitle/project.py", "app/core/audio/extract.py",
     "app/core/audio/capture.py", "app/core/profiles/store.py", "app/core/profiles/glossary_io.py",

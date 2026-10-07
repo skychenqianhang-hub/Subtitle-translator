@@ -22,7 +22,7 @@ class SettingsDialog(QDialog):
         layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
         self.settings_page = SettingsPage(cfg)
-        self.profiles_page = ProfilesPage(store)
+        self.profiles_page = ProfilesPage(store, cfg)
         self.tabs.addTab(self.settings_page, "API Key")
         self.tabs.addTab(self.profiles_page, tr("场景管理"))
         layout.addWidget(self.tabs)

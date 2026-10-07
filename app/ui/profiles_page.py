@@ -5,12 +5,12 @@ from app.i18n import tr
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QHeaderView, QInputDialog, QLabel, QLineEdit,
+    QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QHeaderView, QInputDialog, QLabel, QLineEdit,
     QMessageBox, QPlainTextEdit, QPushButton, QSplitter, QTableWidget, QTableWidgetItem, QTreeWidget,
     QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
-from app.config import ASR_MODELS, GLOSSARY_LANG_NAMES, TRANSLATE_MODELS, TRANSLATE_PROVIDERS
+from app.config import ASR_MODELS, GLOSSARY_LANG_NAMES, TRANSLATE_MODELS, TRANSLATE_PROVIDERS, Config
 from app.core.errors import UserFacingError, friendly_message
 from app.core.profiles.glossary import GLOSSARY_LANGS, Row, merge_rows
 from app.core.profiles.glossary_io import export_glossary, import_glossary
@@ -105,9 +105,10 @@ class GlossaryTable(QTableWidget):
 class ProfilesPage(QWidget):
     profiles_changed = Signal()   # 场景树或内容有变化（给主页的选择器刷新用）
 
-    def __init__(self, store: ProfileStore, parent: QWidget | None = None) -> None:
+    def __init__(self, store: ProfileStore, cfg: Config | None = None, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.store = store
+        self.cfg = cfg                      # 「让 AI 生成词表」要用 API Key 和翻译模型；没传就不显示那个按钮
         self._current: str | None = None
         self._dirty = False
 
@@ -209,6 +210,11 @@ class ProfilesPage(QWidget):
         self.export_button = QPushButton(tr("导出 CSV…"))
         self.export_button.clicked.connect(self._export_glossary)
         gl_btns.addWidget(self.export_button)
+        self.generate_button = QPushButton(tr("让 AI 生成词表…"))
+        self.generate_button.setToolTip(tr("填一句话描述领域，模型联网查官方资料整理成多语言术语表，预览确认后再加进来"))
+        self.generate_button.clicked.connect(self._generate_glossary)
+        self.generate_button.setVisible(cfg is not None)
+        gl_btns.addWidget(self.generate_button)
         gl_btns.addStretch(1)
         gl_box.addLayout(gl_btns)
         form.addRow(tr("术语表"), gl_box)
@@ -411,6 +417,36 @@ class ProfilesPage(QWidget):
         merged = merge_rows(existing, rows)
         self.glossary.set_rows(merged)
         self.status.setText(tr("已导入 {0} 条（新增 {1} 条），记得点「保存」。", len(rows), max(0, len(merged) - len(existing))))
+
+    def _generate_glossary(self, generator=None) -> None:
+        """打开「让 AI 生成词表」对话框；generator 参数只给测试用（换成不花钱的假函数）。"""
+        if self.cfg is None:
+            return
+        from app.ui.glossary_generate_dialog import GlossaryGenerateDialog
+        name = self._current or ROOT_NAME
+        default_domain = "" if name == ROOT_NAME else name
+        kwargs = {"generator": generator} if generator else {}
+        dlg = GlossaryGenerateDialog(self.cfg, self.store.display_name(name), self.glossary.rows(), default_domain,
+                                     parent=self, **kwargs)
+        self._generate_dialog = dlg
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+        self.apply_generated(dlg.accepted_rows, dlg.accepted_prompt, dlg.accepted_description)
+
+    def apply_generated(self, rows: list[Row], prompt_terms: list[str], description: str) -> None:
+        existing = self.glossary.rows()
+        merged = merge_rows(existing, rows)
+        self.glossary.set_rows(merged)
+        if prompt_terms:
+            current = [t.strip() for t in self.asr_prompt.toPlainText().replace("\n", ",").split(",") if t.strip()]
+            for t in prompt_terms:
+                if t not in current:
+                    current.append(t)
+            self.asr_prompt.setPlainText(", ".join(current))
+        if description and not self.description.text().strip():
+            self.description.setText(description)
+        self.status.setStyleSheet("color: #2a7;")
+        self.status.setText(tr("已加入 {0} 条（新增 {1} 条），记得点「保存」。", len(rows), max(0, len(merged) - len(existing))))
 
     def _export_glossary(self) -> None:
         default = f"{self._current or '术语表'}.csv"
