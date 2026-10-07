@@ -39,6 +39,7 @@ class VideoJob:
     corrections: dict[str, str] = field(default_factory=dict)
     style: str = ""
     scene: str = ""
+    tone: str = "subtitle"     # 译文风格档位
     batch_size: int = 15
     context_size: int = 3
     parallel: int = 4          # 同时发几个识别请求
@@ -129,7 +130,7 @@ class VideoPipeline:
             if prof is not None:
                 self.detected_scene = prof
                 job.scene = prof.display_name
-                job.glossary = prof.glossary
+                job.glossary = prof.glossary_for(job.source_language, job.target_language)
                 job.corrections = prof.corrections
                 job.style = prof.style
                 self.log(tr("自动判断场景：{0}（术语 {1} 条，纠错 {2} 条）", prof.display_name, len(prof.glossary), len(prof.corrections)))
@@ -187,6 +188,7 @@ class VideoPipeline:
                 glossary=job.glossary,
                 style=job.style,
                 scene=job.scene,
+                tone=job.tone,
             )
             translations = self.translator.translate(req)
             u = self.translator.last_usage or {}

@@ -36,6 +36,7 @@ class _Bridge(QObject):
     scene = Signal(str, str)
 from app.ui.model_panel import ModelLanguagePanel
 from app.ui.output_mode import OutputModePicker
+from app.ui.tone_picker import TonePicker
 from app.ui.overlay_window import OverlayWindow
 from app.ui.scene_picker import ScenePicker
 
@@ -104,6 +105,9 @@ class RealtimePage(QWidget):
         self.output_mode = OutputModePicker(cfg.realtime_output_mode, cfg.target_language_name())
         self.output_mode.changed.connect(self._save_output_mode)
         form.addRow(tr("输出内容"), self.output_mode)
+        self.tone = TonePicker(cfg.realtime_tone)
+        self.tone.changed.connect(self._save_tone)
+        form.addRow(tr("译文风格"), self.tone)
         layout.addWidget(box)
 
         # ---- 控制 ----
@@ -191,6 +195,11 @@ class RealtimePage(QWidget):
     def _apply_output_mode(self, mode: str) -> None:
         self.overlay.set_mode(mode)
         self.model_panel.set_translation_enabled(mode != "source_only")
+        self.tone.setEnabled(mode != "source_only")
+
+    def _save_tone(self, tone: str) -> None:
+        self.cfg.realtime_tone = tone
+        self._save()
 
     def _on_model_panel_changed(self) -> None:
         self.output_mode.set_target_name(self.cfg.target_language_name())
@@ -231,8 +240,9 @@ class RealtimePage(QWidget):
             device_index=self.device.currentData() if self.device.currentData() not in (None, -1) else None,
             max_segment_seconds=float(self.delay.value()),
             output_mode=mode, source_language=self.cfg.source_language, target_language=self.cfg.target_language,
-            asr_prompt=", ".join(prof.asr_prompt), glossary=prof.glossary, corrections=prof.corrections,
-            style=prof.style, scene=prof.display_name,
+            asr_prompt=", ".join(prof.asr_prompt), corrections=prof.corrections,
+            glossary=prof.glossary_for(self.cfg.source_language, self.cfg.target_language),
+            style=prof.style, scene=prof.display_name, tone=self.tone.current(),
             auto_scene=auto, scene_name=prof.name,
         )
         cbs = LiveCallbacks(
@@ -288,6 +298,7 @@ class RealtimePage(QWidget):
         self.model_panel.setEnabled(not running)
         self.scene.setEnabled(not running)
         self.output_mode.setEnabled(not running)
+        self.tone.setEnabled(not running and self.output_mode.current() != "source_only")
         if not running:
             self.level.setValue(0)
 

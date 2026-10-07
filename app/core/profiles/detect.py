@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from app.core.profiles.glossary import row_terms
 from app.core.profiles.store import ROOT_NAME, ProfileStore
 
 _CJK = re.compile(r"[぀-ヿ㐀-鿿가-힯]")
@@ -38,7 +39,7 @@ class SceneDetector:
         p = self.store.get(name)
         if p is None:
             return set()
-        raw = set(p.glossary.keys()) | set(p.asr_prompt) | set(p.corrections.values())
+        raw = row_terms(p.glossary) | set(p.asr_prompt) | set(p.corrections.values())
         out: set[str] = set()
         for t in raw:
             t = t.strip()

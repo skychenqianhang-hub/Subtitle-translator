@@ -27,6 +27,7 @@ from app.ui.subtitle_editor import SubtitleEditorWindow
 from app.ui.common import hint, not_implemented
 from app.ui.model_panel import ModelLanguagePanel
 from app.ui.output_mode import OutputModePicker
+from app.ui.tone_picker import TonePicker
 from app.ui.scene_picker import ScenePicker
 
 VIDEO_FILTER = "视频 / 音频文件 (*.mp4 *.mkv *.mov *.avi *.webm *.flv *.ts *.mp3 *.m4a *.wav *.flac *.aac *.ogg);;所有文件 (*)"
@@ -44,9 +45,10 @@ class _Worker(QObject):
 
     def __init__(self, cfg: Config, media_path: Path | None, output_mode: str, output_kinds: list[str],
                  subtitle_size: str, profile: EffectiveProfile, url: str = "", store: ProfileStore | None = None,
-                 auto_scene: bool = False) -> None:
+                 auto_scene: bool = False, tone: str = "subtitle") -> None:
         super().__init__()
         self.cfg = cfg
+        self.tone = tone
         self.store = store
         self.auto_scene = auto_scene
         self.url = url
@@ -104,9 +106,10 @@ class _Worker(QObject):
                 target_language=self.cfg.target_language,
                 scene=prof.display_name,
                 asr_prompt=", ".join(prof.asr_prompt),
-                glossary=prof.glossary,
+                glossary=prof.glossary_for(self.cfg.source_language, self.cfg.target_language),
                 corrections=prof.corrections,
                 style=prof.style,
+                tone=self.tone,
             )
             result = pipeline.run(job)
             if pipeline.detected_scene is not None:
@@ -225,6 +228,10 @@ class VideoPage(QWidget):
         self.output_mode = OutputModePicker(cfg.video_output_mode, cfg.target_language_name())
         self.output_mode.changed.connect(self._save_output_mode)
         form.addRow(tr("输出内容"), self.output_mode)
+        self.tone = TonePicker(cfg.video_tone)
+        self.tone.changed.connect(self._save_tone)
+        self.tone.setEnabled(cfg.video_output_mode != "source_only")
+        form.addRow(tr("译文风格"), self.tone)
         layout.addWidget(box)
         self._apply_output_kind()
 
@@ -338,7 +345,8 @@ class VideoPage(QWidget):
 
         self._worker = _Worker(self.cfg, path, mode, self.selected_kinds(),
                                self.cfg.video_subtitle_size, self.store.resolve(self.scene.current_name()), url=url,
-                               store=self.store, auto_scene=self.scene.current_name() == AUTO_SCENE)
+                               store=self.store, auto_scene=self.scene.current_name() == AUTO_SCENE,
+                               tone=self.tone.current())
         self._worker.media_resolved.connect(self._on_media_resolved)
         self._thread = QThread(self)
         self._worker.moveToThread(self._thread)
@@ -382,6 +390,7 @@ class VideoPage(QWidget):
         self.url_edit.setEnabled(not running)
         self.model_panel.setEnabled(not running)
         self.output_mode.setEnabled(not running)
+        self.tone.setEnabled(not running and self.output_mode.current() != "source_only")
         for cb in self.kind_checks.values():
             cb.setEnabled(not running)
         self.style_button.setEnabled(not running)
@@ -535,9 +544,14 @@ class VideoPage(QWidget):
         self.cfg.last_scene = name
         self._save()
 
+    def _save_tone(self, tone: str) -> None:
+        self.cfg.video_tone = tone
+        self._save()
+
     def _save_output_mode(self, mode: str) -> None:
         self.cfg.video_output_mode = mode
         self.model_panel.set_translation_enabled(mode != "source_only")
+        self.tone.setEnabled(mode != "source_only")
         if self._lines:
             self._render_preview()
         self._save()

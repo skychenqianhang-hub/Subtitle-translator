@@ -841,7 +841,17 @@ class SubtitleEditorWindow(QMainWindow):
         if not res or not res[0]:
             return
         p = self.store.get(self.project.scene) or self.store.get("通用")
-        p.glossary[res[0]] = res[1]
+        from app.core.profiles.glossary import GLOSSARY_LANGS, guess_language, merge_rows
+        tgt = self.project.target_language if self.project.target_language in GLOSSARY_LANGS else "zh-Hans"
+        src = self.project.source_language
+        if src == "zh":
+            src = "zh-Hans"
+        if src not in GLOSSARY_LANGS:        # 原文语言是「自动」：按词的文字猜
+            src = guess_language(res[0], prefer_han="ja" if tgt.startswith("zh") else "zh-Hans")
+        row = {src: res[0]}
+        if res[1]:
+            row[tgt] = res[1]
+        p.glossary = merge_rows(p.glossary, [row])
         self.store.save(p)
         self.status.setStyleSheet("color: #2a7;")
         self.status.setText(tr("已加入术语表：{0} → {1}", res[0], res[1]))

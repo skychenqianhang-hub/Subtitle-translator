@@ -61,6 +61,7 @@ class LiveOptions:
     corrections: dict[str, str] = field(default_factory=dict)
     style: str = ""
     scene: str = ""
+    tone: str = "casual"                      # 译文风格档位
     context_size: int = 3
     hold_half_sentence_seconds: float = 2.5   # 半句话最多等多久再翻译
     auto_scene: bool = False                  # 场景选了「自动」
@@ -288,7 +289,7 @@ class LiveSession:
             return
         self.opt.scene_name = chosen
         self.opt.scene = prof.display_name
-        self.opt.glossary = prof.glossary
+        self.opt.glossary = prof.glossary_for(self.opt.source_language, self.opt.target_language)
         self.opt.corrections = prof.corrections
         self.opt.asr_prompt = ", ".join(prof.asr_prompt)
         self.opt.style = prof.style
@@ -304,7 +305,7 @@ class LiveSession:
         req = TranslateRequest(
             sentences=[line.source], source_language=self.opt.source_language,
             target_language=self.opt.target_language, context=context, glossary=self.opt.glossary,
-            style=self.opt.style, scene=self.opt.scene,
+            style=self.opt.style, scene=self.opt.scene, tone=self.opt.tone,
         )
         try:
             target = self.translator.translate(req)[0]

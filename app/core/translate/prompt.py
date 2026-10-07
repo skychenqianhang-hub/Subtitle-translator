@@ -16,6 +16,15 @@ def lang_name(code: str) -> str:
     return LANG_NAMES.get(code, code)
 
 
+# 语气档位 → 发给模型的具体要求（主页「译文风格」下拉框）
+TONE_INSTRUCTIONS = {
+    "casual": "语气：口语。照说话人的口气翻，用短句，保留语气词和情绪，可以用{tgt}观众常用的网络说法，不要整理成书面句",
+    "subtitle": "语气：标准影视字幕。简洁通顺，每句尽量短，去掉口头禅、重复和无意义的填充词，口语但不啰嗦",
+    "semiformal": "语气：半正式。通顺的书面口语，句子完整，不用俚语和网络用语",
+    "formal": "语气：正式。书面语，句子完整规范，术语用标准说法，不带情绪色彩和口头语",
+}
+
+
 def system_prompt(req: TranslateRequest) -> str:
     src = lang_name(req.source_language)
     tgt = lang_name(req.target_language)
@@ -23,7 +32,8 @@ def system_prompt(req: TranslateRequest) -> str:
         f"你是专业的字幕翻译。把{src}的语音识别文本翻译成{tgt}字幕。",
         "要求：",
         "1. 逐句翻译，输出的句数必须和输入完全一致，每句译文对应同编号的原文，不要合并、拆分或漏句。",
-        "2. 字幕要简洁口语化，符合中文观众的表达习惯；单句过长时适当精简，但不能丢信息。",
+        "2. " + TONE_INSTRUCTIONS.get(req.tone, TONE_INSTRUCTIONS["subtitle"]).format(tgt=tgt)
+        + f"；符合{tgt}母语观众的表达习惯；单句过长时适当精简，但不能丢信息。",
         "3. 原文是语音识别结果，可能有错字、断句不佳；按上下文理解真实意思再翻。",
         "4. 「前文」只用来理解语境，不要翻译它。",
         "5. 只输出译文，不要解释，不要加引号。",
@@ -33,7 +43,7 @@ def system_prompt(req: TranslateRequest) -> str:
         for k, v in req.glossary.items():
             lines.append(f"   - {k} → {v}")
     if req.style:
-        lines.append(f"翻译风格：{req.style}")
+        lines.append(f"题材要求：{req.style}（和第 2 条的语气要求冲突时，以第 2 条为准）")
     if req.scene:
         lines.append(f"内容场景：{req.scene}")
     return "\n".join(lines)

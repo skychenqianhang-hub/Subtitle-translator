@@ -1,6 +1,6 @@
 name: Valorant
 parent: 游戏
-preset_version: 2
+preset_version: 5
 asr_model: null
 translate_provider: null
 translate_model: null
@@ -118,299 +118,171 @@ corrections:
   レーナ: レイナ
   ケイオー: KAY/O
 glossary:
-  # ---------- 特工（英文 → 国服译名） ----------
-  Jett: 捷风
-  Reyna: 芮娜
-  Phoenix: 不死鸟
-  Raze: 雷兹
-  Yoru: 夜露
-  Neon: 霓虹
-  Iso: 壹决
-  Waylay: 幻棱
-  Sova: 猎枭
-  Breach: 铁臂
-  Skye: 斯凯
-  KAY/O: K/O
-  Fade: 黑梦
-  Gekko: 盖可
-  Tejo: 钛狐
-  Omen: 幽影
-  Brimstone: 炼狱
-  Viper: 蝰蛇
-  Astra: 星礈
-  Harbor: 海神
-  Clove: 暮蝶
-  Miks: 迷核
-  Sage: 贤者
-  Cypher: 零
-  Killjoy: 奇乐
-  Chamber: 尚勃勒
-  Deadlock: 钢锁
-  Vyse: 维斯
-  Veto: 禁灭
-  duelist: 决斗
-  initiator: 先锋
-  controller: 控场
-  sentinel: 哨卫
-  # ---------- 特工（日文 → 国服译名） ----------
-  ジェット: 捷风
-  レイナ: 芮娜
-  フェニックス: 不死鸟
-  レイズ: 雷兹
-  ヨル: 夜露
-  ネオン: 霓虹
-  アイソ: 壹决
-  ウェイレイ: 幻棱
-  ソーヴァ: 猎枭
-  ブリーチ: 铁臂
-  スカイ: 斯凯
-  ケイオー: K/O
-  フェイド: 黑梦
-  ゲッコー: 盖可
-  テホ: 钛狐
-  オーメン: 幽影
-  ブリムストーン: 炼狱
-  ブリム: 炼狱
-  ヴァイパー: 蝰蛇
-  アストラ: 星礈
-  ハーバー: 海神
-  クローヴ: 暮蝶
-  ミクス: 迷核
-  セージ: 贤者
-  サイファー: 零
-  キルジョイ: 奇乐
-  キルジョ: 奇乐
-  チェンバー: 尚勃勒
-  デッドロック: 钢锁
-  ヴァイス: 维斯
-  ヴィトー: 禁灭
-  デュエリスト: 决斗
-  イニシエーター: 先锋
-  コントローラー: 控场
-  センチネル: 哨卫
-  # ---------- 地图 ----------
-  Ascent: 亚海悬城
-  Bind: 源工重镇
-  Haven: 隐世修所
-  Split: 霓虹町
-  Icebox: 森寒冬港
-  Breeze: 微风岛屿
-  Fracture: 裂变峡谷
-  Pearl: 深海明珠
-  Lotus: 莲华古城
-  Sunset: 日落之城
-  Abyss: 幽邃地窟
-  Corrode: 盐海矿镇
-  Summit: 天枢云阙
-  アセント: 亚海悬城
-  バインド: 源工重镇
-  ヘイヴン: 隐世修所
-  スプリット: 霓虹町
-  アイスボックス: 森寒冬港
-  ブリーズ: 微风岛屿
-  フラクチャー: 裂变峡谷
-  パール: 深海明珠
-  ロータス: 莲华古城
-  サンセット: 日落之城
-  アビス: 幽邃地窟
-  カロード: 盐海矿镇
-  サミット: 天枢云阙
-  # ---------- 武器 ----------
-  Classic: 标配
-  Shorty: 短炮
-  Frenzy: 狂怒
-  Ghost: 鬼魅
-  Sheriff: 正义
-  Bandit: 追猎
-  Stinger: 蜂刺
-  Spectre: 骇灵
-  Bucky: 雄鹿
-  Judge: 判官
-  Bulldog: 獠犬
-  Guardian: 戍卫
-  Phantom: 幻影
-  Vandal: 狂徒
-  Marshal: 飞将
-  Outlaw: 莽侠
-  Operator: 冥驹
-  Ares: 战神
-  Odin: 奥丁
-  knife: 刀
-  クラシック: 标配
-  ショーティ: 短炮
-  フレンジー: 狂怒
-  ゴースト: 鬼魅
-  シェリフ: 正义
-  スティンガー: 蜂刺
-  スペクター: 骇灵
-  バッキー: 雄鹿
-  ジャッジ: 判官
-  ブルドッグ: 獠犬
-  ガーディアン: 戍卫
-  ファントム: 幻影
-  ヴァンダル: 狂徒
-  マーシャル: 飞将
-  アウトロー: 莽侠
-  オペレーター: 冥驹
-  オペ: 冥驹
-  アレス: 战神
-  オーディン: 奥丁
-  ナイフ: 刀
-  # ---------- 战术 / 对局（英文） ----------
-  Spike: 辐能核心
-  plant: 下包
-  defuse: 拆包
-  post-plant: 包后
-  retake: 回防
-  rotate: 转点
-  eco: 经济局
-  anti-eco: 反经济局
-  force buy: 强起
-  full buy: 满购
-  half buy: 半起
-  save: 保枪
-  bonus round: 奖励局
-  pistol round: 手枪局
-  thrifty: 节俭胜利
-  flawless: 零伤亡
-  clutch: 残局
-  ace: 五杀
-  ult: 大招
-  ultimate: 大招
-  ult orb: 大招点
-  orb: 大招点
-  ability: 技能
-  utility: 技能
-  flash: 闪光
-  smoke: 烟
-  molly: 燃烧
-  wall: 墙
-  recon: 侦查箭
-  drone: 无人机
-  trip: 绊线
-  turret: 炮台
-  camera: 摄像头
-  teleport: 传送
-  entry: 首杀突破
-  entry frag: 首杀
-  first blood: 首杀
-  lurk: 偷家
-  lurker: 偷家位
-  flank: 绕后
-  trade: 补枪
-  bait: 当鱼饵
-  peek: 拉枪
-  dry peek: 干拉
-  shoulder peek: 肩膀拉
-  jiggle peek: 晃身
-  wide peek: 大拉
-  hold: 架枪
-  anchor: 守点位
-  stack: 堆人
-  split: 分推
-  execute: 执行战术
-  default: 默认开局
-  fake: 假打
-  rush: 冲
-  push: 前压
-  one tap: 一枪头
-  one way: 单向烟
-  wallbang: 穿墙
-  prefire: 预瞄枪
-  pre-aim: 预瞄
-  spray: 扫射
-  tap: 点射
-  burst: 点射
-  flick: 甩枪
-  whiff: 空枪
-  dink: 打头没死
-  comp: 阵容
-  IGL: 指挥
-  mid: 中路
-  site: 点位
-  A site: A 点
-  B site: B 点
-  heaven: 天堂
-  main: 主通道
-  elbow: 拐角
-  callout: 报点
-  # ---------- 战术 / 对局（日文） ----------
-  スパイク: 辐能核心
-  設置: 下包
-  プラント: 下包
-  解除: 拆包
-  ガチ解除: 硬拆
-  ポストプラント: 包后
-  リテイク: 回防
-  ローテ: 转点
-  ローテート: 转点
-  エコ: 经济局
-  アンチエコ: 反经济局
-  フォースバイ: 强起
-  フルバイ: 满购
-  ハーフバイ: 半起
-  セーブ: 保枪
-  ボーナスラウンド: 奖励局
-  ピストルラウンド: 手枪局
-  スリフティ: 节俭胜利
-  クラッチ: 残局
-  エース: 五杀
-  アビリティ: 技能
-  ユーティリティ: 技能
-  フラッシュ: 闪光
-  スモーク: 烟
-  モク: 烟
-  モリー: 燃烧
-  ウォール: 墙
-  リコン: 侦查箭
-  ドローン: 无人机
-  トリップ: 绊线
-  タレット: 炮台
-  カメラ: 摄像头
-  テレポート: 传送
-  エントリー: 首杀突破
-  ファーストブラッド: 首杀
-  ラーク: 偷家
-  ラーカー: 偷家位
-  裏取り: 绕后
-  トレード: 补枪
-  ピーク: 拉枪
-  ドライピーク: 干拉
-  ショルダーピーク: 肩膀拉
-  ジグルピーク: 晃身
-  ホールド: 架枪
-  アンカー: 守点位
-  スタック: 堆人
-  スプリット: 分推
-  セットプレイ: 战术执行
-  フェイク: 假打
-  ラッシュ: 冲
-  プッシュ: 前压
-  ワンタップ: 一枪头
-  ワンウェイ: 单向烟
-  壁抜き: 穿墙
-  決め撃ち: 预瞄枪
-  置きエイム: 预瞄
-  スプレー: 扫射
-  タップ撃ち: 点射
-  バースト: 点射
-  フリック: 甩枪
-  クリア: 清点
-  構成: 阵容
-  コンポジション: 阵容
-  ミッド: 中路
-  サイト: 点位
-  Aサイト: A 点
-  Bサイト: B 点
-  ヘブン: 天堂
-  メイン: 主通道
-  報告: 报点
-  インフォ: 信息
-  アタック: 进攻方
-  ディフェンス: 防守方
-  攻め: 进攻
-  守り: 防守
-  クレジット: 经济
-  買い物: 买枪
+# ---------- 特工（英文 → 国服译名） ----------
+- {en: Jett, ja: ジェット, zh-Hans: 捷风, zh-Hant: 婕提}
+- {en: Reyna, ja: レイナ, zh-Hans: 芮娜, zh-Hant: 蕾娜}
+- {en: Phoenix, ja: フェニックス, zh-Hans: 不死鸟, zh-Hant: 菲尼克斯}
+- {en: Raze, ja: レイズ, zh-Hans: 雷兹, zh-Hant: 芮茲}
+- {en: Yoru, ja: ヨル, zh-Hans: 夜露, zh-Hant: 夜戮}
+- {en: Neon, ja: ネオン, zh-Hans: 霓虹, zh-Hant: 妮虹}
+- {en: Iso, ja: アイソ, zh-Hans: 壹决, zh-Hant: 離索}
+- {en: Waylay, ja: ウェイレイ, zh-Hans: 幻棱, zh-Hant: 維蕾}
+- {en: Sova, ja: ソーヴァ, zh-Hans: 猎枭, zh-Hant: 蘇法}
+- {en: Breach, ja: ブリーチ, zh-Hans: 铁臂, zh-Hant: 叛奇}
+- {en: Skye, ja: スカイ, zh-Hans: 斯凯, zh-Hant: 絲凱}
+- {en: KAY/O, ja: ケイオー, zh-Hans: K/O, zh-Hant: KAY/O}
+- {en: Fade, ja: フェイド, zh-Hans: 黑梦, zh-Hant: 菲德}
+- {en: Gekko, ja: ゲッコー, zh-Hans: 盖可, zh-Hant: 蓋克}
+- {en: Tejo, ja: テホ, zh-Hans: 钛狐, zh-Hant: 戴侯}
+- {en: Omen, ja: オーメン, zh-Hans: 幽影, zh-Hant: 歐門}
+- {en: Brimstone, ja: ブリムストーン, zh-Hans: 炼狱, zh-Hant: 布史東}
+- {en: Viper, ja: ヴァイパー, zh-Hans: 蝰蛇, zh-Hant: 薇蝮}
+- {en: Astra, ja: アストラ, zh-Hans: 星礈, zh-Hant: 亞星卓}
+- {en: Harbor, ja: ハーバー, zh-Hans: 海神, zh-Hant: 哈泊}
+- {en: Clove, ja: クローヴ, zh-Hans: 暮蝶, zh-Hant: 珂樂芙}
+- {en: Miks, ja: ミクス, zh-Hans: 迷核, zh-Hant: 米克什}
+- {en: Sage, ja: セージ, zh-Hans: 贤者, zh-Hant: 聖祈}
+- {en: Cypher, ja: サイファー, zh-Hans: 零, zh-Hant: 瑟符}
+- {en: Killjoy, ja: キルジョイ, zh-Hans: 奇乐, zh-Hant: 愷宙}
+- {en: Chamber, ja: チェンバー, zh-Hans: 尚勃勒, zh-Hant: 錢博爾}
+- {en: Deadlock, ja: デッドロック, zh-Hans: 钢锁, zh-Hant: 蒂羅}
+- {en: Vyse, ja: ヴァイス, zh-Hans: 维斯, zh-Hant: 薇絲}
+- {en: Veto, ja: ヴィトー, zh-Hans: 禁灭, zh-Hant: 維托}
+- {en: duelist, ja: デュエリスト, zh-Hans: 决斗, zh-Hant: 決鬥者}
+- {en: initiator, ja: イニシエーター, zh-Hans: 先锋, zh-Hant: 先鋒}
+- {en: controller, ja: コントローラー, zh-Hans: 控场, zh-Hant: 控場者}
+- {en: sentinel, ja: センチネル, zh-Hans: 哨卫, zh-Hant: 守衛}
+# ---------- 特工（日文 → 国服译名） ----------
+- {ja: ブリム, zh-Hans: 炼狱, zh-Hant: 煉獄}
+- {ja: キルジョ, zh-Hans: 奇乐, zh-Hant: 奇樂}
+# ---------- 地图 ----------
+- {en: Ascent, ja: アセント, zh-Hans: 亚海悬城, zh-Hant: 義境空島}
+- {en: Bind, ja: バインド, zh-Hans: 源工重镇, zh-Hant: 劫境之地}
+- {en: Haven, ja: ヘイヴン, zh-Hans: 隐世修所, zh-Hant: 遺落境地}
+- {en: Split, ja: スプリット, zh-Hans: 霓虹町, zh-Hant: 雙塔迷城}
+- {en: Icebox, ja: アイスボックス, zh-Hans: 森寒冬港, zh-Hant: 極地寒港}
+- {en: Breeze, ja: ブリーズ, zh-Hans: 微风岛屿, zh-Hant: 熱帶樂園}
+- {en: Fracture, ja: フラクチャー, zh-Hans: 裂变峡谷, zh-Hant: 天漠之峽}
+- {en: Pearl, ja: パール, zh-Hans: 深海明珠, zh-Hant: 深海遺珠}
+- {en: Lotus, ja: ロータス, zh-Hans: 莲华古城, zh-Hant: 蓮華古城}
+- {en: Sunset, ja: サンセット, zh-Hans: 日落之城, zh-Hant: 日落之城}
+- {en: Abyss, ja: アビス, zh-Hans: 幽邃地窟, zh-Hant: 深窟幽境}
+- {en: Corrode, ja: カロード, zh-Hans: 盐海矿镇, zh-Hant: 晶蝕之地}
+- {en: Summit, ja: サミット, zh-Hans: 天枢云阙, zh-Hant: 頂峰亭閣}
+# ---------- 武器 ----------
+- {en: Classic, ja: クラシック, zh-Hans: 标配, zh-Hant: 制式手槍}
+- {en: Shorty, ja: ショーティ, zh-Hans: 短炮, zh-Hant: 短管}
+- {en: Frenzy, ja: フレンジー, zh-Hans: 狂怒, zh-Hant: 狂弒}
+- {en: Ghost, ja: ゴースト, zh-Hans: 鬼魅, zh-Hant: 鬼魅}
+- {en: Sheriff, ja: シェリフ, zh-Hans: 正义, zh-Hant: 神射}
+- {en: Bandit, zh-Hans: 追猎, zh-Hant: 盜賊}
+- {en: Stinger, ja: スティンガー, zh-Hans: 蜂刺, zh-Hant: 刺針}
+- {en: Spectre, ja: スペクター, zh-Hans: 骇灵, zh-Hant: 惡靈}
+- {en: Bucky, ja: バッキー, zh-Hans: 雄鹿, zh-Hant: 重砲}
+- {en: Judge, ja: ジャッジ, zh-Hans: 判官, zh-Hant: 判官}
+- {en: Bulldog, ja: ブルドッグ, zh-Hans: 獠犬, zh-Hant: 鬥牛犬}
+- {en: Guardian, ja: ガーディアン, zh-Hans: 戍卫, zh-Hant: 捍衛者}
+- {en: Phantom, ja: ファントム, zh-Hans: 幻影, zh-Hant: 幻象}
+- {en: Vandal, ja: ヴァンダル, zh-Hans: 狂徒, zh-Hant: 暴徒}
+- {en: Marshal, ja: マーシャル, zh-Hans: 飞将, zh-Hant: 警長}
+- {en: Outlaw, ja: アウトロー, zh-Hans: 莽侠, zh-Hant: 逃犯}
+- {en: Operator, ja: オペレーター, zh-Hans: 冥驹, zh-Hant: 間諜}
+- {en: Ares, ja: アレス, zh-Hans: 战神, zh-Hant: 戰神}
+- {en: Odin, ja: オーディン, zh-Hans: 奥丁, zh-Hant: 奧丁}
+- {en: knife, ja: ナイフ, zh-Hans: 刀, zh-Hant: 戰術小刀}
+- {ja: オペ, zh-Hans: 冥驹, zh-Hant: 冥駒}
+# ---------- 战术 / 对局（英文） ----------
+- {en: Spike, ja: スパイク, zh-Hans: 辐能核心, zh-Hant: 輻能核心}
+- {en: plant, ja: プラント, zh-Hans: 下包, zh-Hant: 下包}
+- {en: defuse, ja: 解除, zh-Hans: 拆包, zh-Hant: 拆包}
+- {en: post-plant, ja: ポストプラント, zh-Hans: 包后, zh-Hant: 下包後}
+- {en: retake, ja: リテイク, zh-Hans: 回防, zh-Hant: 回防}
+- {en: rotate, ja: ローテート, zh-Hans: 转点, zh-Hant: 轉點}
+- {en: eco, ja: エコ, zh-Hans: 经济局, zh-Hant: eco 局}
+- {en: anti-eco, ja: アンチエコ, zh-Hans: 反经济局, zh-Hant: anti-eco}
+- {en: force buy, ja: フォースバイ, zh-Hans: 强起, zh-Hant: 強買}
+- {en: full buy, ja: フルバイ, zh-Hans: 满购, zh-Hant: 全買}
+- {en: half buy, ja: ハーフバイ, zh-Hans: 半起, zh-Hant: 半買}
+- {en: save, ja: セーブ, zh-Hans: 保枪, zh-Hant: 保槍}
+- {en: bonus round, ja: ボーナスラウンド, zh-Hans: 奖励局, zh-Hant: bonus 局}
+- {en: pistol round, ja: ピストルラウンド, zh-Hans: 手枪局, zh-Hant: 手槍局}
+- {en: thrifty, ja: スリフティ, zh-Hans: 节俭胜利, zh-Hant: 節儉}
+- {en: flawless, zh-Hans: 零伤亡, zh-Hant: 完美}
+- {en: clutch, ja: クラッチ, zh-Hans: 残局, zh-Hant: 殘局}
+- {en: ace, ja: エース, zh-Hans: 五杀, zh-Hant: ACE}
+- {en: ult, zh-Hans: 大招, zh-Hant: 大絕}
+- {en: ultimate, zh-Hans: 大招, zh-Hant: 大絕}
+- {en: ult orb, zh-Hans: 大招点, zh-Hant: 大絕靈球}
+- {en: orb, zh-Hans: 大招点, zh-Hant: 大絕靈球}
+- {en: ability, ja: アビリティ, zh-Hans: 技能, zh-Hant: 技能}
+- {en: utility, ja: ユーティリティ, zh-Hans: 技能, zh-Hant: 技能}
+- {en: flash, ja: フラッシュ, zh-Hans: 闪光, zh-Hant: 閃光}
+- {en: smoke, ja: スモーク, zh-Hans: 烟, zh-Hant: 煙}
+- {en: molly, ja: モリー, zh-Hans: 燃烧, zh-Hant: 燃燒彈}
+- {en: wall, ja: ウォール, zh-Hans: 墙, zh-Hant: 牆}
+- {en: recon, ja: リコン, zh-Hans: 侦查箭, zh-Hant: 偵察箭}
+- {en: drone, ja: ドローン, zh-Hans: 无人机, zh-Hant: 無人機}
+- {en: trip, ja: トリップ, zh-Hans: 绊线, zh-Hant: 絆線}
+- {en: turret, ja: タレット, zh-Hans: 炮台, zh-Hant: 砲台}
+- {en: camera, ja: カメラ, zh-Hans: 摄像头, zh-Hant: 攝影機}
+- {en: teleport, ja: テレポート, zh-Hans: 传送, zh-Hant: 傳送}
+- {en: entry, ja: エントリー, zh-Hans: 首杀突破, zh-Hant: 進點}
+- {en: entry frag, zh-Hans: 首杀, zh-Hant: 首殺}
+- {en: first blood, ja: ファーストブラッド, zh-Hans: 首杀, zh-Hant: 首殺}
+- {en: lurk, ja: ラーク, zh-Hans: 偷家, zh-Hant: lurk}
+- {en: lurker, ja: ラーカー, zh-Hans: 偷家位, zh-Hant: lurker}
+- {en: flank, ja: 裏取り, zh-Hans: 绕后, zh-Hant: 繞後}
+- {en: trade, ja: トレード, zh-Hans: 补枪, zh-Hant: 補槍}
+- {en: bait, zh-Hans: 当鱼饵, zh-Hant: 當誘餌}
+- {en: peek, ja: ピーク, zh-Hans: 拉枪, zh-Hant: 探頭}
+- {en: dry peek, ja: ドライピーク, zh-Hans: 干拉, zh-Hant: dry peek}
+- {en: shoulder peek, ja: ショルダーピーク, zh-Hans: 肩膀拉, zh-Hant: shoulder peek}
+- {en: jiggle peek, ja: ジグルピーク, zh-Hans: 晃身, zh-Hant: jiggle peek}
+- {en: wide peek, zh-Hans: 大拉, zh-Hant: wide peek}
+- {en: hold, ja: ホールド, zh-Hans: 架枪, zh-Hant: 架槍}
+- {en: anchor, ja: アンカー, zh-Hans: 守点位, zh-Hant: 守點}
+- {en: stack, ja: スタック, zh-Hans: 堆人, zh-Hant: 堆人}
+- {en: split, ja: スプリット, zh-Hans: 分推, zh-Hant: 雙塔迷城}
+- {en: execute, zh-Hans: 执行战术, zh-Hant: 執行戰術}
+- {en: default, zh-Hans: 默认开局, zh-Hant: default}
+- {en: fake, ja: フェイク, zh-Hans: 假打, zh-Hant: 假打}
+- {en: rush, ja: ラッシュ, zh-Hans: 冲, zh-Hant: 衝}
+- {en: push, ja: プッシュ, zh-Hans: 前压, zh-Hant: 前壓}
+- {en: one tap, ja: ワンタップ, zh-Hans: 一枪头, zh-Hant: 一槍頭}
+- {en: one way, ja: ワンウェイ, zh-Hans: 单向烟, zh-Hant: 單向煙}
+- {en: wallbang, ja: 壁抜き, zh-Hans: 穿墙, zh-Hant: 穿牆}
+- {en: prefire, ja: 決め撃ち, zh-Hans: 预瞄枪, zh-Hant: 預開}
+- {en: pre-aim, ja: 置きエイム, zh-Hans: 预瞄, zh-Hant: 預瞄}
+- {en: spray, ja: スプレー, zh-Hans: 扫射, zh-Hant: 掃射}
+- {en: tap, ja: タップ撃ち, zh-Hans: 点射, zh-Hant: 點射}
+- {en: burst, ja: バースト, zh-Hans: 点射, zh-Hant: 點射}
+- {en: flick, ja: フリック, zh-Hans: 甩枪, zh-Hant: 甩槍}
+- {en: whiff, zh-Hans: 空枪, zh-Hant: 放槍}
+- {en: dink, zh-Hans: 打头没死, zh-Hant: 打頭沒死}
+- {en: comp, ja: コンポジション, zh-Hans: 阵容, zh-Hant: 陣容}
+- {en: IGL, zh-Hans: 指挥, zh-Hant: 指揮}
+- {en: mid, ja: ミッド, zh-Hans: 中路, zh-Hant: 中路}
+- {en: site, ja: サイト, zh-Hans: 点位, zh-Hant: 包點}
+- {en: A site, ja: Aサイト, zh-Hans: A 点, zh-Hant: A 點}
+- {en: B site, ja: Bサイト, zh-Hans: B 点, zh-Hant: B 點}
+- {en: heaven, ja: ヘブン, zh-Hans: 天堂, zh-Hant: 天堂}
+- {en: main, ja: メイン, zh-Hans: 主通道, zh-Hant: 主通道}
+- {en: elbow, zh-Hans: 拐角, zh-Hant: 轉角}
+- {en: callout, ja: 報告, zh-Hans: 报点, zh-Hant: 報點}
+# ---------- 战术 / 对局（日文） ----------
+- {ja: 設置, zh-Hans: 下包, zh-Hant: 下包}
+- {ja: ガチ解除, zh-Hans: 硬拆, zh-Hant: 硬拆}
+- {ja: ローテ, zh-Hans: 转点, zh-Hant: 轉點}
+- {ja: モク, zh-Hans: 烟, zh-Hant: 煙}
+- {ja: セットプレイ, zh-Hans: 战术执行, zh-Hant: 戰術執行}
+- {ja: クリア, zh-Hans: 清点, zh-Hant: 清角}
+- {ja: 構成, zh-Hans: 阵容, zh-Hant: 陣容}
+- {ja: インフォ, zh-Hans: 信息, zh-Hant: 資訊}
+- {ja: アタック, zh-Hans: 进攻方, zh-Hant: 進攻方}
+- {ja: ディフェンス, zh-Hans: 防守方, zh-Hant: 防守方}
+- {ja: 攻め, zh-Hans: 进攻, zh-Hant: 進攻}
+- {ja: 守り, zh-Hans: 防守, zh-Hant: 防守}
+- {ja: クレジット, zh-Hans: 经济, zh-Hant: 經濟}
+- {ja: 買い物, zh-Hans: 买枪, zh-Hant: 買槍}
 style: null
 description: 无畏契约（Valorant）：特工、地图、武器的国服译名，以及中英日三语的战术用语（资料来源：无畏契约 BWIKI、日本 VALORANT 用语集）。

@@ -1,6 +1,6 @@
 name: 游戏
 parent: 通用
-preset_version: 2
+preset_version: 5
 asr_model: null
 translate_provider: null
 translate_model: null
@@ -16,146 +16,122 @@ asr_prompt:
 - 周回
 corrections: {}
 glossary:
-  # ---------- 英文 ----------
-  GG: GG
-  GGWP: GG
-  GLHF: 祝好运
-  MVP: MVP
-  AFK: 挂机
-  buff: 加强
-  nerf: 削弱
-  debuff: 负面效果
-  meta: 版本答案
-  ranked: 排位
-  rank: 段位
-  lobby: 大厅
-  queue: 排队匹配
-  matchmaking: 匹配
-  respawn: 复活
-  cooldown: 冷却
-  headshot: 爆头
-  kill: 击杀
-  death: 死亡
-  K/D: KD
-  carry: 带飞
-  throw: 送
-  tilt: 上头
-  smurf: 炸鱼
-  noob: 菜鸟
-  camping: 蹲点
-  lag: 卡
-  ping: 延迟
-  patch: 补丁
-  update: 更新
-  DLC: DLC
-  boss: Boss
-  NPC: NPC
-  HP: 血量
-  OP: 太强了
-  RNG: 运气
-  speedrun: 速通
-  grind: 刷
-  farm: 刷
-  loot: 掉落
-  gacha: 抽卡
-  pity: 保底
-  whale: 氪佬
-  F2P: 零氪
-  co-op: 合作模式
-  PvP: PvP
-  PvE: PvE
-  raid: 团本
-  tank: 坦克
-  healer: 奶妈
-  DPS: 输出
-  aggro: 仇恨
-  CC: 控制
-  AoE: 范围伤害
-  combo: 连招
-  cheater: 外挂
-  hacker: 外挂
-  stream: 直播
-  streamer: 主播
-  chat: 弹幕
-  clip: 切片
-  sub: 订阅
-  donation: 打赏
-  # ---------- 日文 ----------
-  ランクマッチ: 排位
-  ランク: 段位
-  野良: 路人局
-  パーティ: 组队
-  ソロ: 单排
-  フレンド: 好友
-  味方: 队友
-  敵: 敌人
-  キル: 击杀
-  デス: 死亡
-  リスポーン: 复活
-  復活: 复活
-  回復: 回血
-  蘇生: 救人
-  ヘッショ: 爆头
-  ヘッドショット: 爆头
-  エイム: 瞄准
-  ラグ: 卡
-  鯖: 服务器
-  鯖落ち: 服务器炸了
-  バフ: 加强
-  ナーフ: 削弱
-  デバフ: 负面效果
-  メタ: 版本答案
-  ガチャ: 抽卡
-  天井: 保底
-  爆死: 歪了
-  神引き: 欧了
-  すり抜け: 歪了
-  単発: 单抽
-  10連: 十连
-  リセマラ: 刷初始
-  無課金: 零氪
-  微課金: 微氪
-  廃課金: 重氪
-  周回: 刷本
-  沼る: 卡关
-  詰む: 卡死了
-  縛りプレイ: 限制挑战
-  初見: 初见
-  ネタバレ: 剧透
-  芋る: 蹲点
-  キャンプ: 蹲点
-  漁夫: 渔翁得利
-  カバー: 补位
-  クリアリング: 清点
-  安置: 安全区
-  物資: 物资
-  降下: 跳伞
-  チーター: 外挂
-  チート: 外挂
-  グリッチ: 卡 bug
-  煽り: 嘲讽
-  ナイス: 漂亮
-  ドンマイ: 没事
-  おつ: 辛苦了
-  お疲れ: 辛苦了
-  配信: 直播
-  実況: 实况
-  同接: 同时在线
-  スパチャ: 打赏
-  切り抜き: 切片
-  コラボ: 联动
-  耐久: 耐久直播
-  アプデ: 更新
-  パッチ: 补丁
-  ボス: Boss
-  周回プレイ: 刷本
-  RTA: 速通
-  コンボ: 连招
-  必殺技: 必杀技
-  ウルト: 大招
-  アルティメット: 大招
-  スキル: 技能
-  クールダウン: 冷却
-  CT: 冷却
+# ---------- 英文 ----------
+- {en: GG, zh-Hans: GG, zh-Hant: GG}
+- {en: GGWP, zh-Hans: GG, zh-Hant: GG}
+- {en: GLHF, zh-Hans: 祝好运, zh-Hant: 祝好運}
+- {en: MVP, zh-Hans: MVP, zh-Hant: MVP}
+- {en: AFK, zh-Hans: 挂机, zh-Hant: 掛機}
+- {en: buff, ja: バフ, zh-Hans: 加强, zh-Hant: 加強}
+- {en: nerf, ja: ナーフ, zh-Hans: 削弱, zh-Hant: 削弱}
+- {en: debuff, ja: デバフ, zh-Hans: 负面效果, zh-Hant: 負面效果}
+- {en: meta, ja: メタ, zh-Hans: 版本答案, zh-Hant: meta}
+- {en: ranked, ja: ランクマッチ, zh-Hans: 排位, zh-Hant: 積分}
+- {en: rank, ja: ランク, zh-Hans: 段位, zh-Hant: 牌位}
+- {en: lobby, zh-Hans: 大厅, zh-Hant: 大廳}
+- {en: queue, zh-Hans: 排队匹配, zh-Hant: 排隊}
+- {en: matchmaking, zh-Hans: 匹配, zh-Hant: 配對}
+- {en: respawn, ja: リスポーン, zh-Hans: 复活, zh-Hant: 復活}
+- {en: cooldown, ja: クールダウン, zh-Hans: 冷却, zh-Hant: 冷卻}
+- {en: headshot, ja: ヘッドショット, zh-Hans: 爆头, zh-Hant: 爆頭}
+- {en: kill, ja: キル, zh-Hans: 击杀, zh-Hant: 擊殺}
+- {en: death, ja: デス, zh-Hans: 死亡, zh-Hant: 死亡}
+- {en: K/D, zh-Hans: KD, zh-Hant: KD}
+- {en: carry, zh-Hans: 带飞, zh-Hant: carry}
+- {en: throw, zh-Hans: 送, zh-Hant: 送}
+- {en: tilt, zh-Hans: 上头, zh-Hant: 心態崩了}
+- {en: smurf, zh-Hans: 炸鱼, zh-Hant: 虐菜}
+- {en: noob, zh-Hans: 菜鸟, zh-Hant: 菜鳥}
+- {en: camping, ja: キャンプ, zh-Hans: 蹲点, zh-Hant: 龜}
+- {en: lag, ja: ラグ, zh-Hans: 卡, zh-Hant: lag}
+- {en: ping, zh-Hans: 延迟, zh-Hant: ping}
+- {en: patch, ja: パッチ, zh-Hans: 补丁, zh-Hant: 更新檔}
+- {en: update, ja: アプデ, zh-Hans: 更新, zh-Hant: 更新}
+- {en: DLC, zh-Hans: DLC, zh-Hant: DLC}
+- {en: boss, ja: ボス, zh-Hans: Boss, zh-Hant: Boss}
+- {en: NPC, zh-Hans: NPC, zh-Hant: NPC}
+- {en: HP, zh-Hans: 血量, zh-Hant: 血量}
+- {en: OP, zh-Hans: 太强了, zh-Hant: OP}
+- {en: RNG, zh-Hans: 运气, zh-Hant: 運氣}
+- {en: speedrun, zh-Hans: 速通, zh-Hant: 速通}
+- {en: grind, zh-Hans: 刷, zh-Hant: 刷}
+- {en: farm, zh-Hans: 刷, zh-Hant: 刷}
+- {en: loot, zh-Hans: 掉落, zh-Hant: 掉落}
+- {en: gacha, ja: ガチャ, zh-Hans: 抽卡, zh-Hant: 抽卡}
+- {en: pity, ja: 天井, zh-Hans: 保底, zh-Hant: 保底}
+- {en: whale, zh-Hans: 氪佬, zh-Hant: 課長}
+- {en: F2P, ja: 無課金, zh-Hans: 零氪, zh-Hant: 無課}
+- {en: co-op, zh-Hans: 合作模式, zh-Hant: 合作模式}
+- {en: PvP, zh-Hans: PvP, zh-Hant: PvP}
+- {en: PvE, zh-Hans: PvE, zh-Hant: PvE}
+- {en: raid, zh-Hans: 团本, zh-Hant: 團本}
+- {en: tank, zh-Hans: 坦克, zh-Hant: 坦克}
+- {en: healer, zh-Hans: 奶妈, zh-Hant: 補師}
+- {en: DPS, zh-Hans: 输出, zh-Hant: 輸出}
+- {en: aggro, zh-Hans: 仇恨, zh-Hant: 仇恨}
+- {en: CC, zh-Hans: 控制, zh-Hant: 控場}
+- {en: AoE, zh-Hans: 范围伤害, zh-Hant: 範圍傷害}
+- {en: combo, ja: コンボ, zh-Hans: 连招, zh-Hant: 連段}
+- {en: cheater, ja: チーター, zh-Hans: 外挂, zh-Hant: 外掛}
+- {en: hacker, zh-Hans: 外挂, zh-Hant: 外掛}
+- {en: stream, ja: 配信, zh-Hans: 直播, zh-Hant: 實況}
+- {en: streamer, zh-Hans: 主播, zh-Hant: 實況主}
+- {en: chat, zh-Hans: 弹幕, zh-Hant: 聊天室}
+- {en: clip, ja: 切り抜き, zh-Hans: 切片, zh-Hant: 精華}
+- {en: sub, zh-Hans: 订阅, zh-Hant: 訂閱}
+- {en: donation, ja: スパチャ, zh-Hans: 打赏, zh-Hant: 斗內}
+# ---------- 日文 ----------
+- {ja: 野良, zh-Hans: 路人局, zh-Hant: 野團}
+- {ja: パーティ, zh-Hans: 组队, zh-Hant: 組隊}
+- {ja: ソロ, zh-Hans: 单排, zh-Hant: 單排}
+- {ja: フレンド, zh-Hans: 好友, zh-Hant: 好友}
+- {ja: 味方, zh-Hans: 队友, zh-Hant: 隊友}
+- {ja: 敵, zh-Hans: 敌人, zh-Hant: 敵人}
+- {ja: 復活, zh-Hans: 复活, zh-Hant: 復活}
+- {ja: 回復, zh-Hans: 回血, zh-Hant: 補血}
+- {ja: 蘇生, zh-Hans: 救人, zh-Hant: 救人}
+- {ja: ヘッショ, zh-Hans: 爆头, zh-Hant: 爆頭}
+- {ja: エイム, zh-Hans: 瞄准, zh-Hant: 瞄準}
+- {ja: 鯖, zh-Hans: 服务器, zh-Hant: 伺服器}
+- {ja: 鯖落ち, zh-Hans: 服务器炸了, zh-Hant: 伺服器炸了}
+- {ja: 爆死, zh-Hans: 歪了, zh-Hant: 歪了}
+- {ja: 神引き, zh-Hans: 欧了, zh-Hant: 歐了}
+- {ja: すり抜け, zh-Hans: 歪了, zh-Hant: 歪了}
+- {ja: 単発, zh-Hans: 单抽, zh-Hant: 單抽}
+- {ja: 10連, zh-Hans: 十连, zh-Hant: 十連}
+- {ja: リセマラ, zh-Hans: 刷初始, zh-Hant: 刷首抽}
+- {ja: 微課金, zh-Hans: 微氪, zh-Hant: 微課}
+- {ja: 廃課金, zh-Hans: 重氪, zh-Hant: 重課}
+- {ja: 周回, zh-Hans: 刷本, zh-Hant: 刷本}
+- {ja: 沼る, zh-Hans: 卡关, zh-Hant: 卡關}
+- {ja: 詰む, zh-Hans: 卡死了, zh-Hant: 卡死了}
+- {ja: 縛りプレイ, zh-Hans: 限制挑战, zh-Hant: 限制挑戰}
+- {ja: 初見, zh-Hans: 初见, zh-Hant: 初見}
+- {ja: ネタバレ, zh-Hans: 剧透, zh-Hant: 爆雷}
+- {ja: 芋る, zh-Hans: 蹲点, zh-Hant: 龜}
+- {ja: 漁夫, zh-Hans: 渔翁得利, zh-Hant: 漁翁得利}
+- {ja: カバー, zh-Hans: 补位, zh-Hant: 補位}
+- {ja: クリアリング, zh-Hans: 清点, zh-Hant: 清角}
+- {ja: 安置, zh-Hans: 安全区, zh-Hant: 安全區}
+- {ja: 物資, zh-Hans: 物资, zh-Hant: 物資}
+- {ja: 降下, zh-Hans: 跳伞, zh-Hant: 跳傘}
+- {ja: チート, zh-Hans: 外挂, zh-Hant: 外掛}
+- {ja: グリッチ, zh-Hans: 卡 bug, zh-Hant: 卡 bug}
+- {ja: 煽り, zh-Hans: 嘲讽, zh-Hant: 嘲諷}
+- {ja: ナイス, zh-Hans: 漂亮, zh-Hant: 漂亮}
+- {ja: ドンマイ, zh-Hans: 没事, zh-Hant: 沒事}
+- {ja: おつ, zh-Hans: 辛苦了, zh-Hant: 辛苦了}
+- {ja: お疲れ, zh-Hans: 辛苦了, zh-Hant: 辛苦了}
+- {ja: 実況, zh-Hans: 实况, zh-Hant: 實況}
+- {ja: 同接, zh-Hans: 同时在线, zh-Hant: 同時觀看人數}
+- {ja: コラボ, zh-Hans: 联动, zh-Hant: 連動}
+- {ja: 耐久, zh-Hans: 耐久直播, zh-Hant: 耐久實況}
+- {ja: 周回プレイ, zh-Hans: 刷本, zh-Hant: 刷本}
+- {en: RTA, zh-Hans: 速通, zh-Hant: 速通}
+- {ja: 必殺技, zh-Hans: 必杀技, zh-Hant: 必殺技}
+- {ja: ウルト, zh-Hans: 大招, zh-Hant: 大絕}
+- {ja: アルティメット, zh-Hans: 大招, zh-Hant: 大絕}
+- {ja: スキル, zh-Hans: 技能, zh-Hant: 技能}
+- {en: CT, zh-Hans: 冷却, zh-Hant: 冷卻}
 style: 游戏直播 / 解说口语风格，简短，用中文玩家常用说法；英文术语和缩写按术语表保留或翻译
 description: 所有游戏场景的父场景：通用游戏、直播用语（中英日）。

@@ -396,5 +396,16 @@
 "切换界面语言": "Change interface language",
 "界面语言已保存，下次启动程序时生效。（现在有任务正在运行，没有自动重启。）": "The interface language has been saved and takes effect the next time the app starts. (A task is running, so the app was not restarted.)",
 "界面语言在重启程序后生效。现在重启吗？": "The interface language takes effect after the app restarts. Restart now?",
-"视频 / 音频文件 (*.mp4 *.mkv *.mov *.avi *.webm *.flv *.ts *.mp3 *.m4a *.wav *.flac *.aac *.ogg);;所有文件 (*)": "Video / audio files (*.mp4 *.mkv *.mov *.avi *.webm *.flv *.ts *.mp3 *.m4a *.wav *.flac *.aac *.ogg);;All files (*)"
+"视频 / 音频文件 (*.mp4 *.mkv *.mov *.avi *.webm *.flv *.ts *.mp3 *.m4a *.wav *.flac *.aac *.ogg);;所有文件 (*)": "Video / audio files (*.mp4 *.mkv *.mov *.avi *.webm *.flv *.ts *.mp3 *.m4a *.wav *.flac *.aac *.ogg);;All files (*)",
+"口语": "Casual",
+"字幕": "Subtitle",
+"半正式": "Semi-formal",
+"正式": "Formal",
+"译文风格": "Translation style",
+"照说话人的口气翻，短句，保留语气词；适合直播、聊天、游戏解说。": "Keeps the speaker's tone, short sentences, interjections kept; for livestreams, chat and game commentary.",
+"影视字幕写法：简洁通顺、去掉口头禅；适合上传 B 站 / YouTube 的视频。": "Film-subtitle style: concise and fluent, filler words removed; for videos uploaded to Bilibili / YouTube.",
+"通顺的书面口语，不用俚语和网络用语；适合讲座、访谈、新闻。": "Fluent written speech, no slang or internet jargon; for lectures, interviews and news.",
+"书面语，句子完整规范，不带情绪色彩；适合会议、纪录片、公告。": "Written language, complete and standard sentences, neutral tone; for meetings, documentaries and announcements.",
+"一行是同一个词在各语言里的写法。翻译时按主页的「原文语言 → 翻译至」取对应两列；哪一格留空就不管那个方向。": "Each row is one term written in each language. When translating, the two columns matching the main page's \"Source language → Translate to\" are used; an empty cell simply means that direction is not covered.",
+"文件里没有读到任何术语。": "No glossary terms were found in the file."
 }

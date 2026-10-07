@@ -17,6 +17,7 @@ import yaml
 
 from app.config import config_dir
 from app.core.errors import UserFacingError
+from app.core.profiles.glossary import Row, glossary_for, merge_rows, normalize_glossary
 
 ROOT_NAME = "通用"
 AUTO_SCENE = "__auto__"                 # 场景选「自动」时保存的值
@@ -32,7 +33,7 @@ class Profile:
     translate_model: str | None = None        # None = 继承
     asr_prompt: list[str] = field(default_factory=list)     # 专有名词提示（合并继承）
     corrections: dict[str, str] = field(default_factory=dict)  # 听错 → 正确（合并继承）
-    glossary: dict[str, str] = field(default_factory=dict)     # 原文 → 译文（合并继承，子覆盖父）
+    glossary: list[Row] = field(default_factory=list)          # 多语言术语行（合并继承，子覆盖父），见 glossary.py
     style: str | None = None                  # 翻译风格（覆盖继承）
     description: str = ""
     preset_version: int = 0                   # 程序自带预置的版本号；0 = 用户自建
@@ -49,7 +50,7 @@ class Profile:
             "translate_model": self.translate_model,
             "asr_prompt": list(self.asr_prompt),
             "corrections": dict(self.corrections),
-            "glossary": dict(self.glossary),
+            "glossary": [dict(r) for r in self.glossary],
             "style": self.style,
             "description": self.description,
         }
@@ -67,7 +68,7 @@ class Profile:
             translate_model=d.get("translate_model") or None,
             asr_prompt=[str(p) for p in prompt],
             corrections={str(k): str(v) for k, v in (d.get("corrections") or {}).items()},
-            glossary={str(k): str(v) for k, v in (d.get("glossary") or {}).items()},
+            glossary=normalize_glossary(d.get("glossary")),
             style=d.get("style") or None,
             description=str(d.get("description") or ""),
             preset_version=int(d.get("preset_version") or 0),
@@ -85,8 +86,12 @@ class EffectiveProfile:
     translate_model: str | None
     asr_prompt: list[str]
     corrections: dict[str, str]
-    glossary: dict[str, str]
+    glossary: list[Row]
     style: str
+
+    def glossary_for(self, source_language: str, target_language: str) -> dict[str, str]:
+        """按「原文语言 → 翻译至」拼成交给翻译模型的 {原文词: 译文词}。"""
+        return glossary_for(self.glossary, source_language, target_language)
 
     @property
     def display_name(self) -> str:
@@ -165,7 +170,16 @@ class ProfileStore:
         return self.dir / f"{_safe_filename(name)}.yaml"
 
     def _write(self, p: Profile) -> None:
-        text = yaml.safe_dump(p.to_dict(), allow_unicode=True, sort_keys=False, default_flow_style=False)
+        d = p.to_dict()
+        rows = d.pop("glossary")
+        text = yaml.safe_dump(d, allow_unicode=True, sort_keys=False, default_flow_style=False)
+        # 术语表一行一条 {en: Jett, zh-Hans: 捷风}，比每格一行好读
+        if rows:
+            text += "glossary:\n" + "".join(
+                "- " + yaml.safe_dump(r, default_flow_style=True, allow_unicode=True, width=10000).strip() + "\n"
+                for r in rows)
+        else:
+            text += "glossary: []\n"
         self._path_for(p.name).write_text(text, encoding="utf-8")
 
     def save(self, p: Profile, from_user: bool = True) -> None:
@@ -262,7 +276,7 @@ class ProfileStore:
         style = ""
         prompt: list[str] = []
         corrections: dict[str, str] = {}
-        glossary: dict[str, str] = {}
+        glossary: list[Row] = []
         for n in path:                      # 从根到叶，后面的覆盖前面的
             p = self.profiles.get(n)
             if p is None:
@@ -279,7 +293,7 @@ class ProfileStore:
                 if t and t not in prompt:
                     prompt.append(t)
             corrections.update({k: v for k, v in p.corrections.items() if k})
-            glossary.update({k: v for k, v in p.glossary.items() if k})
+            glossary = merge_rows(glossary, p.glossary)
         return EffectiveProfile(
             name=name, path=path, asr_model=asr_model, translate_provider=translate_provider,
             translate_model=translate_model, asr_prompt=prompt, corrections=corrections,

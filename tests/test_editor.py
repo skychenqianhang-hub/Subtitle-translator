@@ -106,7 +106,8 @@ def main() -> int:
     win._pair_dialog = lambda *a, **k: ("ランクマッチ", "排位赛")
     win.table.selectRow(1)
     win._add_to_glossary()
-    assert store.get("Valorant").glossary["ランクマッチ"] == "排位赛"
+    assert {"ja": "ランクマッチ", "zh-Hans": "排位赛"} in store.get("Valorant").glossary
+    assert store.resolve("Valorant").glossary_for("ja", "zh-Hans")["ランクマッチ"] == "排位赛"
     win._pair_dialog = lambda *a, **k: ("ランクマッチ", "ランクマッチ（排位）")
     win._add_correction()
     assert store.get("Valorant").corrections["ランクマッチ"] == "ランクマッチ（排位）"

@@ -1,6 +1,6 @@
 name: Odyssey
 parent: 电影
-preset_version: 2
+preset_version: 4
 asr_model: null
 translate_provider: null
 translate_model: null
@@ -18,16 +18,16 @@ asr_prompt:
 - Polyphemus
 corrections: {}
 glossary:
-  The Odyssey: 奥德赛
-  Odysseus: 奥德修斯
-  Penelope: 珀涅罗珀
-  Telemachus: 忒勒马科斯
-  Ithaca: 伊萨卡
-  Troy: 特洛伊
-  Poseidon: 波塞冬
-  Athena: 雅典娜
-  Circe: 喀耳刻
-  Calypso: 卡吕普索
-  Polyphemus: 波吕斐摩斯
+- {en: The Odyssey, zh-Hans: 奥德赛, zh-Hant: 奧德賽}
+- {en: Odysseus, zh-Hans: 奥德修斯, zh-Hant: 奧德修斯}
+- {en: Penelope, zh-Hans: 珀涅罗珀, zh-Hant: 潘妮洛普}
+- {en: Telemachus, zh-Hans: 忒勒马科斯, zh-Hant: 鐵拉馬庫斯}
+- {en: Ithaca, zh-Hans: 伊萨卡, zh-Hant: 伊薩卡}
+- {en: Troy, zh-Hans: 特洛伊, zh-Hant: 特洛伊}
+- {en: Poseidon, zh-Hans: 波塞冬, zh-Hant: 波賽頓}
+- {en: Athena, zh-Hans: 雅典娜, zh-Hant: 雅典娜}
+- {en: Circe, zh-Hans: 喀耳刻, zh-Hant: 瑟西}
+- {en: Calypso, zh-Hans: 卡吕普索, zh-Hant: 卡呂普索}
+- {en: Polyphemus, zh-Hans: 波吕斐摩斯, zh-Hant: 波利菲莫斯}
 style: null
 description: 电影《奥德赛》：人名、地名按通行中文译名。

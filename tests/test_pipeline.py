@@ -172,6 +172,10 @@ def test_srt_and_prompt() -> None:
     assert "こんにちは" not in to_srt(lines, "target_only")
     req = TranslateRequest(["a", "b"], "ja", "zh-Hans", context=["前"], glossary={"AWP": "AWP"}, scene="游戏 → CS2")
     assert "必须严格遵守" in system_prompt(req) and "AWP → AWP" in system_prompt(req)
+    assert "标准影视字幕" in system_prompt(req), "默认档位应是字幕"
+    for tone, word in (("casual", "语气：口语"), ("semiformal", "语气：半正式"), ("formal", "语气：正式")):
+        sp = system_prompt(TranslateRequest(["a"], "ja", "en", tone=tone, style="电竞解说口语"))
+        assert word in sp and "英语母语观众" in sp and "以第 2 条为准" in sp, sp
     assert "1. a\n2. b" in user_prompt(req)
     assert parse_translations('{"translations": ["x", "y"]}', 2) == ["x", "y"]
     assert parse_translations("1. x\n2. y", 2) == ["x", "y"]

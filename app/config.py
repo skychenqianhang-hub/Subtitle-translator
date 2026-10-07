@@ -77,6 +77,14 @@ TARGET_LANGUAGES = {
     "ja": "日语",
     "ko": "韩语",
 }
+# 术语表的列（和 glossary.GLOSSARY_LANGS 一一对应）
+GLOSSARY_LANG_NAMES = {
+    "en": "英语",
+    "ja": "日语",
+    "zh-Hans": "简体中文",
+    "zh-Hant": "繁体中文",
+    "ko": "韩语",
+}
 # 视频翻译的输出形式（可多选）
 OUTPUT_KINDS = {
     "srt": "字幕文件（.srt）",
@@ -89,6 +97,20 @@ OUTPUT_MODES = {
     "target_only": "仅译文",
     "source_only": "仅原文（只识别，不翻译）",
 }
+# 译文风格（语气档位）：下拉框显示短名，旁边的说明写清楚适合什么。发给模型的具体要求在 translate/prompt.py
+TONES = {
+    "casual": "口语",
+    "subtitle": "字幕",
+    "semiformal": "半正式",
+    "formal": "正式",
+}
+TONE_NOTES = {
+    "casual": "照说话人的口气翻，短句，保留语气词；适合直播、聊天、游戏解说。",
+    "subtitle": "影视字幕写法：简洁通顺、去掉口头禅；适合上传 B 站 / YouTube 的视频。",
+    "semiformal": "通顺的书面口语，不用俚语和网络用语；适合讲座、访谈、新闻。",
+    "formal": "书面语，句子完整规范，不带情绪色彩；适合会议、纪录片、公告。",
+}
+DEFAULT_TONE = {"realtime": "casual", "video": "subtitle"}
 
 
 def default_download_dir() -> Path:
@@ -124,8 +146,10 @@ class Config:
     realtime_delay_seconds: int = 5
     audio_device_name: str = ""
     realtime_output_mode: str = "bilingual"
+    realtime_tone: str = "casual"           # 译文风格档位，见 TONES
     # 视频翻译参数
     video_output_mode: str = "bilingual"
+    video_tone: str = "subtitle"
     video_output_kinds: list[str] = field(default_factory=lambda: ["srt"])   # srt / video / doc，可多选
     video_subtitle_size: str = "medium"     # small / medium / large（烧进视频时的字号）
     video_subtitle_margin_pct: int = 3      # 字幕离底边的距离（画面高度百分比）
@@ -191,6 +215,10 @@ def load_config() -> Config:
     if version < 4:
         old_kind = raw.get("video_output_kind", "srt")
         cfg.video_output_kinds = {"srt": ["srt"], "video": ["video"], "both": ["srt", "video"]}.get(old_kind, ["srt"])
+    if cfg.realtime_tone not in TONES:
+        cfg.realtime_tone = DEFAULT_TONE["realtime"]
+    if cfg.video_tone not in TONES:
+        cfg.video_tone = DEFAULT_TONE["video"]
     if not isinstance(cfg.video_output_kinds, list) or not cfg.video_output_kinds:
         cfg.video_output_kinds = ["srt"]
     if not cfg.ui_language:

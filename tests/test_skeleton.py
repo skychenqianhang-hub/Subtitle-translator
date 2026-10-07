@@ -54,16 +54,16 @@ def main() -> int:
     rp.scene.sub.setCurrentIndex(rp.scene.sub.findData("Valorant"))
     assert rp.scene.current_name() == "Valorant" and rp.scene.current_display() == "游戏 → Valorant", rp.scene.current_display()
     assert config_mod.load_config().last_scene == "Valorant"
-    assert win.store.resolve("Valorant").glossary.get("Jett") == "捷风"
+    assert win.store.resolve("Valorant").glossary_for("en", "zh-Hans").get("Jett") == "捷风"
     rp.scene.section.setCurrentIndex(rp.scene.section.findData("通用"))
     assert not rp.scene.sub.isEnabled() and rp.scene.current_name() == "通用"
     # 场景管理页：选中 Valorant，改术语并保存，主页选择器仍正常
     pp = win.settings_dialog.profiles_page
     pp.reload_tree(select="Valorant")
     assert pp.current_name() == "Valorant" and pp.glossary.rowCount() > 10
-    pp.glossary.add_row("test term", "测试词")
+    pp.glossary.add_row({"en": "test term", "zh-Hans": "测试词"})
     pp.save()
-    assert win.store.resolve("Valorant").glossary["test term"] == "测试词"
+    assert win.store.resolve("Valorant").glossary_for("en", "zh-Hans")["test term"] == "测试词"
     assert "来自父场景" in pp.inherited.text()
     print("场景选择 / 场景管理：OK")
 
@@ -131,9 +131,17 @@ def main() -> int:
     assert config_mod.load_config().realtime_output_mode == "source_only"
     assert ov.source_label.isVisibleTo(ov) and not ov.target_label.isVisibleTo(ov), "仅原文时不应显示译文"
     assert not mp.translate_model.isEnabled() and not mp.target_language.isEnabled(), "仅原文时翻译选项应变灰"
+    assert not rp.tone.isEnabled(), "仅原文时译文风格应变灰"
     rp.output_mode.set_current("target_only")
     assert not ov.source_label.isVisibleTo(ov) and ov.target_label.isVisibleTo(ov), "仅译文时不应显示原文"
-    assert mp.translate_model.isEnabled()
+    assert mp.translate_model.isEnabled() and rp.tone.isEnabled()
+    # 译文风格：实时页默认口语、视频页默认字幕，各自记住
+    assert rp.tone.current() == "casual" and vp.tone.current() == "subtitle"
+    rp.tone.combo.setCurrentIndex(rp.tone.combo.findData("formal"))
+    vp.tone.combo.setCurrentIndex(vp.tone.combo.findData("semiformal"))
+    assert "会议" in rp.tone.note.text()
+    c = config_mod.load_config()
+    assert c.realtime_tone == "formal" and c.video_tone == "semiformal", (c.realtime_tone, c.video_tone)
     ov.hide()
     vp.output_mode.set_current("source_only")
     assert not vmp.translate_model.isEnabled()
@@ -148,6 +156,8 @@ def main() -> int:
     assert win2.realtime_page.model_panel.translate_model.currentData() == "gpt-5-mini"
     assert win2.realtime_page.output_mode.current() == "target_only"
     assert win2.video_page.output_mode.current() == "source_only"
+    assert win2.realtime_page.tone.current() == "formal" and win2.video_page.tone.current() == "semiformal"
+    assert not win2.video_page.tone.isEnabled()
     assert not win2.video_page.model_panel.translate_model.isEnabled()
     assert win2.settings_dialog.settings_page.openai_key.text() == "sk-test-openai"
     print("重启后设置回填：OK")

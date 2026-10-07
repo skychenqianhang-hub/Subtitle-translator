@@ -15,8 +15,9 @@ class TranslateRequest:
     target_language: str = "zh-Hans"
     context: list[str] = field(default_factory=list)   # 前文（只用于理解，不要翻译）
     glossary: dict[str, str] = field(default_factory=dict)
-    style: str = ""
+    style: str = ""                      # 场景里填的题材要求
     scene: str = ""
+    tone: str = "subtitle"               # 语气档位：casual / subtitle / semiformal / formal
 
 
 class Translator(ABC):

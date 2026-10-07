@@ -1,6 +1,6 @@
 name: CS2
 parent: 游戏
-preset_version: 2
+preset_version: 5
 asr_model: null
 translate_provider: null
 translate_model: null
@@ -50,252 +50,171 @@ corrections:
   Ancients: Ancient
   アウプ: AWP
 glossary:
-  # ---------- 武器（英文） ----------
-  AWP: AWP
-  AK: AK
-  AK-47: AK-47
-  M4: M4
-  M4A4: M4A4
-  M4A1-S: M4A1-S
-  Deagle: 沙鹰
-  Desert Eagle: 沙鹰
-  Glock: 格洛克
-  USP: USP
-  P2000: P2000
-  P250: P250
-  Tec-9: Tec-9
-  Five-SeveN: FN57
-  CZ: CZ
-  Dual Berettas: 双枪
-  R8: 左轮
-  Scout: 鸟狙
-  SSG: 鸟狙
-  Galil: 加利尔
-  FAMAS: 法玛斯
-  AUG: AUG
-  SG 553: SG
-  Krieg: SG
-  MAC-10: MAC-10
-  MP9: MP9
-  MP7: MP7
-  MP5: MP5
-  UMP: UMP
-  P90: P90
-  PP-Bizon: 野牛
-  Nova: Nova
-  XM1014: XM
-  MAG-7: MAG-7
-  Sawed-Off: 截短霰弹枪
-  Negev: 内格夫
-  M249: M249
-  Zeus: 电击枪
-  knife: 刀
-  kit: 拆弹器
-  defuse kit: 拆弹器
-  armor: 甲
-  helmet: 头盔
-  kevlar: 甲
-  # ---------- 武器（日文） ----------
-  デグル: 沙鹰
-  デザートイーグル: 沙鹰
-  グロック: 格洛克
-  スカウト: 鸟狙
-  ガリル: 加利尔
-  ファマス: 法玛斯
-  ネゲブ: 内格夫
-  ナイフ: 刀
-  キット: 拆弹器
-  アーマー: 甲
-  ヘルメット: 头盔
-  # ---------- 地图 ----------
-  Mirage: 荒漠迷城
-  Inferno: 炼狱小镇
-  Dust 2: 炙热沙城 2
-  Dust2: 炙热沙城 2
-  Nuke: 核子危机
-  Ancient: 远古遗迹
-  Anubis: 阿努比斯
-  Vertigo: 殒命大厦
-  Overpass: 死亡游乐园
-  Train: 列车停放站
-  Cache: 死亡迷城
-  Cobblestone: 古堡激战
-  Office: 办公室
-  ミラージュ: 荒漠迷城
-  インフェルノ: 炼狱小镇
-  ダスト2: 炙热沙城 2
-  ニューク: 核子危机
-  エンシェント: 远古遗迹
-  アヌビス: 阿努比斯
-  ヴァーティゴ: 殒命大厦
-  オーバーパス: 死亡游乐园
-  トレイン: 列车停放站
-  # ---------- 阵营 / 对局（英文） ----------
-  CT: 警
-  Counter-Terrorist: 警
-  T: 匪
-  Terrorist: 匪
-  T side: 匪方
-  CT side: 警方
-  bomb: 炸弹
-  C4: C4
-  plant: 下包
-  defuse: 拆包
-  ninja defuse: 偷拆
-  retake: 回防
-  rotate: 转点
-  eco: 经济局
-  anti-eco: 反经济局
-  force buy: 强起
-  force: 强起
-  full buy: 满购
-  buy round: 长枪局
-  half buy: 半起
-  save: 保枪
-  pistol round: 手枪局
-  clutch: 残局
-  ace: 五杀
-  entry: 首杀突破
-  entry frag: 首杀
-  first blood: 首杀
-  opening kill: 首杀
-  lurk: 偷家
-  lurker: 偷家位
-  flank: 绕后
-  trade: 补枪
-  refrag: 补枪
-  bait: 当鱼饵
-  peek: 拉枪
-  dry peek: 干拉
-  shoulder peek: 肩膀拉
-  jiggle peek: 晃身
-  wide peek: 大拉
-  double peek: 双拉
-  hold: 架枪
-  anchor: 守点位
-  stack: 堆人
-  split: 分推
-  execute: 执行战术
-  default: 默认开局
-  fake: 假打
-  rush: 冲
-  rush B: 冲 B
-  rush A: 冲 A
-  push: 前压
-  one tap: 一枪头
-  one way: 单向烟
-  wallbang: 穿墙
-  prefire: 预瞄枪
-  pre-aim: 预瞄
-  spray: 扫射
-  spray control: 压枪
-  tap: 点射
-  burst: 点射
-  flick: 甩枪
-  whiff: 空枪
-  dink: 打头没死
-  flash: 闪光
-  pop flash: 顺爆闪
-  smoke: 烟
-  molly: 燃烧弹
-  molotov: 燃烧瓶
-  incendiary: 燃烧弹
-  nade: 手雷
-  HE: 手雷
-  decoy: 诱饵弹
-  utility: 道具
-  util: 道具
-  lineup: 定点道具
-  boost: 搭人梯
-  crosshair: 准星
-  callout: 报点
-  mid: 中路
-  long: 长管
-  short: 短管
-  A site: A 点
-  B site: B 点
-  site: 点位
-  IGL: 指挥
-  AWPer: 狙击手
-  rifler: 步枪手
-  support: 辅助
-  overtime: 加时
-  MR12: 12 局制
-  timeout: 暂停
-  VAC: VAC
-  MM: 官匹
-  Premier: 优先匹配
-  FACEIT: FACEIT
-  Major: Major
-  # ---------- 阵营 / 对局（日文） ----------
-  ボム: 炸弹
-  設置: 下包
-  プラント: 下包
-  解除: 拆包
-  ディフューズ: 拆包
-  リテイク: 回防
-  ローテ: 转点
-  ローテート: 转点
-  エコ: 经济局
-  エコラウンド: 经济局
-  アンチエコ: 反经济局
-  フォースバイ: 强起
-  フルバイ: 满购
-  ハーフバイ: 半起
-  セーブ: 保枪
-  ピストルラウンド: 手枪局
-  クラッチ: 残局
-  エース: 五杀
-  エントリー: 首杀突破
-  ラーク: 偷家
-  裏取り: 绕后
-  トレード: 补枪
-  ピーク: 拉枪
-  ドライピーク: 干拉
-  ショルダーピーク: 肩膀拉
-  ジグルピーク: 晃身
-  ワイドピーク: 大拉
-  ダブピ: 双拉
-  ホールド: 架枪
-  アンカー: 守点位
-  スタック: 堆人
-  スプリット: 分推
-  フェイク: 假打
-  ラッシュ: 冲
-  プッシュ: 前压
-  ワンタップ: 一枪头
-  ワンウェイ: 单向烟
-  壁抜き: 穿墙
-  プリファイア: 预瞄枪
-  プリエイム: 预瞄
-  スプレー: 扫射
-  リコイルコントロール: 压枪
-  タップ撃ち: 点射
-  バースト: 点射
-  フリック: 甩枪
-  フラッシュ: 闪光
-  ポップフラッシュ: 顺爆闪
-  スモーク: 烟
-  モク: 烟
-  モロトフ: 燃烧瓶
-  モリー: 燃烧弹
-  グレ: 手雷
-  グレネード: 手雷
-  デコイ: 诱饵弹
-  ユーティリティ: 道具
-  定点: 定点道具
-  ブースト: 搭人梯
-  クロスヘア: 准星
-  コールアウト: 报点
-  ミッド: 中路
-  ロング: 长管
-  ショート: 短管
-  Aサイト: A 点
-  Bサイト: B 点
-  サイト: 点位
-  クリア: 清点
-  カバー: 补位
-  オーバータイム: 加时
-  タイムアウト: 暂停
+# ---------- 武器（英文） ----------
+- {en: AWP, zh-Hans: AWP, zh-Hant: AWP}
+- {en: AK, zh-Hans: AK, zh-Hant: AK}
+- {en: AK-47, zh-Hans: AK-47, zh-Hant: AK-47}
+- {en: M4, zh-Hans: M4, zh-Hant: M4}
+- {en: M4A4, zh-Hans: M4A4, zh-Hant: M4A4}
+- {en: M4A1-S, zh-Hans: M4A1-S, zh-Hant: M4A1-S}
+- {en: Deagle, ja: デグル, zh-Hans: 沙鹰, zh-Hant: Desert Eagle}
+- {en: Desert Eagle, ja: デザートイーグル, zh-Hans: 沙鹰, zh-Hant: Desert Eagle}
+- {en: Glock, ja: グロック, zh-Hans: 格洛克, zh-Hant: Glock-18}
+- {en: USP, zh-Hans: USP, zh-Hant: USP}
+- {en: P2000, zh-Hans: P2000, zh-Hant: P2000}
+- {en: P250, zh-Hans: P250, zh-Hant: P250}
+- {en: Tec-9, zh-Hans: Tec-9, zh-Hant: Tec-9}
+- {en: Five-SeveN, zh-Hans: FN57, zh-Hant: FN57}
+- {en: CZ, zh-Hans: CZ, zh-Hant: CZ}
+- {en: Dual Berettas, zh-Hans: 双枪, zh-Hant: Dual Berettas}
+- {en: R8, zh-Hans: 左轮, zh-Hant: R8 Revolver}
+- {en: Scout, ja: スカウト, zh-Hans: 鸟狙, zh-Hant: SSG 08}
+- {en: SSG, zh-Hans: 鸟狙, zh-Hant: SSG 08}
+- {en: Galil, ja: ガリル, zh-Hans: 加利尔, zh-Hant: Galil AR}
+- {en: FAMAS, ja: ファマス, zh-Hans: 法玛斯, zh-Hant: FAMAS}
+- {en: AUG, zh-Hans: AUG, zh-Hant: AUG}
+- {en: SG 553, zh-Hans: SG, zh-Hant: SG}
+- {en: Krieg, zh-Hans: SG, zh-Hant: SG}
+- {en: MAC-10, zh-Hans: MAC-10, zh-Hant: MAC-10}
+- {en: MP9, zh-Hans: MP9, zh-Hant: MP9}
+- {en: MP7, zh-Hans: MP7, zh-Hant: MP7}
+- {en: MP5, zh-Hans: MP5, zh-Hant: MP5}
+- {en: UMP, zh-Hans: UMP, zh-Hant: UMP}
+- {en: P90, zh-Hans: P90, zh-Hant: P90}
+- {en: PP-Bizon, zh-Hans: 野牛, zh-Hant: PP-Bizon}
+- {en: Nova, zh-Hans: Nova, zh-Hant: Nova}
+- {en: XM1014, zh-Hans: XM, zh-Hant: XM}
+- {en: MAG-7, zh-Hans: MAG-7, zh-Hant: MAG-7}
+- {en: Sawed-Off, zh-Hans: 截短霰弹枪, zh-Hant: Sawed-Off}
+- {en: Negev, ja: ネゲブ, zh-Hans: 内格夫, zh-Hant: Negev}
+- {en: M249, zh-Hans: M249, zh-Hant: M249}
+- {en: Zeus, zh-Hans: 电击枪, zh-Hant: Zeus x27}
+- {en: knife, ja: ナイフ, zh-Hans: 刀, zh-Hant: 軍刀}
+- {en: kit, ja: キット, zh-Hans: 拆弹器, zh-Hant: 拆彈包}
+- {en: defuse kit, zh-Hans: 拆弹器, zh-Hant: 拆彈包}
+- {en: armor, ja: アーマー, zh-Hans: 甲, zh-Hant: 防彈背心}
+- {en: helmet, ja: ヘルメット, zh-Hans: 头盔, zh-Hant: 頭盔}
+- {en: kevlar, zh-Hans: 甲, zh-Hant: 防彈背心}
+# ---------- 武器（日文） ----------
+# ---------- 地图 ----------
+- {en: Mirage, ja: ミラージュ, zh-Hans: 荒漠迷城, zh-Hant: Mirage}
+- {en: Inferno, ja: インフェルノ, zh-Hans: 炼狱小镇, zh-Hant: Inferno}
+- {en: Dust 2, ja: ダスト2, zh-Hans: 炙热沙城 2, zh-Hant: Dust II}
+- {en: Dust2, zh-Hans: 炙热沙城 2, zh-Hant: Dust II}
+- {en: Nuke, ja: ニューク, zh-Hans: 核子危机, zh-Hant: Nuke}
+- {en: Ancient, ja: エンシェント, zh-Hans: 远古遗迹, zh-Hant: Ancient}
+- {en: Anubis, ja: アヌビス, zh-Hans: 阿努比斯, zh-Hant: Anubis}
+- {en: Vertigo, ja: ヴァーティゴ, zh-Hans: 殒命大厦, zh-Hant: Vertigo}
+- {en: Overpass, ja: オーバーパス, zh-Hans: 死亡游乐园, zh-Hant: Overpass}
+- {en: Train, ja: トレイン, zh-Hans: 列车停放站, zh-Hant: Train}
+- {en: Cache, zh-Hans: 死亡迷城, zh-Hant: Cache}
+- {en: Cobblestone, zh-Hans: 古堡激战, zh-Hant: Cobblestone}
+- {en: Office, zh-Hans: 办公室, zh-Hant: Office}
+# ---------- 阵营 / 对局（英文） ----------
+- {en: CT, zh-Hans: 警, zh-Hant: CT}
+- {en: Counter-Terrorist, zh-Hans: 警, zh-Hant: CT}
+- {en: T, zh-Hans: 匪, zh-Hant: T}
+- {en: Terrorist, zh-Hans: 匪, zh-Hant: T}
+- {en: T side, zh-Hans: 匪方, zh-Hant: T 方}
+- {en: CT side, zh-Hans: 警方, zh-Hant: CT 方}
+- {en: bomb, ja: ボム, zh-Hans: 炸弹, zh-Hant: C4}
+- {en: C4, zh-Hans: C4, zh-Hant: C4}
+- {en: plant, ja: プラント, zh-Hans: 下包, zh-Hant: 下包}
+- {en: defuse, ja: ディフューズ, zh-Hans: 拆包, zh-Hant: 拆包}
+- {en: ninja defuse, zh-Hans: 偷拆, zh-Hant: 偷拆}
+- {en: retake, ja: リテイク, zh-Hans: 回防, zh-Hant: 回防}
+- {en: rotate, ja: ローテート, zh-Hans: 转点, zh-Hant: 轉點}
+- {en: eco, ja: エコ, zh-Hans: 经济局, zh-Hant: eco 局}
+- {en: anti-eco, ja: アンチエコ, zh-Hans: 反经济局, zh-Hant: anti-eco}
+- {en: force buy, ja: フォースバイ, zh-Hans: 强起, zh-Hant: 強買}
+- {en: force, zh-Hans: 强起, zh-Hant: 強買}
+- {en: full buy, ja: フルバイ, zh-Hans: 满购, zh-Hant: 全買}
+- {en: buy round, zh-Hans: 长枪局, zh-Hant: 長槍局}
+- {en: half buy, ja: ハーフバイ, zh-Hans: 半起, zh-Hant: 半買}
+- {en: save, ja: セーブ, zh-Hans: 保枪, zh-Hant: 保槍}
+- {en: pistol round, ja: ピストルラウンド, zh-Hans: 手枪局, zh-Hant: 手槍局}
+- {en: clutch, ja: クラッチ, zh-Hans: 残局, zh-Hant: 殘局}
+- {en: ace, ja: エース, zh-Hans: 五杀, zh-Hant: ACE}
+- {en: entry, ja: エントリー, zh-Hans: 首杀突破, zh-Hant: 進點}
+- {en: entry frag, zh-Hans: 首杀, zh-Hant: 首殺}
+- {en: first blood, zh-Hans: 首杀, zh-Hant: 首殺}
+- {en: opening kill, zh-Hans: 首杀, zh-Hant: 首殺}
+- {en: lurk, ja: ラーク, zh-Hans: 偷家, zh-Hant: lurk}
+- {en: lurker, zh-Hans: 偷家位, zh-Hant: lurker}
+- {en: flank, ja: 裏取り, zh-Hans: 绕后, zh-Hant: 繞後}
+- {en: trade, ja: トレード, zh-Hans: 补枪, zh-Hant: 補槍}
+- {en: refrag, zh-Hans: 补枪, zh-Hant: 補槍}
+- {en: bait, zh-Hans: 当鱼饵, zh-Hant: 當誘餌}
+- {en: peek, ja: ピーク, zh-Hans: 拉枪, zh-Hant: 探頭}
+- {en: dry peek, ja: ドライピーク, zh-Hans: 干拉, zh-Hant: dry peek}
+- {en: shoulder peek, ja: ショルダーピーク, zh-Hans: 肩膀拉, zh-Hant: shoulder peek}
+- {en: jiggle peek, ja: ジグルピーク, zh-Hans: 晃身, zh-Hant: jiggle peek}
+- {en: wide peek, ja: ワイドピーク, zh-Hans: 大拉, zh-Hant: wide peek}
+- {en: double peek, ja: ダブピ, zh-Hans: 双拉, zh-Hant: double peek}
+- {en: hold, ja: ホールド, zh-Hans: 架枪, zh-Hant: 架槍}
+- {en: anchor, ja: アンカー, zh-Hans: 守点位, zh-Hant: 守點}
+- {en: stack, ja: スタック, zh-Hans: 堆人, zh-Hant: 堆人}
+- {en: split, ja: スプリット, zh-Hans: 分推, zh-Hant: 分推}
+- {en: execute, zh-Hans: 执行战术, zh-Hant: 執行戰術}
+- {en: default, zh-Hans: 默认开局, zh-Hant: default}
+- {en: fake, ja: フェイク, zh-Hans: 假打, zh-Hant: 假打}
+- {en: rush, ja: ラッシュ, zh-Hans: 冲, zh-Hant: 衝}
+- {en: rush B, zh-Hans: 冲 B, zh-Hant: 衝 B}
+- {en: rush A, zh-Hans: 冲 A, zh-Hant: 衝 A}
+- {en: push, ja: プッシュ, zh-Hans: 前压, zh-Hant: 前壓}
+- {en: one tap, ja: ワンタップ, zh-Hans: 一枪头, zh-Hant: 一槍頭}
+- {en: one way, ja: ワンウェイ, zh-Hans: 单向烟, zh-Hant: 單向煙}
+- {en: wallbang, ja: 壁抜き, zh-Hans: 穿墙, zh-Hant: 穿牆}
+- {en: prefire, ja: プリファイア, zh-Hans: 预瞄枪, zh-Hant: 預開}
+- {en: pre-aim, ja: プリエイム, zh-Hans: 预瞄, zh-Hant: 預瞄}
+- {en: spray, ja: スプレー, zh-Hans: 扫射, zh-Hant: 掃射}
+- {en: spray control, ja: リコイルコントロール, zh-Hans: 压枪, zh-Hant: 壓槍}
+- {en: tap, ja: タップ撃ち, zh-Hans: 点射, zh-Hant: 點射}
+- {en: burst, ja: バースト, zh-Hans: 点射, zh-Hant: 點射}
+- {en: flick, ja: フリック, zh-Hans: 甩枪, zh-Hant: 甩槍}
+- {en: whiff, zh-Hans: 空枪, zh-Hant: 放槍}
+- {en: dink, zh-Hans: 打头没死, zh-Hant: 打頭沒死}
+- {en: flash, ja: フラッシュ, zh-Hans: 闪光, zh-Hant: 閃光}
+- {en: pop flash, ja: ポップフラッシュ, zh-Hans: 顺爆闪, zh-Hant: pop flash}
+- {en: smoke, ja: スモーク, zh-Hans: 烟, zh-Hant: 煙}
+- {en: molly, ja: モリー, zh-Hans: 燃烧弹, zh-Hant: 燃燒彈}
+- {en: molotov, ja: モロトフ, zh-Hans: 燃烧瓶, zh-Hant: 燃燒瓶}
+- {en: incendiary, zh-Hans: 燃烧弹, zh-Hant: 燃燒彈}
+- {en: nade, ja: グレ, zh-Hans: 手雷, zh-Hant: 手榴彈}
+- {en: HE, zh-Hans: 手雷, zh-Hant: 手榴彈}
+- {en: decoy, ja: デコイ, zh-Hans: 诱饵弹, zh-Hant: 誘餌彈}
+- {en: utility, ja: ユーティリティ, zh-Hans: 道具, zh-Hant: 道具}
+- {en: util, zh-Hans: 道具, zh-Hant: 道具}
+- {en: lineup, ja: 定点, zh-Hans: 定点道具, zh-Hant: 定點}
+- {en: boost, ja: ブースト, zh-Hans: 搭人梯, zh-Hant: 疊人}
+- {en: crosshair, ja: クロスヘア, zh-Hans: 准星, zh-Hant: 準心}
+- {en: callout, ja: コールアウト, zh-Hans: 报点, zh-Hant: 報點}
+- {en: mid, ja: ミッド, zh-Hans: 中路, zh-Hant: 中路}
+- {en: long, ja: ロング, zh-Hans: 长管, zh-Hant: A大}
+- {en: short, ja: ショート, zh-Hans: 短管, zh-Hant: A小}
+- {en: A site, ja: Aサイト, zh-Hans: A 点, zh-Hant: A 點}
+- {en: B site, ja: Bサイト, zh-Hans: B 点, zh-Hant: B 點}
+- {en: site, ja: サイト, zh-Hans: 点位, zh-Hant: 包點}
+- {en: IGL, zh-Hans: 指挥, zh-Hant: 指揮}
+- {en: AWPer, zh-Hans: 狙击手, zh-Hant: 狙擊手}
+- {en: rifler, zh-Hans: 步枪手, zh-Hant: 步槍手}
+- {en: support, zh-Hans: 辅助, zh-Hant: 輔助}
+- {en: overtime, ja: オーバータイム, zh-Hans: 加时, zh-Hant: 延長賽}
+- {en: MR12, zh-Hans: 12 局制, zh-Hant: 12 局制}
+- {en: timeout, ja: タイムアウト, zh-Hans: 暂停, zh-Hant: 暫停}
+- {en: VAC, zh-Hans: VAC, zh-Hant: VAC}
+- {en: MM, zh-Hans: 官匹, zh-Hant: 競技模式}
+- {en: Premier, zh-Hans: 优先匹配, zh-Hant: 優先權模式}
+- {en: FACEIT, zh-Hans: FACEIT, zh-Hant: FACEIT}
+- {en: Major, zh-Hans: Major, zh-Hant: Major}
+# ---------- 阵营 / 对局（日文） ----------
+- {ja: 設置, zh-Hans: 下包, zh-Hant: 下包}
+- {ja: 解除, zh-Hans: 拆包, zh-Hant: 拆包}
+- {ja: ローテ, zh-Hans: 转点, zh-Hant: 轉點}
+- {ja: エコラウンド, zh-Hans: 经济局, zh-Hant: eco 局}
+- {ja: モク, zh-Hans: 烟, zh-Hant: 煙}
+- {ja: グレネード, zh-Hans: 手雷, zh-Hant: 手榴彈}
+- {ja: クリア, zh-Hans: 清点, zh-Hant: 清角}
+- {ja: カバー, zh-Hans: 补位, zh-Hant: 補位}
 style: null
 description: 反恐精英 2（CS2）：武器保留原名或用通行昵称，地图用国服译名，中英日三语战术用语（资料来源：虎扑 CS 术语词典、CS2 日本語 Wiki 用語集）。

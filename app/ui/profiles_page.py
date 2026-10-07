@@ -10,9 +10,10 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
-from app.config import ASR_MODELS, TRANSLATE_MODELS, TRANSLATE_PROVIDERS
+from app.config import ASR_MODELS, GLOSSARY_LANG_NAMES, TRANSLATE_MODELS, TRANSLATE_PROVIDERS
 from app.core.errors import UserFacingError, friendly_message
-from app.core.profiles.glossary_io import export_csv, import_pairs
+from app.core.profiles.glossary import GLOSSARY_LANGS, Row, merge_rows
+from app.core.profiles.glossary_io import export_glossary, import_glossary
 from app.core.profiles.store import ROOT_NAME, Profile, ProfileStore
 from app.ui.common import hint, page_title
 
@@ -56,6 +57,48 @@ class PairTable(QTableWidget):
             v = (self.item(r, 1).text() if self.item(r, 1) else "").strip()
             if k:
                 out[k] = v
+        return out
+
+
+class GlossaryTable(QTableWidget):
+    """多语言术语表：一列一种语言，一行是同一个词在各语言里的写法。"""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(0, len(GLOSSARY_LANGS), parent)
+        self.setHorizontalHeaderLabels([tr(GLOSSARY_LANG_NAMES[lang]) for lang in GLOSSARY_LANGS])
+        for i in range(len(GLOSSARY_LANGS)):
+            self.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+        self.verticalHeader().setVisible(False)
+        self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+
+    def set_rows(self, rows: list[Row]) -> None:
+        self.setRowCount(0)
+        for r in rows:
+            self.add_row(r)
+
+    def add_row(self, row: Row | None = None) -> None:
+        r = self.rowCount()
+        self.insertRow(r)
+        for i, lang in enumerate(GLOSSARY_LANGS):
+            self.setItem(r, i, QTableWidgetItem((row or {}).get(lang, "")))
+        if not row:
+            self.setCurrentCell(r, 0)
+            self.editItem(self.item(r, 0))
+
+    def remove_selected(self) -> None:
+        for r in sorted({i.row() for i in self.selectedIndexes()}, reverse=True):
+            self.removeRow(r)
+
+    def rows(self) -> list[Row]:
+        out: list[Row] = []
+        for r in range(self.rowCount()):
+            row = {}
+            for i, lang in enumerate(GLOSSARY_LANGS):
+                text = (self.item(r, i).text() if self.item(r, i) else "").strip()
+                if text:
+                    row[lang] = text
+            if row:
+                out.append(row)
         return out
 
 
@@ -148,8 +191,9 @@ class ProfilesPage(QWidget):
         corr_box.addLayout(corr_btns)
         form.addRow(tr("纠错规则"), corr_box)
 
-        self.glossary = PairTable((tr("原文"), tr("译文")))
+        self.glossary = GlossaryTable()
         gl_box = QVBoxLayout()
+        gl_box.addWidget(hint(tr("一行是同一个词在各语言里的写法。翻译时按主页的「原文语言 → 翻译至」取对应两列；哪一格留空就不管那个方向。")))
         gl_box.addWidget(self.glossary, 1)
         gl_btns = QHBoxLayout()
         b = QPushButton(tr("添加"))
@@ -249,7 +293,7 @@ class ProfilesPage(QWidget):
         self.asr_prompt.setPlainText(", ".join(p.asr_prompt))
         self.style.setText(p.style or "")
         self.corrections.set_pairs(p.corrections)
-        self.glossary.set_pairs(p.glossary)
+        self.glossary.set_rows(p.glossary)
         self.status.setText("")
         is_root = p.name == ROOT_NAME
         self.rename_button.setEnabled(not is_root)
@@ -285,7 +329,7 @@ class ProfilesPage(QWidget):
             translate_model=self.translate_model.currentData() or None,
             asr_prompt=terms,
             corrections=self.corrections.pairs(),
-            glossary=self.glossary.pairs(),
+            glossary=self.glossary.rows(),
             style=self.style.text().strip() or None,
             description=description,
         )
@@ -359,15 +403,14 @@ class ProfilesPage(QWidget):
         if not path:
             return
         try:
-            pairs = import_pairs(path)
+            rows = import_glossary(path)
         except Exception as e:  # noqa: BLE001
             QMessageBox.warning(self, tr("导入失败"), friendly_message(e))
             return
-        existing = self.glossary.pairs()
-        added = sum(1 for k in pairs if k not in existing)
-        existing.update(pairs)
-        self.glossary.set_pairs(existing)
-        self.status.setText(tr("已导入 {0} 条（新增 {1} 条），记得点「保存」。", len(pairs), added))
+        existing = self.glossary.rows()
+        merged = merge_rows(existing, rows)
+        self.glossary.set_rows(merged)
+        self.status.setText(tr("已导入 {0} 条（新增 {1} 条），记得点「保存」。", len(rows), max(0, len(merged) - len(existing))))
 
     def _export_glossary(self) -> None:
         default = f"{self._current or '术语表'}.csv"
@@ -375,7 +418,7 @@ class ProfilesPage(QWidget):
         if not path:
             return
         try:
-            export_csv(path, self.glossary.pairs())
+            export_glossary(path, self.glossary.rows(), {lang: tr(name) for lang, name in GLOSSARY_LANG_NAMES.items()})
         except OSError as e:
             QMessageBox.warning(self, tr("导出失败"), str(e))
             return

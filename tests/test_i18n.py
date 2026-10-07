@@ -114,7 +114,7 @@ def check_ui(app: QApplication, shots: Path | None) -> None:
         assert scene.section.findData("游戏") >= 0 and scene.section.findData("通用") >= 0
         shown = scene.section.itemText(scene.section.findData("游戏"))
         assert shown == {"zh": "游戏", "en": table.get("游戏"), "ja": table.get("游戏")}[lang], shown
-        assert win.store.resolve("Valorant").glossary.get("Jett") == "捷风"
+        assert win.store.resolve("Valorant").glossary_for("en", "zh-Hans").get("Jett") == "捷风"
         texts = []
         for mode in ("realtime", "video"):
             win.mode_buttons[mode].click()
