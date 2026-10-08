@@ -8,7 +8,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, Qt, QThread, Signal
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+    QCheckBox, QComboBox, QFileDialog, QFrame, QHBoxLayout, QLabel, QLineEdit,
     QMessageBox, QProgressBar, QPushButton, QTextEdit, QVBoxLayout, QWidget,
 )
 
@@ -24,7 +24,7 @@ from app.core.subtitle.models import SubtitleLine
 from app.core.subtitle.project import PROJECT_SUFFIX, SubtitleProject, project_path_for
 from app.core.subtitle.srt import default_srt_path, fmt_time, write_srt
 from app.ui.subtitle_editor import SubtitleEditorWindow
-from app.ui.common import hint, not_implemented
+from app.ui.common import Collapsible, card, not_implemented, set_status
 from app.ui.model_panel import ModelLanguagePanel
 from app.ui.output_mode import OutputModePicker
 from app.ui.tone_picker import TonePicker
@@ -178,38 +178,64 @@ class VideoPage(QWidget):
         self._editor: SubtitleEditorWindow | None = None
 
         layout = QVBoxLayout(self)
-        layout.addWidget(hint(tr("适用于已经录好的视频：输入本地文件，整段处理完后输出字幕文件（保存在视频旁边、同名 .srt）。")))
+        layout.setContentsMargins(24, 16, 24, 20)
+        layout.setSpacing(14)
 
-        # ---- 来源 ----
-        src_box = QGroupBox(tr("视频来源"))
-        src_form = QFormLayout(src_box)
+        # ---- 输入：拖放区 ----
+        self.drop_zone = QFrame()
+        self.drop_zone.setObjectName("dropZone")
+        drop_layout = QVBoxLayout(self.drop_zone)
+        drop_layout.setContentsMargins(24, 20, 24, 20)
+        drop_layout.setSpacing(10)
+        self.drop_title = QLabel(tr("把视频或音频文件拖到这里"))
+        self.drop_title.setObjectName("sectionTitle")
+        self.drop_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        drop_layout.addWidget(self.drop_title)
         file_row = QHBoxLayout()
-        self.file_edit = QLineEdit()
-        self.file_edit.setPlaceholderText(tr("选择本地视频或音频文件，或把文件拖进这个窗口……"))
-        self.file_button = QPushButton(tr("选择文件"))
+        file_row.setSpacing(8)
+        self.file_button = QPushButton(tr("选择文件…"))
         self.file_button.clicked.connect(self._choose_file)
-        file_row.addWidget(self.file_edit, 1)
+        self.file_edit = QLineEdit()
+        self.file_edit.setPlaceholderText(tr("还没选文件"))
+        self.file_edit.textChanged.connect(self._on_file_text)
         file_row.addWidget(self.file_button)
-        src_form.addRow(tr("本地文件"), file_row)
+        file_row.addWidget(self.file_edit, 1)
+        drop_layout.addLayout(file_row)
+        url_row = QHBoxLayout()
+        url_row.setSpacing(8)
+        url_row.addWidget(QLabel(tr("或粘贴网址")))
         self.url_edit = QLineEdit()
-        self.url_edit.setPlaceholderText(tr("或粘贴视频网址（YouTube、B 站等），会先下载到「设置 → 网址下载」里指定的文件夹"))
-        src_form.addRow(tr("视频网址"), self.url_edit)
-        layout.addWidget(src_box)
+        self.url_edit.setPlaceholderText(tr("YouTube、B 站等视频链接，会先下载到「设置 → 网址下载」指定的文件夹"))
+        url_row.addWidget(self.url_edit, 1)
+        drop_layout.addLayout(url_row)
+        layout.addWidget(self.drop_zone)
 
-        # ---- 语言与模型 ----
+        # ---- 一张卡片：语言 / 场景 / 风格；输出 ----
         self.model_panel = ModelLanguagePanel(cfg)
         self.model_panel.changed.connect(self._on_model_panel_changed)
-        layout.addWidget(self.model_panel)
-
-        # ---- 参数 ----
-        box = QGroupBox(tr("参数"))
-        form = QFormLayout(box)
+        box, card_layout = card()
         self.scene = ScenePicker(store)
         self.scene.set_current(cfg.last_scene)
         self.scene.changed.connect(self._save_scene)
         self.scene.manage_requested.connect(self.manage_scenes_requested.emit)
-        form.addRow(tr("内容场景"), self.scene)
+        self.tone = TonePicker(cfg.video_tone)
+        self.tone.changed.connect(self._save_tone)
+        self.tone.setEnabled(cfg.video_output_mode != "source_only")
+        lang_row = QHBoxLayout()
+        lang_row.setSpacing(8)
+        lang_row.addWidget(self.model_panel.lang_widget)
+        lang_row.addSpacing(24)
+        lang_row.addWidget(QLabel(tr("场景")))
+        lang_row.addWidget(self.scene)
+        lang_row.addSpacing(16)
+        lang_row.addWidget(QLabel(tr("风格")))
+        lang_row.addWidget(self.tone)
+        lang_row.addStretch(1)
+        card_layout.addLayout(lang_row)
+
         kind_row = QHBoxLayout()
+        kind_row.setSpacing(8)
+        kind_row.addWidget(QLabel(tr("输出")))
         self.kind_checks: dict[str, QCheckBox] = {}
         for key, label in OUTPUT_KINDS.items():
             cb = QCheckBox(tr(label))
@@ -217,52 +243,56 @@ class VideoPage(QWidget):
             cb.toggled.connect(self._save_output_kind)
             self.kind_checks[key] = cb
             kind_row.addWidget(cb)
-        kind_row.addSpacing(12)
+        kind_row.addSpacing(24)
+        kind_row.addWidget(QLabel(tr("内容")))
+        self.output_mode = OutputModePicker(cfg.video_output_mode, cfg.target_language_name())
+        self.output_mode.changed.connect(self._save_output_mode)
+        kind_row.addWidget(self.output_mode)
+        kind_row.addSpacing(16)
         self.style_button = QPushButton(tr("字幕样式…"))
         self.style_button.setToolTip(tr("像编辑幻灯片一样，在画面上设置字幕的字体、大小、颜色、位置"))
         self.style_button.clicked.connect(self._open_style_editor)
         kind_row.addWidget(self.style_button)
-        self.kind_hint = hint("")
-        kind_row.addWidget(self.kind_hint, 1)
-        form.addRow(tr("输出形式"), kind_row)
-        self.output_mode = OutputModePicker(cfg.video_output_mode, cfg.target_language_name())
-        self.output_mode.changed.connect(self._save_output_mode)
-        form.addRow(tr("输出内容"), self.output_mode)
-        self.tone = TonePicker(cfg.video_tone)
-        self.tone.changed.connect(self._save_tone)
-        self.tone.setEnabled(cfg.video_output_mode != "source_only")
-        form.addRow(tr("译文风格"), self.tone)
+        kind_row.addStretch(1)
+        card_layout.addLayout(kind_row)
+        self.kind_hint = QLabel("")          # 输出形式的说明：只作悬停提示
+        self.kind_hint.setVisible(False)
         layout.addWidget(box)
         self._apply_output_kind()
 
+        # ---- 高级：模型 ----
+        self.advanced = Collapsible(tr("高级：识别 / 翻译模型"), self.model_panel.advanced_widget)
+        layout.addWidget(self.advanced)
+
         # ---- 处理 ----
         run_row = QHBoxLayout()
+        run_row.setSpacing(8)
         self.start_button = QPushButton(tr("开始处理"))
-        self.start_button.setMinimumHeight(36)
+        self.start_button.setObjectName("primary")
+        self.start_button.setMinimumSize(140, 40)
         self.start_button.clicked.connect(self._start)
         self.cancel_button = QPushButton(tr("取消"))
-        self.cancel_button.setMinimumHeight(36)
+        self.cancel_button.setMinimumHeight(40)
         self.cancel_button.setEnabled(False)
         self.cancel_button.clicked.connect(self._cancel)
         run_row.addWidget(self.start_button)
         run_row.addWidget(self.cancel_button)
+        run_row.addSpacing(12)
         self.progress = QProgressBar()
         self.progress.setValue(0)
         self.progress.setFormat("%p%")
         run_row.addWidget(self.progress, 1)
         layout.addLayout(run_row)
-        self.status = QLabel("")
-        self.status.setStyleSheet("color: #555;")
+        self.status = QLabel(tr("选好文件后点「开始处理」"))
+        set_status(self.status, "info")
         layout.addWidget(self.status)
 
-        self.preview = QTextEdit()
-        self.preview.setReadOnly(True)
-        self.preview.setPlaceholderText(tr("处理过程中，识别和翻译的结果会显示在这里。"))
-        layout.addWidget(self.preview, 1)
-
+        # ---- 结果 ----
+        result_box, result_layout = card()
         export_row = QHBoxLayout()
+        export_row.setSpacing(8)
         self.result_label = QLabel("")
-        self.result_label.setStyleSheet("color: #2a7;")
+        set_status(self.result_label, "ok")
         export_row.addWidget(self.result_label, 1)
         self.open_project_button = QPushButton(tr("打开以前的结果…"))
         self.open_project_button.setToolTip(tr("打开之前处理过的视频的字幕工程文件（.字幕工程.json），继续修改或重新导出"))
@@ -280,7 +310,13 @@ class VideoPage(QWidget):
         self.export_button.setEnabled(False)
         self.export_button.clicked.connect(self._export_as)
         export_row.addWidget(self.export_button)
-        layout.addLayout(export_row)
+        result_layout.addLayout(export_row)
+        layout.addWidget(result_box)
+
+        self.preview = QTextEdit()
+        self.preview.setReadOnly(True)
+        self.preview.setPlaceholderText(tr("处理过程中，识别和翻译的结果会显示在这里。"))
+        layout.addWidget(self.preview, 1)
 
         self.model_panel.set_translation_enabled(cfg.video_output_mode != "source_only")
         self.setAcceptDrops(True)
@@ -289,13 +325,27 @@ class VideoPage(QWidget):
     def dragEnterEvent(self, event) -> None:
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
+            self._set_drop_active(True)
+
+    def dragLeaveEvent(self, event) -> None:
+        self._set_drop_active(False)
 
     def dropEvent(self, event) -> None:
+        self._set_drop_active(False)
         for url in event.mimeData().urls():
             p = url.toLocalFile()
             if p:
                 self.file_edit.setText(p)
                 break
+
+    def _set_drop_active(self, on: bool) -> None:
+        self.drop_zone.setProperty("active", "true" if on else "false")
+        self.drop_zone.style().unpolish(self.drop_zone)
+        self.drop_zone.style().polish(self.drop_zone)
+
+    def _on_file_text(self, text: str) -> None:
+        name = Path(text.strip().strip('"')).name if text.strip() else ""
+        self.drop_title.setText(tr("已选：{0}", name) if name else tr("把视频或音频文件拖到这里"))
 
     # ---------------------------------------------------------------- 处理
     def _choose_file(self) -> None:
@@ -434,7 +484,7 @@ class VideoPage(QWidget):
         cost = outputs.pop("cost", "")
         names = [p.name for k, p in outputs.items() if k != "project"]
         self._saved_path = outputs.get("video") or outputs.get("srt") or outputs.get("doc") or outputs.get("project")
-        self.result_label.setStyleSheet("color: #2a7;")
+        set_status(self.result_label, "ok")
         self.result_label.setText(tr("已保存：{0}（{1} 条字幕）", '、'.join(names) or '字幕工程', len(lines)) + (tr("　费用：{0}", cost) if cost else ""))
         self.progress.setValue(100)
         self.status.setText(tr("完成"))
@@ -513,7 +563,7 @@ class VideoPage(QWidget):
         self._render_preview()
         self.edit_button.setEnabled(True)
         self.export_button.setEnabled(True)
-        self.result_label.setStyleSheet("color: #2a7;")
+        set_status(self.result_label, "ok")
         self.result_label.setText(tr("已打开：{0}（{1} 条字幕）", Path(path).name, len(self._lines)))
         self._open_editor()
 
@@ -528,7 +578,7 @@ class VideoPage(QWidget):
         try:
             write_srt(path, self._lines, self.output_mode.current())
             self._saved_path = Path(path)
-            self.result_label.setStyleSheet("color: #2a7;")
+            set_status(self.result_label, "ok")
             self.result_label.setText(tr("已保存：{0}", Path(path).name))
             self.open_folder_button.setEnabled(True)
         except OSError as e:
@@ -576,6 +626,8 @@ class VideoPage(QWidget):
         else:
             text = tr("请至少勾选一种。")
         self.kind_hint.setText(text)
+        for cb in self.kind_checks.values():
+            cb.setToolTip(text)
 
     def _on_model_panel_changed(self) -> None:
         self.output_mode.set_target_name(self.cfg.target_language_name())

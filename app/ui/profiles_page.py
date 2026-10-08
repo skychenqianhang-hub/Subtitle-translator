@@ -15,7 +15,7 @@ from app.core.errors import UserFacingError, friendly_message
 from app.core.profiles.glossary import GLOSSARY_LANGS, Row, merge_rows
 from app.core.profiles.glossary_io import export_glossary, import_glossary
 from app.core.profiles.store import ROOT_NAME, Profile, ProfileStore
-from app.ui.common import hint, page_title
+from app.ui.common import hint, set_status, page_title
 
 _INHERIT = ""   # 下拉框里「继承父场景」的 data
 
@@ -143,7 +143,7 @@ class ProfilesPage(QWidget):
         right = QWidget()
         form = QFormLayout(right)
         self.title = QLabel("")
-        self.title.setStyleSheet("font-size: 16px; font-weight: 600;")
+        self.title.setObjectName("sectionTitle")
         form.addRow(self.title)
         self.description = QLineEdit()
         self.description.setPlaceholderText(tr("一句话说明这个场景（可不填）"))
@@ -224,12 +224,13 @@ class ProfilesPage(QWidget):
 
         save_row = QHBoxLayout()
         self.status = QLabel("")
-        self.status.setStyleSheet("color: #2a7;")
+        set_status(self.status, "ok")
         save_row.addWidget(self.status, 1)
         self.revert_button = QPushButton(tr("放弃修改"))
         self.revert_button.clicked.connect(lambda: self._load_profile(self._current))
         save_row.addWidget(self.revert_button)
         self.save_button = QPushButton(tr("保存"))
+        self.save_button.setObjectName("primary")
         self.save_button.setMinimumHeight(34)
         self.save_button.clicked.connect(self.save)
         save_row.addWidget(self.save_button)
@@ -445,7 +446,7 @@ class ProfilesPage(QWidget):
             self.asr_prompt.setPlainText(", ".join(current))
         if description and not self.description.text().strip():
             self.description.setText(description)
-        self.status.setStyleSheet("color: #2a7;")
+        set_status(self.status, "ok")
         self.status.setText(tr("已加入 {0} 条（新增 {1} 条），记得点「保存」。", len(rows), max(0, len(merged) - len(existing))))
 
     def _export_glossary(self) -> None:

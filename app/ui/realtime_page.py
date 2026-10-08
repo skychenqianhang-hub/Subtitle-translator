@@ -9,7 +9,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import (
-    QComboBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QProgressBar,
+    QComboBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QProgressBar,
     QPushButton, QSpinBox, QTextEdit, QVBoxLayout, QWidget,
 )
 
@@ -22,7 +22,7 @@ from app.core.profiles.store import AUTO_SCENE, ProfileStore
 from app.core.subtitle.document import write_document
 from app.core.subtitle.models import SubtitleLine
 from app.core.subtitle.srt import fmt_time, write_srt
-from app.ui.common import hint
+from app.ui.common import Collapsible, card, hint, set_status
 
 
 class _Bridge(QObject):
@@ -61,80 +61,100 @@ class RealtimePage(QWidget):
         self._bridge.scene.connect(self._on_scene_changed)
         self._session_lines: list[SubtitleLine] = []
         layout = QVBoxLayout(self)
-        layout.addWidget(hint(tr("适用于直播和在线视频：抓取电脑正在播放的声音，实时识别并翻译，字幕显示在悬浮窗里。任何平台都能用。")))
+        layout.setContentsMargins(24, 16, 24, 20)
+        layout.setSpacing(14)
 
-        # ---- 语言与模型（两页共用同一份设置）----
+        # ---- 一张卡片：声音来源 / 语言与场景 / 显示与延迟 ----
         self.model_panel = ModelLanguagePanel(cfg)
         self.model_panel.changed.connect(self._on_model_panel_changed)
-        layout.addWidget(self.model_panel)
+        box, card_layout = card()
 
-        # ---- 实时参数 ----
-        box = QGroupBox(tr("实时参数"))
-        form = QFormLayout(box)
+        dev_row = QHBoxLayout()
+        dev_row.setSpacing(8)
+        dev_row.addWidget(QLabel(tr("听哪里的声音")))
+        self.device = QComboBox()
+        self.device.setObjectName("device_combo")
+        self.device.setMinimumWidth(320)
+        self.device.setToolTip(tr("和 Windows 右下角「选择扬声器」是同一份列表。选你正在用来听直播的那个设备。"))
+        self.refresh_button = QPushButton(tr("刷新"))
+        self.refresh_button.clicked.connect(self.refresh_devices)
+        dev_row.addWidget(self.device, 1)
+        dev_row.addWidget(self.refresh_button)
+        card_layout.addLayout(dev_row)
 
         self.scene = ScenePicker(store)
         self.scene.set_current(cfg.last_scene)
         self.scene.changed.connect(self._save_scene)
         self.scene.manage_requested.connect(self.manage_scenes_requested.emit)
-        form.addRow(tr("内容场景"), self.scene)
-        self.scene_now = QLabel("")
-        self.scene_now.setStyleSheet("color: #2f6fd6;")
-        form.addRow("", self.scene_now)
+        self.tone = TonePicker(cfg.realtime_tone)
+        self.tone.changed.connect(self._save_tone)
+        lang_row = QHBoxLayout()
+        lang_row.setSpacing(8)
+        lang_row.addWidget(self.model_panel.lang_widget)
+        lang_row.addSpacing(24)
+        lang_row.addWidget(QLabel(tr("场景")))
+        lang_row.addWidget(self.scene)
+        lang_row.addSpacing(16)
+        lang_row.addWidget(QLabel(tr("风格")))
+        lang_row.addWidget(self.tone)
+        lang_row.addStretch(1)
+        card_layout.addLayout(lang_row)
 
-        dev_row = QHBoxLayout()
-        self.device = QComboBox()
-        self.device.setObjectName("device_combo")
-        self.device.setMinimumWidth(320)
-        self.refresh_button = QPushButton(tr("刷新"))
-        self.refresh_button.clicked.connect(self.refresh_devices)
-        dev_row.addWidget(self.device, 1)
-        dev_row.addWidget(self.refresh_button)
-        form.addRow(tr("抓取声音的设备"), dev_row)
-        form.addRow("", hint(tr("和 Windows 右下角「选择扬声器」是同一份列表。选你正在用来听直播的那个设备。")))
-
-        delay_row = QHBoxLayout()
+        self.output_mode = OutputModePicker(cfg.realtime_output_mode, cfg.target_language_name())
+        self.output_mode.changed.connect(self._save_output_mode)
         self.delay = QSpinBox()
         self.delay.setRange(2, 30)
         self.delay.setSuffix(tr(" 秒"))
         self.delay.setValue(cfg.realtime_delay_seconds)
+        self.delay.setToolTip(tr("最多攒多长的声音再送去识别。越短字幕越快出，但句子更容易被切断；建议 5 到 8 秒。"))
         self.delay.valueChanged.connect(self._save_delay)
-        delay_row.addWidget(self.delay)
-        delay_row.addWidget(hint(tr("最多攒多长的声音再送去识别。越短字幕越快出，但句子更容易被切断；建议 5 到 8 秒。")), 1)
-        form.addRow(tr("翻译延迟"), delay_row)
-
-        self.output_mode = OutputModePicker(cfg.realtime_output_mode, cfg.target_language_name())
-        self.output_mode.changed.connect(self._save_output_mode)
-        form.addRow(tr("输出内容"), self.output_mode)
-        self.tone = TonePicker(cfg.realtime_tone)
-        self.tone.changed.connect(self._save_tone)
-        form.addRow(tr("译文风格"), self.tone)
+        show_row = QHBoxLayout()
+        show_row.setSpacing(8)
+        show_row.addWidget(QLabel(tr("显示")))
+        show_row.addWidget(self.output_mode)
+        show_row.addSpacing(24)
+        show_row.addWidget(QLabel(tr("延迟")))
+        show_row.addWidget(self.delay)
+        show_row.addStretch(1)
+        card_layout.addLayout(show_row)
         layout.addWidget(box)
+
+        # ---- 高级：模型 ----
+        self.advanced = Collapsible(tr("高级：识别 / 翻译模型"), self.model_panel.advanced_widget)
+        layout.addWidget(self.advanced)
+        self.scene_now = QLabel("")
+        self.scene_now.setObjectName("accentText")
+        self.scene_now.setVisible(False)
+        layout.addWidget(self.scene_now)
 
         # ---- 控制 ----
         ctrl_row = QHBoxLayout()
+        ctrl_row.setSpacing(8)
         self.start_button = QPushButton(tr("开始"))
-        self.start_button.setMinimumHeight(36)
+        self.start_button.setObjectName("primary")
+        self.start_button.setMinimumSize(140, 40)
         self.start_button.clicked.connect(self.start_session)
         self.stop_button = QPushButton(tr("停止"))
-        self.stop_button.setMinimumHeight(36)
+        self.stop_button.setMinimumHeight(40)
         self.stop_button.setEnabled(False)
         self.stop_button.clicked.connect(self.stop_session)
         self.overlay_button = QPushButton(tr("打开悬浮字幕窗"))
-        self.overlay_button.setMinimumHeight(36)
+        self.overlay_button.setMinimumHeight(40)
         self.overlay_button.clicked.connect(self._toggle_overlay)
         ctrl_row.addWidget(self.start_button)
         ctrl_row.addWidget(self.stop_button)
         ctrl_row.addSpacing(12)
-        self.status_label = QLabel(tr("未开始"))
-        self.status_label.setStyleSheet("color: #555;")
-        ctrl_row.addWidget(self.status_label)
+        ctrl_row.addWidget(QLabel(tr("音量")))
         self.level = QProgressBar()
         self.level.setRange(0, 100)
         self.level.setTextVisible(False)
         self.level.setFixedWidth(120)
         self.level.setToolTip(tr("抓到的声音大小。开始后如果一直是空的，说明选错了设备"))
-        ctrl_row.addWidget(QLabel(tr("音量")))
         ctrl_row.addWidget(self.level)
+        ctrl_row.addSpacing(12)
+        self.status_label = QLabel(tr("未开始"))
+        set_status(self.status_label, "info")
+        ctrl_row.addWidget(self.status_label)
         ctrl_row.addStretch(1)
         ctrl_row.addWidget(self.overlay_button)
         layout.addLayout(ctrl_row)
@@ -145,7 +165,8 @@ class RealtimePage(QWidget):
         layout.addWidget(self.log, 1)
 
         save_row = QHBoxLayout()
-        save_row.addStretch(1)
+        self.stats_label = hint("")
+        save_row.addWidget(self.stats_label, 1)
         self.save_button = QPushButton(tr("保存本场字幕"))
         self.save_button.clicked.connect(self.save_session)
         self.save_button.setEnabled(False)
@@ -253,6 +274,7 @@ class RealtimePage(QWidget):
         )
         self._session = self._make_session(transcriber, translator, opts, cbs)
         self.scene_now.setText(tr("当前场景：通用（自动判断中）") if auto else "")
+        self.scene_now.setVisible(auto)
         self._session_lines = []
         self.log.clear()
         try:
@@ -275,6 +297,7 @@ class RealtimePage(QWidget):
 
     def _on_scene_changed(self, name: str, display: str) -> None:
         self.scene_now.setText(tr("当前场景：{0}（自动）", display))
+        self.scene_now.setVisible(True)
 
     def stop_session(self) -> None:
         if self._session is None:
@@ -313,6 +336,8 @@ class RealtimePage(QWidget):
             self._set_running(False)
             self.status_label.setText(tr("已停止"))
             self.save_button.setEnabled(bool(self._session_lines))
+            if self._session_lines:
+                self.stats_label.setText(tr("已识别 {0} 句", len(self._session_lines)))
             return
         self.status_label.setText(text)
 

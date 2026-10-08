@@ -114,8 +114,8 @@ def main() -> int:
     app = QApplication.instance() or QApplication(sys.argv)
     win = MainWindow(config_mod.load_config())
     sp = win.realtime_page.scene
-    sp.section.setCurrentIndex(sp.section.findData(AUTO_SCENE))
-    assert sp.current_name() == AUTO_SCENE and sp.is_auto() and not sp.sub.isEnabled()
+    sp.combo.setCurrentIndex(sp.combo.findData(AUTO_SCENE))
+    assert sp.current_name() == AUTO_SCENE and sp.is_auto()
     assert config_mod.load_config().last_scene == AUTO_SCENE
     win2 = MainWindow(config_mod.load_config())
     assert win2.realtime_page.scene.current_name() == AUTO_SCENE, "重开后应仍是自动"

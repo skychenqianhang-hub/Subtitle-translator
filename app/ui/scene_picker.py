@@ -1,116 +1,124 @@
-"""内容场景选择器：板块 + 子板块 两个下拉框，以及「管理场景」按钮。
+"""内容场景选择器：逐级下拉。
 
-板块 = 「通用」以及它的直接子场景（游戏、电影……）；
-子板块 = 所选板块下面的所有后代（多层的用「→」连起来显示）。
-保存和发出的都是场景的唯一名字（例如 "Valorant"），显示用路径（"游戏 → Valorant"）。
+第一个下拉框列出顶层（自动 / 通用 / 游戏 / 电影……）；选中一个有子场景的项，右边自动多出一个下拉框列它的子场景；
+再选中还有子场景的，再多出一个……有几层就出几个，用户不用看一整串「游戏 → Valorant → 某主播」。
+保存和发出的都是场景的唯一名字（例如 "Valorant"），显示用路径。
 """
 from __future__ import annotations
 
 from app.i18n import tr
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QPushButton, QWidget
+from PySide6.QtWidgets import QComboBox, QHBoxLayout, QPushButton, QWidget
 
 from app.core.profiles.store import AUTO_LABEL, AUTO_SCENE, ROOT_NAME, ProfileStore
 
-_NONE = ""
+_NONE = ""   # 子级下拉框里「（不选）」的值：停在父级
 
 
 class ScenePicker(QWidget):
     manage_requested = Signal()
-    changed = Signal(str)  # 场景名，例如 "Valorant" 或 "通用"
+    changed = Signal(str)  # 场景名，例如 "Valorant"、"通用" 或 AUTO_SCENE
 
     def __init__(self, store: ProfileStore, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.store = store
         self._loading = False
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(QLabel(tr("板块")))
-        self.section = QComboBox()
-        self.section.setMinimumWidth(120)
-        layout.addWidget(self.section)
-        layout.addWidget(QLabel(tr("子板块")))
-        self.sub = QComboBox()
-        self.sub.setMinimumWidth(160)
-        layout.addWidget(self.sub)
+        self.combos: list[QComboBox] = []
+        self._layout = QHBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(8)
+        self.combo = self._new_combo()                # 第一级；下面几级按需添加
+        self.combo.setToolTip(tr("场景决定术语表、纠错规则和识别提示词。「自动」会按识别到的内容自己挑。"))
         self.manage = QPushButton(tr("管理场景…"))
         self.manage.clicked.connect(self.manage_requested.emit)
-        layout.addWidget(self.manage)
-        layout.addStretch(1)
-
-        self.section.currentIndexChanged.connect(self._on_section)
-        self.sub.currentIndexChanged.connect(self._emit)
+        self._layout.addWidget(self.manage)
         self.reload()
+
+    # ------------------------------------------------------------ 结构
+    def _new_combo(self) -> QComboBox:
+        c = QComboBox()
+        c.setMinimumWidth(130)
+        level = len(self.combos)
+        c.currentIndexChanged.connect(lambda _i, lv=level: self._on_level_changed(lv))
+        self._layout.insertWidget(level, c)
+        self.combos.append(c)
+        return c
+
+    def _drop_levels_after(self, level: int) -> None:
+        while len(self.combos) > level + 1:
+            c = self.combos.pop()
+            self._layout.removeWidget(c)
+            c.deleteLater()
+
+    def _fill_children(self, level: int, parent: str) -> None:
+        """第 level 级下拉框列 parent 的子场景（有子场景才出现）。"""
+        self._drop_levels_after(level - 1)
+        children = self.store.children(parent)
+        if not children:
+            return
+        c = self._new_combo()
+        self._loading = True
+        c.addItem(tr("（不选）"), _NONE)
+        for p in children:
+            c.addItem(tr(p.name), p.name)
+        self._loading = False
+
+    def _on_level_changed(self, level: int) -> None:
+        if self._loading or level >= len(self.combos):
+            return
+        value = self.combos[level].currentData()
+        if value in (_NONE, AUTO_SCENE, None) or (level == 0 and value == ROOT_NAME):
+            self._drop_levels_after(level)      # 「通用」的子场景已经列在第一级里了，不再往下出
+        else:
+            self._fill_children(level + 1, value)
+        self.changed.emit(self.current_name())
 
     # ------------------------------------------------------------ 数据
     def reload(self, keep: str | None = None) -> None:
         """场景列表变化后重新填充；keep = 想保持选中的场景名。"""
         current = keep if keep is not None else self.current_name()
         self._loading = True
-        self.section.clear()
-        self.section.addItem(tr(AUTO_LABEL), AUTO_SCENE)
-        self.section.addItem(tr(ROOT_NAME), ROOT_NAME)
+        self._drop_levels_after(0)
+        self.combo.clear()
+        self.combo.addItem(tr(ROOT_NAME), ROOT_NAME)
         for p in self.store.children(ROOT_NAME):
-            self.section.addItem(tr(p.name), p.name)
+            self.combo.addItem(tr(p.name), p.name)
+        self.combo.addItem(tr(AUTO_LABEL), AUTO_SCENE)
         self._loading = False
         self.set_current(current or ROOT_NAME)
 
-    def _fill_sub(self, section: str) -> None:
-        self._loading = True
-        self.sub.clear()
-        self.sub.addItem(tr("（不选）"), _NONE)
-        if section not in (ROOT_NAME, AUTO_SCENE):
-            for d in self.store.descendants(section):
-                path = self.store.path(d.name)
-                # 去掉「通用 → 板块」前缀，只显示板块下面的层级
-                label = " → ".join(tr(x) for x in path[2:]) if len(path) > 2 else tr(d.name)
-                self.sub.addItem(label, d.name)
-        self.sub.setEnabled(self.sub.count() > 1)
-        self._loading = False
-
-    def _on_section(self) -> None:
-        if self._loading:
-            return
-        self._fill_sub(self.section.currentData() or ROOT_NAME)
-        self._emit()
-
-    def _emit(self) -> None:
-        if not self._loading:
-            self.changed.emit(self.current_name())
-
     # ------------------------------------------------------------ 取值
     def current_name(self) -> str:
-        sub = self.sub.currentData() if self.sub.count() else _NONE
-        if sub:
-            return sub
-        return self.section.currentData() or ROOT_NAME
+        name = ROOT_NAME
+        for c in self.combos:
+            v = c.currentData()
+            if v in (_NONE, None):
+                break
+            name = v
+        return name
 
     def current_display(self) -> str:
         return self.store.display_name(self.current_name())
 
     def is_auto(self) -> bool:
-        return self.section.currentData() == AUTO_SCENE
+        return self.combo.currentData() == AUTO_SCENE
 
     def set_current(self, name: str) -> None:
-        if name == AUTO_SCENE:
-            self._loading = True
-            self.section.setCurrentIndex(max(0, self.section.findData(AUTO_SCENE)))
-            self._loading = False
-            self._fill_sub(AUTO_SCENE)
-            self.changed.emit(AUTO_SCENE)
-            return
-        if name not in self.store.profiles:
+        if name != AUTO_SCENE and name not in self.store.profiles:
             name = ROOT_NAME
-        path = self.store.path(name)          # ["通用", 板块, ..., name]
-        section = path[1] if len(path) > 1 else ROOT_NAME
+        # 路径 ["通用", "游戏", "Valorant"] → 第一级选「游戏」，第二级选「Valorant」，再出第三级（若有）
+        path = [AUTO_SCENE] if name == AUTO_SCENE else self.store.path(name)[1:]
         self._loading = True
-        idx = self.section.findData(section)
-        self.section.setCurrentIndex(max(0, idx))
+        self._drop_levels_after(0)
+        self.combo.setCurrentIndex(max(0, self.combo.findData(path[0] if path else ROOT_NAME)))
         self._loading = False
-        self._fill_sub(section)
-        self._loading = True
-        idx = self.sub.findData(name) if len(path) > 2 else 0
-        self.sub.setCurrentIndex(max(0, idx))
-        self._loading = False
+        for level, node in enumerate(path):
+            if node == AUTO_SCENE:
+                break
+            self._fill_children(level + 1, node)
+            if level + 1 < len(path) and level + 1 < len(self.combos):
+                self._loading = True
+                self.combos[level + 1].setCurrentIndex(max(0, self.combos[level + 1].findData(path[level + 1])))
+                self._loading = False
         self.changed.emit(self.current_name())

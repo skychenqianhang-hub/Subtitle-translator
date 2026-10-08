@@ -146,7 +146,8 @@ def main() -> int:
 
     app = QApplication(sys.argv)
     app.setApplicationName(i18n.tr(APP_NAME))
-    app.setStyle("Fusion")
+    from app.ui.theme import apply_theme
+    apply_theme(app, cfg.ui_theme)
     if i18n.current_language() == "ja":
         # 中文系统的默认字体会把日文汉字画成中文写法（直、選 等字形不同），日文界面换成日文字体
         font = app.font()

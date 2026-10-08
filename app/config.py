@@ -157,6 +157,7 @@ class Config:
     download_dir: str = ""                  # 网址下载的保存位置；空 = 我的视频\字幕翻译器
     subtitle_style: dict = field(default_factory=dict)   # 默认字幕样式（SubtitleStyle.to_dict()），空 = 内置默认
     ui_language: str = ""                   # 界面语言 zh / ja / en；空 = 还没选过
+    ui_theme: str = "light"                 # 界面配色，见 app/ui/theme.py 的 PALETTES
     # 界面
     last_mode: str = "realtime"      # "realtime" 或 "video"
     last_scene: str = "通用"         # 例如 "游戏 → Valorant"

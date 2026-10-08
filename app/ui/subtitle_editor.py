@@ -34,7 +34,7 @@ from app.core.subtitle.models import SubtitleLine
 from app.core.subtitle.project import SubtitleProject
 from app.core.subtitle.srt import default_srt_path, fmt_time, write_srt
 from app.core.subtitle.style import PLAY_H, PLAY_W, PRESETS, SubtitleStyle, TextStyle, chars_per_line
-from app.ui.common import hint
+from app.ui.common import hint, set_status
 
 SAMPLE_LINES = [
     SubtitleLine(0.0, 4.0, "This is a sample subtitle line to preview the style.", "这是一条示例字幕，用来预览样式效果。"),
@@ -539,7 +539,7 @@ class SubtitleEditorWindow(QMainWindow):
         self.default_button.clicked.connect(self._set_default_style)
         right_layout.addWidget(self.default_button)
         self.style_status = QLabel("")
-        self.style_status.setStyleSheet("color: #2a7;")
+        set_status(self.style_status, "ok")
         right_layout.addWidget(self.style_status)
         top.addWidget(right)
         top.setSizes([860, 380])
@@ -574,11 +574,11 @@ class SubtitleEditorWindow(QMainWindow):
         act.addWidget(self.correction_button)
         act.addSpacing(20)
         self.scene_label = QLabel(tr("当前场景：{0}", self.store.display_name(project.scene)))
-        self.scene_label.setStyleSheet("color: #666;")
+        set_status(self.scene_label, "info")
         act.addWidget(self.scene_label)
         act.addStretch(1)
         self.status = QLabel("")
-        self.status.setStyleSheet("color: #2a7;")
+        set_status(self.status, "ok")
         act.addWidget(self.status)
         bottom_layout.addLayout(act)
 
@@ -598,6 +598,7 @@ class SubtitleEditorWindow(QMainWindow):
         self.open_folder_button = QPushButton(tr("打开所在文件夹"))
         self.open_folder_button.clicked.connect(self._open_folder)
         self.save_button = QPushButton(tr("保存修改"))
+        self.save_button.setObjectName("primary")
         self.save_button.setMinimumHeight(32)
         self.save_button.clicked.connect(self.save_project)
         for w in (self.export_srt_button, self.export_doc_button, self.burn_button, self.burn_cancel, self.burn_progress):
@@ -791,7 +792,7 @@ class SubtitleEditorWindow(QMainWindow):
         self.time_label.setText(f"{fmt_time(ms / 1000)[:8]} / {fmt_time(self.player.duration() / 1000)[:8]}")
 
     def _on_player_error(self, _err, text: str) -> None:
-        self.status.setStyleSheet("color: #c33;")
+        set_status(self.status, "error")
         self.status.setText(tr("播放器：{0}（字幕编辑不受影响）", text or '无法播放这个文件'))
 
     def line_index_at(self, t: float) -> int:
@@ -853,7 +854,7 @@ class SubtitleEditorWindow(QMainWindow):
             row[tgt] = res[1]
         p.glossary = merge_rows(p.glossary, [row])
         self.store.save(p)
-        self.status.setStyleSheet("color: #2a7;")
+        set_status(self.status, "ok")
         self.status.setText(tr("已加入术语表：{0} → {1}", res[0], res[1]))
 
     def _add_correction(self) -> None:
@@ -867,7 +868,7 @@ class SubtitleEditorWindow(QMainWindow):
         p = self.store.get(self.project.scene) or self.store.get("通用")
         p.corrections[res[0]] = res[1]
         self.store.save(p)
-        self.status.setStyleSheet("color: #2a7;")
+        set_status(self.status, "ok")
         self.status.setText(tr("已加入纠错规则：{0} → {1}", res[0], res[1]))
 
     # ------------------------------------------------------------ 保存 / 导出
@@ -881,7 +882,7 @@ class SubtitleEditorWindow(QMainWindow):
             QMessageBox.warning(self, tr("保存失败"), str(e))
             return
         self._dirty = False
-        self.status.setStyleSheet("color: #2a7;")
+        set_status(self.status, "ok")
         self.status.setText(tr("已保存修改：{0}", p.name))
 
     def _export_srt(self) -> None:
@@ -940,7 +941,7 @@ class SubtitleEditorWindow(QMainWindow):
         self.burn_cancel.setEnabled(True)
         self.burn_progress.setVisible(True)
         self.burn_progress.setValue(0)
-        self.status.setStyleSheet("color: #555;")
+        set_status(self.status, "info")
         self.status.setText(tr("正在按当前样式把字幕烧进视频……"))
         self._burn_thread.start()
 
@@ -960,11 +961,11 @@ class SubtitleEditorWindow(QMainWindow):
         self.burn_progress.setVisible(False)
 
     def _on_burn_done(self, out: Path) -> None:
-        self.status.setStyleSheet("color: #2a7;")
+        set_status(self.status, "ok")
         self.status.setText(tr("已生成：{0}", out.name))
 
     def _on_burn_failed(self, msg: str) -> None:
-        self.status.setStyleSheet("color: #c33;")
+        set_status(self.status, "error")
         self.status.setText(msg)
 
     def _open_folder(self) -> None:

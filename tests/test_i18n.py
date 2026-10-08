@@ -74,7 +74,7 @@ def check_tables() -> None:
 def visible_texts(root: QWidget) -> list[str]:
     out: list[str] = []
     for w in [root] + root.findChildren(QWidget):
-        if w.objectName() in ("language_button", "device_combo") or isinstance(w, QFontComboBox):
+        if w.objectName() in ("language_button", "device_combo", "theme_button") or isinstance(w, QFontComboBox):
             continue               # 语言下拉框写各语言自己的名字；设备名是 Windows 给的，不归我们翻
         out.append(w.toolTip())
         out.append(w.windowTitle())
@@ -111,8 +111,8 @@ def check_ui(app: QApplication, shots: Path | None) -> None:
         assert [a.text() for a in win.language_menu.actions()] == ["中文", "日本語", "English"]
         # 场景：内部名字不变（存盘、找术语都靠它），显示的名字跟着语言走
         scene = win.realtime_page.scene
-        assert scene.section.findData("游戏") >= 0 and scene.section.findData("通用") >= 0
-        shown = scene.section.itemText(scene.section.findData("游戏"))
+        assert scene.combo.findData("游戏") >= 0 and scene.combo.findData("通用") >= 0
+        shown = scene.combo.itemText(scene.combo.findData("游戏"))
         assert shown == {"zh": "游戏", "en": table.get("游戏"), "ja": table.get("游戏")}[lang], shown
         assert win.store.resolve("Valorant").glossary_for("en", "zh-Hans").get("Jett") == "捷风"
         texts = []

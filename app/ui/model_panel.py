@@ -1,13 +1,14 @@
-"""「语言与模型」面板：原文语言、翻译至、识别模型、翻译服务与模型。
+"""语言与模型：原文语言、翻译至、识别模型、翻译服务与模型。
 
 实时翻译和视频翻译两页各放一个，但背后是同一份设置：在一页改了，另一页跟着变。
+界面上分两块放：lang_widget（原文 → 译成，放在主卡片里）和 advanced_widget（模型，放在「高级」折叠区里）。
 """
 from __future__ import annotations
 
 from app.i18n import tr
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QWidget
+from PySide6.QtWidgets import QComboBox, QFormLayout, QHBoxLayout, QLabel, QWidget
 
 from app.config import (
     ASR_AUTO, ASR_MODELS, DEFAULT_TRANSLATE_MODEL, SOURCE_LANGUAGES, TARGET_LANGUAGES, TRANSLATE_MODELS,
@@ -16,39 +17,45 @@ from app.config import (
 from app.ui.common import hint
 
 
-class ModelLanguagePanel(QGroupBox):
+class ModelLanguagePanel(QWidget):
     changed = Signal()
 
     def __init__(self, cfg: Config, parent: QWidget | None = None) -> None:
-        super().__init__(tr("语言与模型"), parent)
+        super().__init__(parent)
         self.cfg = cfg
         self._loading = False
-        form = QFormLayout(self)
 
-        lang_row = QHBoxLayout()
+        # ---- 原文 → 译成 ----
+        self.lang_widget = QWidget()
+        lang_row = QHBoxLayout(self.lang_widget)
+        lang_row.setContentsMargins(0, 0, 0, 0)
+        lang_row.setSpacing(8)
         self.source_language = QComboBox()
+        self.source_language.setToolTip(tr("视频里说的是什么语言。「自动检测」让识别模型自己判断。"))
         for key, label in SOURCE_LANGUAGES.items():
             self.source_language.addItem(tr(label), key)
         self.target_language = QComboBox()
+        self.target_language.setToolTip(tr("字幕翻译成什么语言。"))
         for key, label in TARGET_LANGUAGES.items():
             self.target_language.addItem(tr(label), key)
-        lang_row.addWidget(QLabel(tr("原文语言")))
+        lang_row.addWidget(QLabel(tr("原文")))
         lang_row.addWidget(self.source_language)
-        lang_row.addSpacing(16)
-        self.target_label = QLabel(tr("翻译至"))
+        self.target_label = QLabel("→")
         lang_row.addWidget(self.target_label)
         lang_row.addWidget(self.target_language)
-        lang_row.addStretch(1)
-        form.addRow(tr("语言"), lang_row)
 
+        # ---- 模型（高级）----
+        self.advanced_widget = QWidget()
+        form = QFormLayout(self.advanced_widget)
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setHorizontalSpacing(12)
+        form.setVerticalSpacing(8)
         self.asr_model = QComboBox()
         for mid, label in ASR_MODELS:
             self.asr_model.addItem(tr(label), mid)
-        asr_row = QHBoxLayout()
-        asr_row.addWidget(self.asr_model, 1)
-        form.addRow(tr("识别模型"), asr_row)
-
+        form.addRow(tr("识别模型"), self.asr_model)
         tr_row = QHBoxLayout()
+        tr_row.setSpacing(8)
         self.translate_provider = QComboBox()
         for key, label in TRANSLATE_PROVIDERS.items():
             self.translate_provider.addItem(tr(label), key)
@@ -57,7 +64,7 @@ class ModelLanguagePanel(QGroupBox):
         tr_row.addWidget(self.translate_model, 1)
         self.translate_row_label = QLabel(tr("翻译模型"))
         form.addRow(self.translate_row_label, tr_row)
-        form.addRow("", hint(tr("价格是每百万字的输入 / 输出费用；评测依据见项目说明。每个场景也可以在「管理场景」里单独指定模型，优先级高于这里。")))
+        form.addRow("", hint(tr("价格是每百万字的输入 / 输出费用。每个场景也可以在「管理场景」里单独指定模型，优先级高于这里。")))
 
         self.load_from_config()
 
@@ -66,6 +73,11 @@ class ModelLanguagePanel(QGroupBox):
         self.asr_model.currentIndexChanged.connect(self._on_change)
         self.translate_provider.currentIndexChanged.connect(self._on_provider_change)
         self.translate_model.currentIndexChanged.connect(self._on_change)
+
+    def setEnabled(self, enabled: bool) -> None:  # noqa: N802  两块控件各自放在页面不同位置，一起启停
+        self.lang_widget.setEnabled(enabled)
+        self.advanced_widget.setEnabled(enabled)
+        super().setEnabled(enabled)
 
     # ---- 读写 ----
     def load_from_config(self) -> None:

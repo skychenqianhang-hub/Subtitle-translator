@@ -1,13 +1,12 @@
-"""输出内容选择：原文 + 译文 / 仅译文 / 仅原文（不翻译）。实时页和视频页共用。"""
+"""输出内容选择：原文 + 译文 / 仅译文 / 仅原文（不翻译）。实时页和视频页共用。说明放在鼠标悬停提示里。"""
 from __future__ import annotations
 
 from app.i18n import tr
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QComboBox, QHBoxLayout, QWidget
+from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QWidget
 
 from app.config import OUTPUT_MODES
-from app.ui.common import hint
 
 
 class OutputModePicker(QWidget):
@@ -22,10 +21,9 @@ class OutputModePicker(QWidget):
         self.combo = QComboBox()
         for key, label in OUTPUT_MODES.items():
             self.combo.addItem(tr(label), key)
-        self.combo.setMinimumWidth(220)
         layout.addWidget(self.combo)
-        self.note = hint("")
-        layout.addWidget(self.note, 1)
+        self.note = QLabel("")          # 说明文字：只作悬停提示，不占版面
+        self.note.setVisible(False)
         self.set_current(current)
         self.combo.currentIndexChanged.connect(self._on_change)
         self._update_note()
@@ -53,4 +51,6 @@ class OutputModePicker(QWidget):
             "target_only": tr("只显示 / 输出{0}译文。", t),
             "source_only": tr("跳过翻译这一步，只做语音识别，速度更快、费用更低。"),
         }
-        self.note.setText(notes.get(self.current(), ""))
+        text = notes.get(self.current(), "")
+        self.note.setText(text)
+        self.combo.setToolTip(text)

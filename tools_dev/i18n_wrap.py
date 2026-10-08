@@ -36,7 +36,7 @@ FILES = [
 # 只做导出（这些文件里的文字在使用处用 tr(变量) 翻译，键在这里以常量形式存在）
 EXTRACT_CONSTANTS_FROM = ["app/config.py", "app/core/subtitle/style.py", "app/core/subtitle/ass.py"]
 
-EXTRACT_MODULE_CONSTANTS_FROM = ["app/ui/main_window.py", "app/ui/video_page.py"]
+EXTRACT_MODULE_CONSTANTS_FROM = ["app/ui/main_window.py", "app/ui/video_page.py", "app/ui/theme.py"]
 
 HAN = re.compile(r"[㐀-鿿]")
 SKIP_EXACT = {"通用"}

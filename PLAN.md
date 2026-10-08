@@ -297,6 +297,27 @@ SubTranslator/
 
 用户拿到 Anthropic Key 后，用 tests/fixtures 的两段十几秒音频跑了真实流程：日→简体中文（Valorant 场景，ランクマッチ → 排位 术语生效）、英→日语（通用场景），Claude Sonnet 5.5，结构化输出、费用统计（含缓存读）都正常，两段合计约 $0.012。至此两家翻译服务都实测过。
 
+## 7.6 界面美化：主题与配色（2026-10-09 用户提出「太丑了」，已做第一轮，待验收）
+
+用户不给设计建议，只判断好看不好看。做法：先出三套配色的截图让用户挑，用户决定「做成可以选的」。
+
+- `app/ui/theme.py`：一套样式表（QSS）+ 三组配色 `PALETTES`（light 清爽蓝 / dark 深色紫 / warm 暖调青）。形状、圆角、间距只写一遍，配色只是换值。启动时 `apply_theme(app, cfg.ui_theme)`。
+- 版式统一：分组框变成圆角卡片（标题压在卡片上边框上，背景用窗口色「切」出缺口）；按钮 / 输入框圆角；主按钮（开始、保存、开始生成、加进术语表）`objectName="primary"` 用强调色；顶部两个模式按钮是胶囊切换（`objectName="modeButton"`）；勾选框、下拉和微调箭头的小图标由代码画成 png 放临时目录（`%TEMP%\SubTranslator\theme-icons`）给样式表引用；表头淡色、滚动条细化；页面四周留白 20px。
+- 颜色角色用 objectName：`pageTitle` / `sectionTitle` / `hint` / `statusOk` / `statusError` / `statusInfo` / `accentText`，用 `common.set_status(label, "ok"|"error"|"info"|"plain")` 切换（改 objectName 后要 unpolish/polish 才会重套样式）。**不要再手写 `setStyleSheet("color: …")`**，深色配色下会看不见。顶栏图标颜色也跟配色（`icons.py` 读 `theme.current_palette()["icon"]`）。
+- 切换：右上角地球旁边多了调色盘图标，单选菜单，选了立刻生效（重套样式、重画三个图标），存 `ui_theme`。
+- 悬浮字幕窗和字幕编辑器画面区有自己的样式，不受主题影响（本来就是黑底白字）。
+- 自检：test_skeleton 第 11 项；截图脚本在开发时用 `QT_QPA_PLATFORM=windows` 跑 MainWindow.grab()（见 7.45 的说明）。
+
+### 第二轮：两个主页的版式重做（2026-10-09，用户看过样机后同意）
+
+用户的要求不只是好看，还要「最高效、最易懂、最便于使用」，并且要更简洁。原则：一页从上到下只回答三件事——输入什么 → 怎么翻 → 开始；其余收起。样机在 `tools_dev/mock_ui.py`（只摆控件，可随时改了再截图给用户看）。
+
+- **视频页**：顶上一块虚线「拖放区」（标题 + 选择文件 + 粘贴网址三合一，拖文件进来边框变色，选了文件标题变成「已选：文件名」）→ 一张卡片两行（原文 → 译成 ｜ 场景 ｜ 风格；输出三个勾 ｜ 内容 ｜ 字幕样式）→ 「▸ 高级：识别 / 翻译模型」默认折叠 → 大「开始处理」+ 进度 → 结果条（打开以前的结果 / 预览修改 / 打开文件夹 / 另存）→ 日志。
+- **实时页**：卡片三行（听哪里的声音 ｜ 原文 → 译成 / 场景 / 风格 ｜ 显示 / 延迟）→ 高级折叠 → 大「开始」+ 音量 + 状态 + 悬浮窗按钮 → 字幕流占满 → 底部「已识别 N 句」+ 保存。
+- **砍掉的**：页面顶上的长说明句（进悬停提示）；「板块 / 子板块」→ **逐级下拉**（用户 2026-10-09 要求：先选第一级，选中有子场景的才弹出第二级，再有就弹第三级，有几层出几层；`ScenePicker.combos` 列表、`combo` 是第一级，`set_current / current_name / is_auto` 接口不变）；输出内容、译文风格旁边的说明 → 悬停提示（`note` 标签保留但不显示，测试还在用）；模型下拉和价格说明 → 高级区；两页重复的「语言与模型」大卡片 → `ModelLanguagePanel` 拆成 `lang_widget`（放主卡片）和 `advanced_widget`（放高级区）。
+- 新的公用件在 `app/ui/common.py`：`card()`（圆角卡片 `QFrame#card`）、`Collapsible`（▸ 折叠区）；样式 `QFrame#dropZone`、`QToolButton#advancedToggle` 在 theme.py。
+- 设置、场景管理、字幕编辑器这轮没动，下一轮按同样思路收拾。
+
 ## 7.5 待定想法（用户提出，尚未决定做不做）
 
 ### 延时同步播放模式（2026-10-05 提出，暂缓）

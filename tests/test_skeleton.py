@@ -49,14 +49,28 @@ def main() -> int:
     print("齿轮设置 / 管理场景：OK")
 
     # 3. 场景选择：板块 → 子板块，并记住（数据来自预置场景文件）
-    rp.scene.section.setCurrentIndex(rp.scene.section.findData("游戏"))
-    assert rp.scene.sub.isEnabled()
-    rp.scene.sub.setCurrentIndex(rp.scene.sub.findData("Valorant"))
+    # 逐级下拉：选「游戏」→ 右边出子场景框 → 选 Valorant
+    rp.scene.combo.setCurrentIndex(rp.scene.combo.findData("游戏"))
+    assert len(rp.scene.combos) == 2 and rp.scene.current_name() == "游戏"
+    rp.scene.combos[1].setCurrentIndex(rp.scene.combos[1].findData("Valorant"))
     assert rp.scene.current_name() == "Valorant" and rp.scene.current_display() == "游戏 → Valorant", rp.scene.current_display()
+    assert len(rp.scene.combos) == 2, "Valorant 没有子场景，不该再出第三级"
     assert config_mod.load_config().last_scene == "Valorant"
     assert win.store.resolve("Valorant").glossary_for("en", "zh-Hans").get("Jett") == "捷风"
-    rp.scene.section.setCurrentIndex(rp.scene.section.findData("通用"))
-    assert not rp.scene.sub.isEnabled() and rp.scene.current_name() == "通用"
+    rp.scene.combo.setCurrentIndex(rp.scene.combo.findData("通用"))
+    assert rp.scene.current_name() == "通用" and not rp.scene.is_auto() and len(rp.scene.combos) == 1
+    # 三层：Valorant 下新建子场景后，选 Valorant 会出第三级
+    win.store.create_child("Valorant", "主播A")
+    rp.scene.reload(keep="主播A")
+    assert len(rp.scene.combos) == 3 and rp.scene.current_name() == "主播A" and rp.scene.current_display() == "游戏 → Valorant → 主播A"
+    rp.scene.combos[2].setCurrentIndex(0)      # 第三级选「（不选）」→ 停在 Valorant
+    assert rp.scene.current_name() == "Valorant"
+    win.store.delete("主播A")
+    rp.scene.reload(keep="通用")
+    # 高级区默认收起，打开后模型下拉可见
+    assert not rp.model_panel.advanced_widget.isVisible()
+    rp.advanced.set_open(True)
+    assert rp.model_panel.advanced_widget.isVisible() and rp.advanced.toggle.isChecked()
     # 场景管理页：选中 Valorant，改术语并保存，主页选择器仍正常
     pp = win.settings_dialog.profiles_page
     pp.reload_tree(select="Valorant")
@@ -193,6 +207,16 @@ def main() -> int:
     config_mod.save_config(c)
     assert config_mod.load_config().asr_model == "whisper-1"
     print("旧设置兼容：OK")
+
+    # 11. 界面配色：菜单单选，立刻生效并记住
+    from app.ui.theme import current_theme
+    assert [a.text() for a in win.theme_menu.actions()] == ["清爽蓝", "深色紫", "暖调青"]
+    win._on_theme_chosen("dark")
+    assert current_theme() == "dark" and config_mod.load_config().ui_theme == "dark"
+    assert win.theme_actions["dark"].isChecked() and not win.theme_actions["light"].isChecked()
+    win._on_theme_chosen("light")
+    assert current_theme() == "light"
+    print("界面配色：OK")
 
     win.close()
     win2.close()

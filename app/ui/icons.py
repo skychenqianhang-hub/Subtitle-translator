@@ -6,11 +6,14 @@ import math
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap
 
-ICON_COLOR = "#444444"
+ICON_COLOR = ""         # 空 = 用当前主题的图标色
 ICON_PX = 22            # 顶栏按钮里显示的大小
 
 
 def _begin(size: int, color: str) -> tuple[QPixmap, QPainter]:
+    if not color:
+        from app.ui.theme import current_palette
+        color = current_palette().get("icon", "#444444")
     pm = QPixmap(size, size)
     pm.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pm)
@@ -34,6 +37,18 @@ def globe_icon(size: int = 64, color: str = ICON_COLOR) -> QIcon:
         y = r.top() + r.height() * frac
         half = (r.width() / 2) * (1 - (2 * frac - 1) ** 2) ** 0.5
         painter.drawLine(QPointF(r.center().x() - half, y), QPointF(r.center().x() + half, y))
+    painter.end()
+    return QIcon(pm)
+
+
+def palette_icon(size: int = 64, color: str = ICON_COLOR) -> QIcon:
+    """配色：左半填满的圆（明暗对比的通用符号），和地球、齿轮同一种线宽。"""
+    pm, painter = _begin(size, color)
+    m = size * 0.1
+    r = QRectF(m, m, size - 2 * m, size - 2 * m)
+    painter.drawEllipse(r)
+    painter.setBrush(QColor(painter.pen().color()))
+    painter.drawChord(r, 90 * 16, 180 * 16)
     painter.end()
     return QIcon(pm)
 

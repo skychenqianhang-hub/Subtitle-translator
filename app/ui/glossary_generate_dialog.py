@@ -20,7 +20,7 @@ from app.core.profiles.generate import (
 
 BUDGET_LABELS = {"low": "省钱（最多搜 8 次）", "medium": "标准（最多搜 12 次）", "high": "充分（最多搜 20 次）"}
 from app.core.profiles.glossary import GLOSSARY_LANGS, Row
-from app.ui.common import hint
+from app.ui.common import hint, set_status
 
 Generator = Callable[..., GlossaryDraft]      # generate_glossary 的签名；测试里换成假的
 
@@ -128,6 +128,7 @@ class GlossaryGenerateDialog(QDialog):
 
         run_row = QHBoxLayout()
         self.start_button = QPushButton(tr("开始生成"))
+        self.start_button.setObjectName("primary")
         self.start_button.setMinimumHeight(34)
         self.start_button.clicked.connect(self.start)
         run_row.addWidget(self.start_button)
@@ -167,6 +168,7 @@ class GlossaryGenerateDialog(QDialog):
 
         self.buttons = QDialogButtonBox()
         self.accept_button = self.buttons.addButton(tr("加进术语表"), QDialogButtonBox.ButtonRole.AcceptRole)
+        self.accept_button.setObjectName("primary")
         self.buttons.addButton(tr("取消"), QDialogButtonBox.ButtonRole.RejectRole)
         self.buttons.accepted.connect(self._accept)
         self.buttons.rejected.connect(self.reject)
@@ -201,10 +203,10 @@ class GlossaryGenerateDialog(QDialog):
             self.status.setText(tr("至少勾两种语言。"))
             return
         if not self.cfg.has_anthropic_key():
-            self.status.setStyleSheet("color: #c33;")
+            set_status(self.status, "error")
             self.status.setText(tr("还没有填 Anthropic 的 API Key。请到右上角「设置 → API Key」填写。"))
             return
-        self.status.setStyleSheet("")
+        set_status(self.status, "plain")
         req = GenerateRequest(
             domain=self.domain.text().strip(), languages=langs, max_terms=self.max_terms.value(),
             existing_rows=list(self.existing_rows) if self.mode_fill.isChecked() else [],
@@ -238,13 +240,13 @@ class GlossaryGenerateDialog(QDialog):
 
     def _on_failed(self, message: str) -> None:
         self._set_running(False)
-        self.status.setStyleSheet("color: #c33;")
+        set_status(self.status, "error")
         self.status.setText(message)
 
     def _on_done(self, draft: GlossaryDraft) -> None:
         self._set_running(False)
         self.draft = draft
-        self.status.setStyleSheet("color: #2a7;")
+        set_status(self.status, "ok")
         self.status.setText(tr("完成：{0} 条，联网搜索 {1} 次、抓取网页 {2} 次，本次费用约 ${3:.3f}", len(draft.rows),
                                draft.searches, draft.fetches, draft.cost_usd()))
         self.table.setRowCount(0)

@@ -15,7 +15,8 @@ from app.i18n import LANGUAGES, current_language, tr, tr_in
 
 from app.config import Config, save_config
 from app.core.profiles.store import ProfileStore
-from app.ui.icons import ICON_PX, gear_icon, globe_icon
+from app.ui.icons import ICON_PX, gear_icon, globe_icon, palette_icon
+from app.ui.theme import THEME_LABELS, apply_theme, current_theme
 from app.ui.overlay_window import OverlayWindow
 from app.ui.realtime_page import RealtimePage
 from app.ui.settings_dialog import SettingsDialog
@@ -28,13 +29,7 @@ MODES = [
     ("video", "视频翻译", "已录好的视频或网址：整段处理后输出字幕文件"),
 ]
 
-TOP_ICON_STYLE = "QToolButton { padding: 4px 6px; }"      # 右上角两个图标按钮共用，保证一样大、对齐
-
-MODE_BUTTON_STYLE = (
-    "QPushButton { font-size: 15px; padding: 8px 22px; border: 1px solid #c8c8c8; background: #fafafa; }"
-    "QPushButton:checked { background: #2f6fd6; color: white; border-color: #2f6fd6; }"
-    "QPushButton:hover:!checked { background: #eef3fb; }"
-)
+MENU_NO_ARROW = "QToolButton::menu-indicator { image: none; }"   # 语言按钮不画下拉小箭头
 
 
 class MainWindow(QMainWindow):
@@ -62,7 +57,7 @@ class MainWindow(QMainWindow):
             b = QPushButton(tr(label))
             b.setCheckable(True)
             b.setToolTip(tr(tip))
-            b.setStyleSheet(MODE_BUTTON_STYLE)
+            b.setObjectName("modeButton")       # 样式在 theme.py
             self.mode_group.addButton(b, i)
             self.mode_buttons[key] = b
             top.addWidget(b)
@@ -75,7 +70,7 @@ class MainWindow(QMainWindow):
         self.language_button.setAutoRaise(True)
         self.language_button.setToolTip("界面语言 / 表示言語 / Interface language")
         self.language_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        self.language_button.setStyleSheet(TOP_ICON_STYLE + " QToolButton::menu-indicator { image: none; }")
+        self.language_button.setStyleSheet(MENU_NO_ARROW)
         self.language_menu = QMenu(self.language_button)
         self.language_actions: dict[str, QAction] = {}
         group = QActionGroup(self.language_menu)
@@ -89,12 +84,33 @@ class MainWindow(QMainWindow):
             self.language_actions[code] = act
         self.language_button.setMenu(self.language_menu)
         top.addWidget(self.language_button)
+        # 界面配色：调色盘图标，点开单选菜单，选了立刻生效
+        self.theme_button = QToolButton()
+        self.theme_button.setObjectName("theme_button")
+        self.theme_button.setIcon(palette_icon())
+        self.theme_button.setIconSize(QSize(ICON_PX, ICON_PX))
+        self.theme_button.setAutoRaise(True)
+        self.theme_button.setToolTip(tr("界面配色"))
+        self.theme_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.theme_button.setStyleSheet(MENU_NO_ARROW)
+        self.theme_menu = QMenu(self.theme_button)
+        self.theme_actions: dict[str, QAction] = {}
+        theme_group = QActionGroup(self.theme_menu)
+        theme_group.setExclusive(True)
+        for key, label in THEME_LABELS.items():
+            act = self.theme_menu.addAction(tr(label))
+            act.setCheckable(True)
+            act.setChecked(key == current_theme())
+            act.triggered.connect(lambda _=False, k=key: self._on_theme_chosen(k))
+            theme_group.addAction(act)
+            self.theme_actions[key] = act
+        self.theme_button.setMenu(self.theme_menu)
+        top.addWidget(self.theme_button)
         self.settings_button = QToolButton()
         self.settings_button.setIcon(gear_icon())
         self.settings_button.setIconSize(QSize(ICON_PX, ICON_PX))
         self.settings_button.setToolTip(tr("设置（API Key、场景管理）"))
         self.settings_button.setAutoRaise(True)
-        self.settings_button.setStyleSheet(TOP_ICON_STYLE)
         self.settings_button.clicked.connect(lambda: self.settings_dialog.open_tab(SettingsDialog.TAB_BASIC))
         top.addWidget(self.settings_button)
         root.addLayout(top)
@@ -144,6 +160,19 @@ class MainWindow(QMainWindow):
         answer = QMessageBox.question(self, title, tr_in(code, "界面语言在重启程序后生效。现在重启吗？"))
         if answer == QMessageBox.StandardButton.Yes:
             self.restart_app()
+
+    def _on_theme_chosen(self, name: str) -> None:
+        app = QApplication.instance()
+        if app is not None:
+            name = apply_theme(app, name)
+        for k, act in self.theme_actions.items():
+            act.setChecked(k == name)
+        # 图标颜色跟配色走，重画一遍
+        self.language_button.setIcon(globe_icon())
+        self.theme_button.setIcon(palette_icon())
+        self.settings_button.setIcon(gear_icon())
+        self.cfg.ui_theme = name
+        self._save_quietly()
 
     def _save_quietly(self) -> None:
         try:

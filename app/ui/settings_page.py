@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.config import Config, config_path, default_download_dir, save_config
-from app.ui.common import hint, page_title
+from app.ui.common import hint, set_status, page_title
 
 
 class SettingsPage(QWidget):
@@ -44,9 +44,10 @@ class SettingsPage(QWidget):
 
         save_row = QHBoxLayout()
         self.status = QLabel("")
-        self.status.setStyleSheet("color: #2a7;")
+        set_status(self.status, "ok")
         save_row.addWidget(self.status, 1)
         self.save_button = QPushButton(tr("保存"))
+        self.save_button.setObjectName("primary")
         self.save_button.setMinimumHeight(36)
         self.save_button.clicked.connect(self.save)
         save_row.addWidget(self.save_button)
@@ -89,8 +90,8 @@ class SettingsPage(QWidget):
         try:
             save_config(self.cfg)
         except OSError as e:
-            self.status.setStyleSheet("color: #c33;")
+            set_status(self.status, "error")
             self.status.setText(tr("保存失败：{0}", e))
             return
-        self.status.setStyleSheet("color: #2a7;")
+        set_status(self.status, "ok")
         self.status.setText(tr("已保存。"))
