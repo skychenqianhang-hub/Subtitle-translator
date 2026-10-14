@@ -131,6 +131,10 @@ def self_check(out_path: str) -> int:
 
 
 def main() -> int:
+    if len(sys.argv) >= 2 and sys.argv[1] in ("--version", "-v"):
+        from app.version import __version__
+        print(__version__)
+        return 0
     if len(sys.argv) >= 3 and sys.argv[1] == "--check":
         return self_check(sys.argv[2])
 

@@ -45,6 +45,11 @@
 - 用户 2026-10-07 起有 OpenAI 和 Anthropic 两家的 Key。Claude 的联网生成词表、Claude 翻译线路（字幕翻译，日→简中、英→日）都已用真实接口跑通。
 - 用用户的 Key 做真实测试前要先征得同意，并说明大概花多少钱。用户此前同意过用十几秒的测试音频做小额验证。
 
+## 版本与发布
+
+- 版本号只改 `app/version.py`。发布 = 改版本 → 补 CHANGELOG.md → `python installer/build_installer.py`（PyInstaller + 自检 + Inno Setup）→ 打 tag → `gh release create` 上传 `installer/output/SubTranslator-Setup-<版本>.exe`。细节见 PLAN.md 7.7。
+- README.md / README_en.md 面向外部用户，改了功能要同步；截图在 docs/screenshots。
+
 ## 远端仓库
 
 `https://github.com/skychenqianhang-hub/Subtitle-translator`（私有，用作备份）。本地分支 `main` 跟踪 `origin/main`，凭据由系统凭据管理器保存。推送前确认没有密钥进仓库。

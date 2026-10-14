@@ -14,3 +14,7 @@ dist/
 # 测试用视频和生成的字幕，不进 git
 字幕测试/
 配色预览/
+
+# 安装包产物
+installer/output/
+dist/selfcheck.txt

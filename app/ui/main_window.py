@@ -36,7 +36,8 @@ class MainWindow(QMainWindow):
     def __init__(self, cfg: Config) -> None:
         super().__init__()
         self.cfg = cfg
-        self.setWindowTitle(tr(APP_NAME))
+        from app.version import __version__
+        self.setWindowTitle(f"{tr(APP_NAME)}  {__version__}")
         self.resize(1020, 740)
 
         self.overlay = OverlayWindow(cfg)
