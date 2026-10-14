@@ -47,12 +47,14 @@
 
 ## 版本与发布
 
+- GitHub CLI 装在 `C:\Program Files\GitHub CLI\gh.exe`（不在 PATH 里，用完整路径调用），已用用户账号登录。
+
 - 版本号只改 `app/version.py`。发布 = 改版本 → 补 CHANGELOG.md → `python installer/build_installer.py`（PyInstaller + 自检 + Inno Setup）→ 打 tag → `gh release create` 上传 `installer/output/SubTranslator-Setup-<版本>.exe`。细节见 PLAN.md 7.7。
 - README.md / README_en.md 面向外部用户，改了功能要同步；截图在 docs/screenshots。
 
 ## 远端仓库
 
-`https://github.com/skychenqianhang-hub/Subtitle-translator`（私有，用作备份）。本地分支 `main` 跟踪 `origin/main`，凭据由系统凭据管理器保存。推送前确认没有密钥进仓库。
+`https://github.com/skychenqianhang-hub/Subtitle-translator`（2026-10-15 起**公开**，MIT 许可证；Releases 里有安装包，v1.0.0 已发布）。本地分支 `main` 跟踪 `origin/main`，凭据由系统凭据管理器保存。推送前确认没有密钥进仓库。
 
 ## 界面多语言（中 / 日 / 英）
 

@@ -324,8 +324,8 @@ SubTranslator/
 - **安装包**：Inno Setup 6（`winget install JRSoftware.InnoSetup`，装在 `%LOCALAPPDATA%\Programs\Inno Setup 6`）。脚本 `installer/SubTranslator.iss`；一键 `python installer/build_installer.py`（PyInstaller → 自检 → ISCC），产物 `installer/output/SubTranslator-Setup-<版本>.exe`（不进 git）。安装到 `%ProgramFiles%\SubTranslator`（或用户目录，安装时可选），开始菜单 + 可选桌面图标，卸载保留 `%APPDATA%\SubTranslator` 的设置。安装包语言：英语、日语；简体中文的 .isl 官方没带，放到 `installer/ChineseSimplified.isl` 后脚本会自动启用。
 - **没有代码签名**：别人安装会看到 SmartScreen 警告，README 里写了怎么点。签名要买证书（每年几百美元），用户没要求。
 - **README.md（中文）/ README_en.md**、`CHANGELOG.md`、`docs/screenshots/`。截图是开发时用 `QT_QPA_PLATFORM=windows` 抓的 MainWindow.grab()，换版式后记得更新。
-- **发布流程**：改 `app/version.py` → 补 CHANGELOG → `python installer/build_installer.py` → `git tag v<版本>` 推送 → `gh release create v<版本> installer/output/SubTranslator-Setup-<版本>.exe --notes-file ...`。GitHub CLI 用 `winget install GitHub.cli`，首次要用户自己 `gh auth login`。
-- LICENSE：待用户决定（建议 MIT）。仓库目前私有，是否公开由用户决定。
+- **发布流程**：改 `app/version.py` → 补 CHANGELOG → `python installer/build_installer.py` → `git tag v<版本>` 推送 → `gh release create v<版本> installer/output/SubTranslator-Setup-<版本>.exe --notes-file ...`。GitHub CLI 在 `C:\Program Files\GitHub CLI\gh.exe`，已登录。
+- LICENSE：MIT（用户 2026-10-15 定）。仓库同日改为公开；v1.0.0 Release 已发布，附安装包。
 
 ## 7.5 待定想法（用户提出，尚未决定做不做）
 
