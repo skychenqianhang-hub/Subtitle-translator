@@ -10,7 +10,7 @@ Japanese / English → Simplified Chinese, Traditional Chinese, English, Japanes
 
 </div>
 
-![Live translation](docs/screenshots/realtime.png)
+![Live translation](docs/screenshots/realtime-en.png)
 
 ## Features
 
@@ -22,7 +22,7 @@ Japanese / English → Simplified Chinese, Traditional Chinese, English, Japanes
 - **AI-generated glossaries** — type "League of Legends" or "the movie Dune: Part Two"; Claude searches official sources and builds a sourced glossary for you to review.
 - Four translation styles (casual / subtitle / semi-formal / formal), live cost display, UI in Chinese / Japanese / English, three colour themes.
 
-![Overview](docs/screenshots/overview.png)
+![Overview](docs/screenshots/overview-en.png)
 
 ## How it works
 
