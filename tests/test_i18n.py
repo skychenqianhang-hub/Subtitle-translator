@@ -174,8 +174,8 @@ def check_misc() -> None:
     assert cfg.target_language_name() == "Simplified Chinese", cfg.target_language_name()
     i18n.set_language("zh")
     assert cfg.target_language_name() == "简体中文"
-    # 设置文件：全新安装跟随系统；老用户（文件里没有这一项）保持中文；选过的记住
-    assert config_mod.load_config().ui_language == i18n.detect_system_language()
+    # 设置文件：全新安装默认英文；老用户（文件里没有这一项）保持中文；选过的记住
+    assert config_mod.load_config().ui_language == "en"
     config_mod.save_config(config_mod.Config())
     raw = json.loads(config_mod.config_path().read_text(encoding="utf-8"))
     raw.pop("ui_language")

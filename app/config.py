@@ -185,10 +185,9 @@ class Config:
 def load_config() -> Config:
     path = config_path()
     if not path.exists():
-        # 全新安装：界面语言跟随系统
-        from app.i18n import detect_system_language
+        # 全新安装：界面默认英文（用户 2026-10-22 定：GitHub 面向英文用户），右上角地球图标可随时切换
         cfg = Config()
-        cfg.ui_language = detect_system_language()
+        cfg.ui_language = "en"
         return cfg
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))

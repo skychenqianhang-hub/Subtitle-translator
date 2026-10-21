@@ -33,17 +33,17 @@ ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 DisableProgramGroupPage=yes
-ShowLanguageDialog=auto
+ShowLanguageDialog=yes
 ; 安装过程中程序开着会失败：先提示关闭
 CloseApplications=yes
 RestartApplications=no
 
 [Languages]
 ; 简体中文的语言文件 Inno Setup 官方包里没带（在官方仓库的 Unofficial 目录），放到 installer\ChineseSimplified.isl 后会自动用上
+Name: "english"; MessagesFile: "compiler:Default.isl"
 #if FileExists(AddBackslash(SourcePath) + "ChineseSimplified.isl")
 Name: "chinesesimplified"; MessagesFile: "ChineseSimplified.isl"
 #endif
-Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 
 [Tasks]

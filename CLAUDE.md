@@ -50,7 +50,7 @@
 - GitHub CLI 装在 `C:\Program Files\GitHub CLI\gh.exe`（不在 PATH 里，用完整路径调用），已用用户账号登录。
 
 - 版本号只改 `app/version.py`。发布 = 改版本 → 补 CHANGELOG.md → `python installer/build_installer.py`（PyInstaller + 自检 + Inno Setup）→ 打 tag → `gh release create` 上传 `installer/output/SubTranslator-Setup-<版本>.exe`。细节见 PLAN.md 7.7。
-- README.md / README_en.md 面向外部用户，改了功能要同步；截图在 docs/screenshots。
+- README.md（英文，GitHub 首页）/ README_cn.md（中文）面向外部用户，改了功能要同步；截图在 docs/screenshots（中 / 英界面各一套）。全新安装默认英文界面。
 
 ## 远端仓库
 

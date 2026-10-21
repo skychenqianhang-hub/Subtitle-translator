@@ -245,7 +245,7 @@ SubTranslator/
 界面支持中文 / 日本語 / English。右上角齿轮左边是一个地球图标按钮（用户要求照通行做法用地球标志，不能只写中文「语言」），点开是菜单，三种语言各写自己的名字（中文 / 日本語 / English），当前语言打勾；切换后重启程序生效（会问要不要现在重启）。图标是代码画的（`globe_icon()`），不依赖字体。
 
 - 写法：代码里照常写中文，外面包 `tr("中文", 参数…)`（`app/i18n.py`）。中文既是源语言也是翻译表的键；翻译表是 `app/locales/en.json`、`ja.json`，格式 `{"中文": "译文"}`，缺译文时回退中文不报错。
-- 语言在 `main()` 里读完设置后定一次，然后才加载界面模块。全新安装跟随 Windows 显示语言（中文 → zh，日文 → ja，其他 → en）；加这个功能之前的老用户保持中文。存在设置的 `ui_language`。
+- 语言在 `main()` 里读完设置后定一次，然后才加载界面模块。全新安装**默认英文**（用户 2026-10-22 定，GitHub 面向英文用户；`detect_system_language()` 保留但不再用于默认值）；加这个功能之前的老用户保持中文。存在设置的 `ui_language`。
 - `config.py` 等文件里的模块级常量（模型标注、语言名、输出形式）保持中文，在使用处 `tr(变量)`。
 - **不翻的东西**：场景的内部名字（通用 / 游戏 / 电影是存盘和继承用的键，只在显示时翻）、用户自己建的场景名、术语表内容、场景的「翻译风格」（那是写给翻译模型的话）、发给模型的提示词、输出文件名（`.字幕工程.json`、下载文件夹「字幕翻译器」）、Windows 给的设备名和字体名。预置场景的「说明」显示时翻译，没改过就存回原文。
 - 日文界面把程序字体换成 Yu Gothic UI（中文系统默认字体会把日文汉字画成中文字形）。
@@ -323,7 +323,7 @@ SubTranslator/
 - **版本号**只在 `app/version.py` 改（`__version__`）。窗口标题带版本；`SubTranslator.exe --version` 打印版本。
 - **安装包**：Inno Setup 6（`winget install JRSoftware.InnoSetup`，装在 `%LOCALAPPDATA%\Programs\Inno Setup 6`）。脚本 `installer/SubTranslator.iss`；一键 `python installer/build_installer.py`（PyInstaller → 自检 → ISCC），产物 `installer/output/SubTranslator-Setup-<版本>.exe`（不进 git）。安装到 `%ProgramFiles%\SubTranslator`（或用户目录，安装时可选），开始菜单 + 可选桌面图标，卸载保留 `%APPDATA%\SubTranslator` 的设置。安装包语言：英语、日语；简体中文的 .isl 官方没带，放到 `installer/ChineseSimplified.isl` 后脚本会自动启用。
 - **没有代码签名**：别人安装会看到 SmartScreen 警告，README 里写了怎么点。签名要买证书（每年几百美元），用户没要求。
-- **README.md（中文）/ README_en.md**、`CHANGELOG.md`、`docs/screenshots/`。截图是开发时用 `QT_QPA_PLATFORM=windows` 抓的 MainWindow.grab()，换版式后记得更新。
+- **README.md（英文，GitHub 首页）/ README_cn.md（中文）**（2026-10-22 对调，用户要求英文为主）、`CHANGELOG.md`、`docs/screenshots/`（中 / 英界面各一套）。截图是开发时用 `QT_QPA_PLATFORM=windows` 抓的 MainWindow.grab()，换版式后记得更新。
 - **发布流程**：改 `app/version.py` → 补 CHANGELOG → `python installer/build_installer.py` → `git tag v<版本>` 推送 → `gh release create v<版本> installer/output/SubTranslator-Setup-<版本>.exe --notes-file ...`。GitHub CLI 在 `C:\Program Files\GitHub CLI\gh.exe`，已登录。
 - LICENSE：MIT（用户 2026-10-15 定）。仓库同日改为公开；v1.0.0 Release 已发布，附安装包。
 
